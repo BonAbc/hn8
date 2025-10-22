@@ -104,6 +104,12 @@ body {
   position: relative; /* Ensure links are above waves */
   z-index: 1;
 }
+#render {
+  color: gold !important;
+  transition: color 0.3s ease;
+  position: relative; /* Ensure links are above waves */
+  z-index: 1;
+}
 
 /* Change color only when hovering the individual link */
 .custom-footer a:hover,
