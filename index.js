@@ -346,13 +346,16 @@ app.post("/login", async (req, res, next) => {
       req.flash("error", "Invalid username or password");
       return res.redirect("/login");
     }
+
     const user = result.rows[0];
     const match = await bcrypt.compare(password, user.pw);
     if (!match) {
       req.flash("error", "Invalid username or password");
       return res.redirect("/login");
     }
-    req.logIn(user, (err) => {
+
+    // 🧠 Important: always RETURN req.logIn to prevent fallthrough
+    return req.logIn(user, (err) => {
       if (err) return next(err);
       req.session.isAdmin = adminEmails.includes(user.email);
       return res.redirect(req.session.isAdmin ? "/mes" : "/tax");
