@@ -37,20 +37,20 @@ function getToday() {
 // ----------------------------
 // PostgreSQL Connection
 // ----------------------------
-//const { Pool } = pkg;
-//const port = process.env.PORT || 3000;
+const { Pool } = pkg;
+const port = process.env.PORT || 3000;
 
-//const db = new Pool({
-// user: process.env.PGUSER,
-// host: process.env.PGHOST,
-// database: process.env.PGDATABASE,
-// password: process.env.PGPASSWORD,
-// port: parseInt(process.env.PGPORT, 10),
-// ssl: { rejectUnauthorized: false },
-//});
-//db.connect()
-//  .then(() => console.log("✅ Postgres connected"))
-//  .catch((err) => console.error("❌ Postgres connection error:", err));
+const db = new Pool({
+  user: process.env.PGUSER,
+  host: process.env.PGHOST,
+  database: process.env.PGDATABASE,
+  password: process.env.PGPASSWORD,
+  port: parseInt(process.env.PGPORT, 10),
+  ssl: { rejectUnauthorized: false },
+});
+db.connect()
+  .then(() => console.log("✅ Postgres connected"))
+  .catch((err) => console.error("❌ Postgres connection error:", err));
 
 // ----------------------------
 // Session Handling
