@@ -56,10 +56,13 @@ db.connect()
 // Session Handling
 // ----------------------------
 const PgSession = connectPg(session);
-
 app.use(
   session({
-    store: new PgSession({ pool: db, tableName: "session" }),
+    store: new PgSession({
+      pool: db,
+      tableName: "session",
+      createTableIfMissing: true, // 👈 This line auto-creates the table if it's missing
+    }),
     secret: process.env.SESSION_SECRET || "fallbacksecret",
     resave: false,
     saveUninitialized: false,
@@ -71,6 +74,21 @@ app.use(
     },
   })
 );
+
+//app.use(
+//session({
+//  store: new PgSession({ pool: db, tableName: "session" }),
+//  secret: process.env.SESSION_SECRET || "fallbacksecret",
+//  resave: false,
+//   saveUninitialized: false,
+// cookie: {
+//    secure: process.env.NODE_ENV === "production",
+//      sameSite: "lax",
+//   httpOnly: true,
+//     maxAge: 1000 * 60 * 30, // 30 minutes
+// },
+//  })
+//);
 
 app.use(passport.initialize());
 app.use(passport.session());
