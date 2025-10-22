@@ -1,0 +1,127 @@
+<!--Any new web page must include everything below, then add other thing later-->
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+    <!--defaultDate pass from backend-->
+  </form>
+
+  <!---->
+  <h2 id="hm">Hoa Mai</h2>
+  <!--Build sign in form here-->
+  <!-- Bootstrap container with top margin -->
+  <!-- Bootstrap container -->
+  <!-- Password input group with toggle button -->
+  <!-- Include the header partial and pass a page title -->
+
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-5">
+        <!-- Card wrapper for form -->
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h4 class="card-title text-center mb-4">Change Password</h4>
+
+            <!-- Show message if exists -->
+
+            <!---->
+            <!---->
+            <!-- Show message if exists -->
+            <% if (typeof message !== 'undefined' && message) { %>
+            <div class="alert alert-info" id="message"><%= message %></div>
+            <% } %>
+
+            <!---->
+            <!-- Form for changing/resetting password -->
+            <form action="/chapw" method="POST">
+              <!-- Email field (forgot password) -->
+              <div class="mb-3">
+                <label for="email" class="form-label">User name</label>
+                <input
+                  type="email"
+                  class="form-control"
+                  id="email"
+                  name="email"
+                  required
+                />
+              </div>
+
+              <!-- New password -->
+              <div class="mb-3">
+                <label for="newPassword" class="form-label fw-semibold"
+                  >New Password</label
+                >
+
+                <div class="custom-input-group">
+                  <input
+                    type="password"
+                    class="form-control"
+                    id="newPassword"
+                    name="newPassword"
+                    required
+                    autocomplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    id="togglPassword"
+                    class="toggle-btn"
+                    aria-label="Toggle password visibility"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Confirm password -->
+              <div class="mb-3">
+                <label for="confirmPassword" class="form-label"
+                  >Confirm Password</label
+                >
+                <div class="custom-input-group">
+                  <!--Check CSS make eye on the same line 👆-->
+                  <input
+                    type="password"
+                    class="form-control"
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    required
+                  />
+                  <button
+                    type="button"
+                    id="togglePassword"
+                    class="toggle-btn"
+                    aria-label="Toggle password visibility"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary w-100">
+                Update Password
+              </button>
+            </form>
+
+            <div class="mt-3 text-center">
+              <a href="/login">Back to Login</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h5>Click to register</h5>
+  <a class="btn btn-primary btn-lg" href="/signup" role="button">Register</a>
+  <h5>*User name is email. Update is for change/forget password*</h5>
+  <!--End sign in form-->
+  <!--Refer to index.ejs how to include header and footer.ejs-->
+</main>
+<!-- Link external JS -->
+<script src="/js/chapw.js"></script>
+<!-- Link external JS end -->
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->

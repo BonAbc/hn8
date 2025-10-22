@@ -1,0 +1,181 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100&display=swap");
+
+/* For entire web */
+/* Reset and base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+/*html {*/
+/* scrollbar-gutter: stable; /* reserves scrollbar space to avoid layout shift */
+/*}*/
+html,
+body {
+  height: 100%;
+  width: 100%;
+  background-color: aliceblue;
+}
+
+/* Flex layout for body */
+body {
+  overflow-x: auto; /* always show horizontal scrollbar. If this is in html: we see 2 scroll bar vertical */
+  overflow-y: scroll; /* always show vertical scrollbar */
+  /*   overflow-x: auto;*/ /*horizontal scroll only when needed */
+  /*  overflow-y: auto;*/ /* vertical scroll only when needed */
+  display: flex;
+  flex-direction: column;
+  min-width: 100vw; /* prevent shrink */
+  min-height: 100vh; /* fill viewport height */
+}
+/**/
+#hm {
+  font-size: 30px;
+  font-weight: normal;
+  text-shadow: 2px 2px 6px green; /* corrected */
+  color: yellow;
+  font-family: "Pacifico", cursive;
+}
+/**/
+/* Make main content area grow   flex-grow: 1;*/
+/* width: 100%;*/
+
+/* Custom background color for the header navbar */
+.custom-header {
+  /* background-color: lightskyblue !important;*/ /* Replace with your color */
+  background-color: darkblue !important; /* Replace with your color */
+}
+/**/
+
+/**/
+/*Below is for navbar brand*/
+.navbar .navbar-brand {
+  color: greenyellow;
+}
+
+.navbar .navbar-brand:hover {
+  color: gold; /* Change this to whatever color you want on hover */
+}
+/*The below make the --- seen when srhink to mobile device*/
+.navbar-toggler-icon {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='gold' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+}
+
+/*Change header item when hover*/
+.nav-link,
+.nav-link.active {
+  color: greenyellow; /* Default color */
+  text-decoration: none;
+  transition: color 0.3s ease; /* Smooth transition */
+}
+
+.nav-link:hover,
+.nav-link.active:hover {
+  color: gold; /* Change this to whatever color you want on hover */
+}
+/**/
+
+/*Change dropdown-item when hover*/
+.dropdown-item {
+  color: black; /* Default color */
+  text-decoration: none;
+  transition: color 0.3s ease; /* Smooth transition */
+}
+
+.dropdown-item:hover {
+  color: red; /* Change this to whatever color you want on hover */
+}
+
+/*Footer*/
+.custom-footer {
+  /* background-color: blue !important; /*Change back ground color*/
+  background-color: darkblue !important; /* Footer background */
+  position: relative; /* Needed for absolute positioning waves inside */
+  overflow: visible; /* Allow waves to show outside the padding */
+  z-index: 1; /* Footer content above waves */
+  padding-top: 120px; /* Space at top for waves so*/
+}
+
+.custom-footer a,
+.custom-footer .nav-link {
+  color: greenyellow !important;
+  transition: color 0.3s ease;
+  position: relative; /* Ensure links are above waves */
+  z-index: 1;
+}
+
+/* Change color only when hovering the individual link */
+.custom-footer a:hover,
+.custom-footer .nav-link:hover {
+  color: gold !important;
+}
+#cr {
+  color: gold; /* Change text color */
+  position: relative;
+  z-index: 1; /* Above waves */
+}
+/*Footer End*/
+/**/
+.sidebar {
+  flex: 1;
+  background: #f0f0f0;
+  padding: 20px;
+}
+html {
+  scrollbar-gutter: stable; /* Prevent layout shift when scrollbar appears */
+}
+/* Media Queries */
+
+/* Tablets (≤ 992px) */
+@media (max-width: 992px) {
+  main {
+    flex-direction: column;
+  }
+
+  nav {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* Mobile Devices (≤ 768px) */
+@media (max-width: 768px) {
+  body {
+    font-size: 15px;
+  }
+
+  nav a {
+    margin: 5px 0;
+  }
+
+  header,
+  footer {
+    padding: 15px;
+  }
+
+  .container {
+    width: 95%;
+  }
+}
+
+/* Very Small Devices (≤ 480px) */
+@media (max-width: 480px) {
+  body {
+    font-size: 14px;
+  }
+
+  .sidebar {
+    padding: 10px;
+  }
+
+  .content {
+    padding: 10px;
+  }
+
+  nav {
+    font-size: 14px;
+  }
+}
+/**/
+/* Media Queries */

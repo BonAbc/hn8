@@ -1,0 +1,134 @@
+<!--Mortgage Page-->
+<%- include("partials/header.ejs") %>
+
+<main>
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+  <br />
+  <!---->
+  <h2 class="mo1">Mortgage Calculator/Tính Tiền Trả Hằng Tháng Khi Mua Nhà</h2>
+  <!-- <h3>Debt Amortization</h3>-->
+  <!--Add another div-->
+  <h5>
+    This mortgage calculator is for informational and educational purpose only.
+  </h5>
+  <h5>
+    By using this tool, you acknowledge that all the numbers are your own
+    estimates.
+  </h5>
+  <!--Add another div-->
+  <!-- Mortgage Calculator UI -->
+  <div class="mortgage-wrapper">
+    <!-- Purchase and Down Payment -->
+    <div class="calc-block">
+      <label for="num1">Purchase Price/Giá Mua</label>
+      <input type="text" id="num1" placeholder="Enter number 1" />
+    </div>
+
+    <div class="calc-block">
+      <label for="num2">Down Payment/Trả trước</label>
+      <input type="text" id="num2" placeholder="Enter number 2" />
+    </div>
+
+    <div class="calc-block">
+      <label for="num3">Debt Amount/Nợ <span style="color: red">*</span></label>
+      <input type="text" id="num3" placeholder="Auto/Enter number 3" />
+    </div>
+  </div>
+
+  <div class="mortgage-wrapper">
+    <!-- Interest Rate, Loan Term, Monthly Payment -->
+    <div class="calc-block">
+      <label for="num4"
+        >Annual Interest Rate % / Lãi suất % theo năm
+        <span style="color: red">*</span></label
+      >
+      <input type="text" id="num4" placeholder="Enter number 4 *" required />
+    </div>
+
+    <div class="calc-block">
+      <label for="num5"
+        >Loan Term/Thời gian vay (năm) <span style="color: red">*</span></label
+      >
+      <input type="text" id="num5" placeholder="Enter number 5 *" required />
+    </div>
+
+    <div class="calc-block">
+      <label for="num6"
+        >Constant Monthly Payment/Tiền Trả Hàng Tháng Không Đổi
+      </label>
+      <input type="text" id="num6" placeholder="Number 6 Auto" readonly />
+    </div>
+  </div>
+
+  <div class="mortgage-wrapper">
+    <!-- Additional Costs -->
+    <div class="calc-block">
+      <label for="num7">Monthly Property Tax/Thuế Nhà Hằng Tháng</label>
+      <input type="text" id="num7" placeholder="Enter number 7" />
+    </div>
+
+    <div class="calc-block">
+      <label for="num8">Monthly Insurance/Bảo Hiểm Hằng Tháng</label>
+      <input type="text" id="num8" placeholder="Enter number 8" />
+    </div>
+
+    <div class="calc-block">
+      <label for="num9">Others Monthly/Khoản khác tùy cá nhân</label>
+      <input type="text" id="num9" placeholder="Enter number 9" />
+    </div>
+  </div>
+
+  <div class="mortgage-wrapper">
+    <!-- Operation and Buttons -->
+    <div class="calc-block">
+      <label for="operator">Select Operation/Nhấn mũi tên lựa chọn</label>
+      <select id="operator">
+        <option value="">-- Select --</option>
+        <option value="loan">
+          Debt Amount/Nợ : Number 1/ Number 2 Required
+        </option>
+        <option value="payment">Monthly Payment/Tiền trả hàng tháng</option>
+        <option value="total">
+          Total Monthly Cost/Tổng số tiền trả hằng tháng
+        </option>
+      </select>
+    </div>
+  </div>
+  <div class="mortgage-wrapper">
+    <div class="calc-block">
+      <button type="button" id="calculateBtn">Calculate/Nhấn để tính</button>
+      <br />
+      <button type="button" id="resetBtn" style="margin-top: 10px">
+        Reset
+      </button>
+    </div>
+  </div>
+
+  <div class="mortgage-wrapper">
+    <!-- Result -->
+    <div class="calc-block">
+      <label for="result">Monthly Total/Tổng số tiền trả hằng tháng</label>
+      <input type="text" id="result" placeholder="Result" readonly />
+    </div>
+  </div>
+  <!-- <h5 style="color: darkblue">Dzui lòng chỉ giáo, nếu sơ sót.</h5> -->
+
+  <!--Add another div-->
+
+  <!-- Add another div-->
+
+  <!---->
+
+  <!--Add another div-->
+  <!---->
+  <!---->
+</main>
+<!-- Link external JS -->
+<script src="/js/mortgage.js"></script>
+<!-- Link external JS end -->
+<%- include("partials/footer.ejs") %>

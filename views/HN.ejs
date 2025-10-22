@@ -1,0 +1,54 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!--Route /hnpage; render in app.use-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+  <br />
+  <!---->
+  <h2 id="hm">Hoa Mai</h2>
+  <h3>Welcome to Hieu Nguyen, CPA EA SAP Certified HANA Professional</h3>
+  <p><%= message %></p>
+  <a href="/">Home Page</a>
+  <br />
+  <br />
+
+  <!--Add for fun-->
+  <div class="apd">
+    <div class="card" style="width: 18rem">
+      <img src="/images/rose.png" class="card-img-top" alt="..." />
+      <div class="card-body">
+        <h5 class="card-title">Hoa Hường</h5>
+        <p class="card-text">EA</p>
+        <a id="m1" href="#" class="btn btn-primary">Nguyễn</a>
+      </div>
+    </div>
+
+    <div class="card" style="width: 18rem">
+      <img src="/images/HM.png" class="card-img-top" alt="..." />
+      <div class="card-body">
+        <h5 class="card-title">SAP Certified HANA Professional</h5>
+        <p class="card-text">Enjoy.</p>
+        <a id="m5" href="#" class="btn btn-primary">Thành</a>
+      </div>
+    </div>
+
+    <div class="card" style="width: 18rem">
+      <img src="/images/rose.png" class="card-img-top" alt="..." />
+      <div class="card-body">
+        <h5 class="card-title">Hồng Hoa</h5>
+        <p class="card-text">CPA</p>
+        <a id="m2" href="#" class="btn btn-primary">Hiếu</a>
+      </div>
+    </div>
+  </div>
+  <!--Refer to Line 557 GLobal handler-->
+
+  <!--Refer to index.ejs how to include header and footer.ejs-->
+</main>
+
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->

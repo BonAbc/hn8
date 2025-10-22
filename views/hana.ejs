@@ -1,0 +1,66 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+
+  <!---->
+  <h2 id="hm">Hoa Mai</h2>
+  <!---->
+  <div class="apd">
+    <div class="card" style="width: 18rem">
+      <img src="/images/rose.png" class="card-img-top" alt="Rose" />
+      <div class="card-body">
+        <h5 class="card-title">Hoa Hường</h5>
+        <p class="card-text">EA</p>
+        <a id="m1" href="#" class="btn btn-primary">Nguyễn</a>
+      </div>
+    </div>
+
+    <div class="card" style="width: 18rem">
+      <img src="/images/HM.png" class="card-img-top" alt="Flower" />
+      <div class="card-body">
+        <h5 class="card-title">SAP Certified HANA FICO Professional</h5>
+        <p class="card-text">Enjoy.</p>
+        <a id="m5" href="#" class="btn btn-primary">Thành</a>
+      </div>
+    </div>
+
+    <div class="card" style="width: 18rem">
+      <img src="/images/rose.png" class="card-img-top" alt="Rose" />
+      <div class="card-body">
+        <h5 class="card-title">Hồng Hoa</h5>
+        <p class="card-text">CPA</p>
+        <a id="m2" href="#" class="btn btn-primary">Hiếu</a>
+      </div>
+    </div>
+  </div>
+  <!---->
+  <h2>SAP Accounting</h2>
+  <!---->
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+    <div class="container">
+      <p>Information will be updated.</p>
+    </div>
+  </section>
+  <!---->
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+    <div class="container">
+      <p>Information will be updated.</p>
+    </div>
+  </section>
+  <!---->
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+    <div class="container">
+      <p>Information will be updated.</p>
+    </div>
+  </section>
+  <!---->
+  <!--Refer to index.ejs how to include header and footer.ejs-->
+</main>
+
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->

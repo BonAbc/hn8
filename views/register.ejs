@@ -1,0 +1,159 @@
+<!--Any new web page must include everything below, then add other thing later-->
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+    <!--defaultDate pass from backend-->
+  </form>
+
+  <!---->
+  <h2 id="hm">Hoa Mai</h2>
+  <!--Build sign in form here-->
+  <!-- Bootstrap container with top margin -->
+  <!-- Bootstrap container -->
+  <!-- Password input group with toggle button -->
+  <!-- Include the header partial and pass a page title -->
+
+  <!-- Main login form container -->
+  <div class="container mt-2">
+    <div class="row justify-content-center">
+      <div class="col-sm-6 col-md-5 col-lg-4">
+        <!-- Card provides a border and shadowed box for the form -->
+        <div class="card border rounded shadow-sm">
+          <div
+            class="card-body d-flex flex-column justify-content-center"
+            style="min-height: 400px"
+          >
+            <!-- Page heading -->
+            <h4 class="mb-1 fw-bold text-center">Register</h4>
+            <!-- Show message if exists Need this below 👇, and refer to Line 222 in .js, so tell users what to do -->
+
+            <!--Add message here Ending-->
+            <!-- LOGIN FORM -->
+            <form action="/signup" method="POST" autocomplete="off">
+              <!-- USERNAME INPUT -->
+               <p>User name is email. Password is at least 8 characters, one digit, and one speacial character.</p>
+              <div class="mb-3">
+                <label for="username" class="form-label fw-semibold"
+                  >Username</label
+                >
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  class="form-control rounded-pill border-dark"
+                  required
+                  autocomplete="username"
+                  value="<%= formData.email || '' %>"
+                />
+                <% if (errors && errors.email) { %>
+                <div id="emailServerError" class="text-danger mt-1 ms-1">
+                  <%= errors.email %>
+                </div>
+                <% } else { %>
+                <div
+                  id="emailServerError"
+                  class="text-danger mt-1 ms-1"
+                  style="display: none"
+                ></div>
+                <% } %>
+              </div>
+              <!-- Client-side validation error message container -->
+              <div
+                id="emailServerError"
+                class="text-danger mt-1 ms-1"
+                style="display: none"
+              ></div>
+              <!-- PASSWORD INPUT + TOGGLE EYE ICON -->
+              <!-- PASSWORD INPUT + TOGGLE EYE ICON -->
+              <div class="mb-3">
+                <label for="password" class="form-label fw-semibold"
+                  >Password</label
+                >
+
+                <!-- Custom input wrapper to fix alignment & rounding -->
+                <div class="custom-input-group">
+                  <!-- Password field -->
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="form-control rounded-pill border-dark"
+                    required
+                    autocomplete="current-password"
+                    value="<%= formData.password || '' %>"
+                  />
+            
+                 
+                  <!-- Client-side validation error message container -->
+
+                  <!-- Eye icon toggle button -->
+                  <button
+                    type="button"
+                    id="togglePassword"
+                    class="toggle-btn"
+                    aria-label="Toggle password visibility"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
+                       <% if (errors && errors.password) { %>
+                  <div id="passwordServerError" class="text-danger mt-1 ms-1">
+                    <%= errors.password %>
+                  </div>
+                  <% } else { %>
+                  <div
+                    id="passwordServerError"
+                    class="text-danger mt-1 ms-1"
+                    style="display: none"
+                  ></div>
+                  <% } %>
+               <div
+                id="passwordError"
+                class="text-danger mt-1 ms-1"
+                style="display: none"
+              >
+            </div>
+            <br>
+              <!-- SUBMIT BUTTON -->
+              <div class="d-grid mb-3">
+                <button
+                  type="submit"
+                  class="btn btn-success rounded-pill fw-bold"
+                >
+                  Register
+                </button>
+                <!--Codes in js route to another page-->
+              </div>
+              <!-- Log in page -->
+              <div class="mt-1 text-center">
+                <a href="/login">Back to Login</a>
+              </div>
+
+              <!-- FORGOT PASSWORD LINK -->
+              <div class="text-center">
+                <a href="/chapw" class="text-decoration-none">
+                  Change Password
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <br>
+  <!-- <h5>Click to Home Page</h5>-->
+  <a class="btn btn-primary btn-lg" href="/" role="button">Home Page</a>
+
+  <!--End sign in form-->
+  <!--Refer to index.ejs how to include header and footer.ejs-->
+</main>
+<!-- Link external JS -->
+<script src="/js/reg.js"></script>
+<!-- Link external JS end -->
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->

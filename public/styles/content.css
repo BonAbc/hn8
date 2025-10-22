@@ -1,0 +1,387 @@
+/*for eacg seperate page*/
+
+header,
+footer {
+  flex: 0 0 auto;
+}
+
+main {
+  text-align: center; /*Vertical align*/
+  padding: 5px;
+  flex: 1 0 auto;
+}
+
+h1 {
+  text-align: center;
+}
+
+/*Home page and Date*/
+input[type="date"] {
+  width: 120px; /* adjust width as you like */
+  height: 30px; /* adjust height */
+  font-size: 14px; /* smaller font size */
+}
+/*Home page and Date*/
+
+/*Home page and Feature*/
+.feature-icon {
+  /*impact on squares*/
+  width: 4rem;
+  height: 4rem;
+  border-radius: 0.75rem;
+}
+/*Home page and Feature End*/
+
+/*Home page and Carousel*/
+.custom-carousel-img {
+  max-height: 800px; /* Shrinks the overall slide */
+  object-fit: cover; /* Keeps the image from stretching */
+  width: 100%;
+}
+
+.custom-caption {
+  font-size: 0.9rem; /* Smaller text */
+  bottom: 10px; /* Move caption closer to bottom */
+}
+.hkn {
+  color: gold;
+}
+
+/*Home page and Carousel End*/
+/*about Page*/
+.apd {
+  display: flex;
+  justify-content: center; /* Center cards as a group */
+  gap: 1rem; /* Space between cards (optional) */
+  flex-wrap: wrap; /* Allow wrapping on small screens */
+  padding: 2rem;
+}
+
+/*About page end*/
+
+/*Contact page and form*/
+
+form {
+  margin-top: 50px;
+}
+
+.feedback-input {
+  /*Class in Form Contact Page*/
+  color: black;
+  /* color: white; /*Original*/
+  font-weight: 500;
+  font-size: 18px;
+  border-radius: 5px;
+  line-height: 22px;
+  background-color: transparent;
+  border: 2px solid #3586ff;
+  transition: all 0.3s;
+  padding: 13px;
+  margin-bottom: 15px;
+  width: 100%;
+  box-sizing: border-box;
+  outline: 0;
+}
+
+.feedback-input:focus {
+  /*Class in Form Contact Page*/
+  border: 2px solid #3586ff;
+}
+
+textarea {
+  height: 150px;
+  line-height: 150%;
+  resize: vertical;
+}
+
+.contact {
+  width: 100%;
+  background: #3586ff;
+  border-radius: 5px;
+  border: 0;
+  cursor: pointer;
+  color: white;
+  font-size: 24px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  transition: all 0.3s;
+  margin-top: -4px;
+  font-weight: 700;
+}
+#contact {
+  background: #3586ff;
+}
+.contact {
+  height: auto;
+  width: auto;
+  background-color: aliceblue;
+}
+
+/*Contact page and form End*/
+
+/* Cal Page*/
+.cal1 {
+  margin-bottom: 20px;
+}
+
+/* Container for side-by-side layout */
+.container {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  margin: 0 auto;
+  border-spacing: 20px; /* 👈 Adds horizontal (and vertical) space between table-cells */
+}
+/* Shared styles for both blocks */
+.paper,
+.calculator-wraper {
+  display: table-cell;
+  vertical-align: middle; /* Vertically center content inside each */
+  padding: 20px;
+  box-sizing: border-box;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+
+  background-color: gold; /* light blue-ish background */
+
+  width: 50%;
+}
+
+/* Paper specific (textarea block) */
+.paper textarea {
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  resize: none;
+  padding: 10px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+/* Calculator specific (form block) */
+.calc-block {
+  margin-bottom: 15px;
+}
+
+input,
+select,
+button {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+/* Cal Page*/
+
+/* Mortgage Page begin*/
+/* page beginning*/
+.mo1 {
+  margin-bottom: 20px;
+}
+/*end */
+.mortgage-wrapper {
+  display: inline-block;
+  vertical-align: middle; /* Vertically center content inside each */
+  padding: 10px;
+  box-sizing: border-box;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+
+  background-color: gold; /* light blue-ish background */
+  margin-bottom: 5px;
+  width: 28%;
+}
+
+.calc-block label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+#lmg11 {
+  color: green;
+}
+
+/* Mortgage Page End*/
+/*Tax Page*/
+.apt {
+  display: flex;
+  justify-content: center; /* Center cards as a group */
+  gap: 1rem; /* Space between cards (optional) */
+  flex-wrap: wrap; /* Allow wrapping on small screens */
+  /*padding: 2rem;*/
+  padding: 2px 2rem 1rem; /* top: 2rem, sides: 2rem, bottom: 1rem */
+  /* height: 50vh; /* Container height */
+  /*overflow-y: visible;*/
+}
+.cvla {
+  font-size: 20px; /* Adjust text size */
+
+  /* font-weight: bold;*/ /* Make the text bold */
+  /* margin-top: 2px; */ /*  Adds space between the heading and the container px;*/
+
+  text-align: left;
+  margin-left: 80px;
+}
+.cvlb {
+  font-size: 20px; /* Adjust text size */
+  /* font-weight: bold; /* Make the text bold */
+  /* margin-top: 2px; /*  Adds space between the heading and the container px;*/
+
+  text-align: left;
+  margin-left: 73px;
+}
+
+/*Tax page end*/
+/*Log in form*/
+/* ============================================================
+   GLOBAL INPUT STYLING
+   ============================================================ */
+
+/* Ensure all inputs (username, password) have equal height and shape */
+.form-control {
+  height: 48px; /* consistent height */
+  border-radius: 50px !important; /* smooth, pill-like edges */
+  border: 1px solid #000; /* dark border to match form theme */
+  box-shadow: none; /* removes Bootstrap inner shadow */
+}
+
+/* ============================================================
+   CUSTOM PASSWORD FIELD STYLING
+   ============================================================ */
+
+/* Wrapper that combines input + eye button into one rounded shape */
+.custom-input-group {
+  display: flex; /* keeps items on one line */
+  align-items: center; /* vertically centers elements */
+  border: 1px solid #000; /* outer border */
+  border-radius: 50px; /* pill edges */
+  overflow: hidden; /* prevents internal edge overlap */
+  background-color: #fff; /* clean background */
+}
+
+/* Password input inside the wrapper */
+.custom-input-group .form-control {
+  border: none !important; /* remove internal borders */
+  border-radius: 0; /* prevent double-rounded edges */
+  height: 48px; /* same height as username */
+  flex: 1; /* take up all available width */
+}
+
+/* Eye icon toggle button */
+.custom-input-group .toggle-btn {
+  background: #fff; /* matches input background */
+  border: none; /* no extra borders */
+  height: 48px;
+  width: 48px; /* square for perfect icon centering */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer; /* shows pointer cursor */
+  border-left: 1px solid #ccc; /* subtle divider between input and icon */
+  transition: background-color 0.2s ease-in-out;
+}
+/* Make the Bootstrap icon see pw sharp and properly sized */
+.custom-input-group .toggle-btn i {
+  font-size: 1.25rem; /* Adjust size to match input height */
+  color: #555; /* Optional: set icon color */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transform: translateZ(0); /* Helps with clarity on some screens */
+}
+/* Hover/focus visual feedback for button */
+.custom-input-group .toggle-btn:hover {
+  background-color: #f2f2f2;
+}
+
+/* ============================================================
+   CARD & BUTTON STYLING
+   ============================================================ */
+
+/* Rounded card with light shadow */
+.card {
+  border-radius: 20px;
+}
+
+/* Customize the login button */
+.btn-success {
+  background-color: #198754; /* standard Bootstrap green */
+  border: none;
+  height: 48px;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+/* Button hover state */
+.btn-success:hover {
+  background-color: #157347;
+}
+
+/*Login form end*/
+
+/*Link Page Check box*/
+#cbt {
+  display: none;
+  color: green;
+  margin-top: 10px;
+}
+/*Add tracking visitor table*/
+/* visitor-stats.css */
+
+.visitor-stats-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.visitor-stats-table th,
+.visitor-stats-table td {
+  border: 1px solid #aaa;
+  padding: 8px;
+  text-align: left;
+}
+
+.visitor-stats-table th {
+  background-color: #eee;
+}
+
+.visitor-stats-container {
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 15px;
+  background-color: #fafafa;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.visitor-stats-header {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.visitor-stats-subheader {
+  font-size: 18px;
+  margin-bottom: 20px;
+  color: #444;
+}
+
+/*End tracking visitor table*/
+
+/**/
+
+/**/

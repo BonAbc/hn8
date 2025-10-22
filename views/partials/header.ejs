@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="CPA Services Tax Accounting" />
+    <meta name="keywords" content="CPA, Hieu CPA, Hieu Nguyen CPA" />
+    <meta name="robots" content="index, follow" />
+    <!--<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">Original-->
+    <!--Copy link from bootstrap below-->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <!--add for login form can see password-->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.2/css/all.css"
+    />
+    <link rel="stylesheet" href="/styles/layout.css" />
+    <link rel="stylesheet" href="/styles/content.css" />
+    <!--styles folder: static files-->
+    <title>Hieu Nguyen, CPA EA, SAP</title>
+  </head>
+  <body>
+    <header>
+      <!--Copy new one -->
+      <nav class="navbar navbar-expand-lg custom-header">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="/"
+            ><img
+              src="/images/cloudsun.svg"
+              height="50px"
+              width="70px"
+              style="background-color: yellow"
+              alt="Picture"
+            />
+            Hieu Nguyen
+          </a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <!--  <a class="nav-link active" aria-current="page" href="/">Home</a>Original: if active hover not change: layout.css: Line 27-->
+                <a class="nav-link" aria-current="page" href="/">Home</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/anotherlink">Payroll</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/link">Accounting</a>
+              </li>
+              <li class="nav-item">
+                <!-- <a class="nav-link disabled" aria-disabled="true">Disabled</a>-->
+                <a class="nav-link" href="/otherlink">Tax</a>
+                <!--href="/anotherlink": not js. Just A tag nad href-->
+              </li>
+
+              <!--Dropdown-->
+              <li class="nav-item dropdown">
+                <a
+                  class="nav-link dropdown-toggle"
+                  href="#"
+                  role="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  List
+                </a>
+                <ul class="dropdown-menu">
+                  <li>
+                    <a class="dropdown-item" href="/calculate">Calculator</a>
+                  </li>
+
+                  <li>
+                    <a class="dropdown-item" href="/mortgage"
+                      >Mortgage Calculator/Tính tiền mua nhà</a
+                    >
+                  </li>
+
+                  <li><hr class="dropdown-divider" /></li>
+                  <li>
+                    <a class="dropdown-item" href="/tax">Tax Rate Table</a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="/hana">SAP Accounting</a>
+                  </li>
+                  <li><hr class="dropdown-divider" /></li>
+                  <li>
+                    <a class="dropdown-item" href="/hnpage">Trang HN</a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="/logout">Logout</a>
+                  </li>
+                </ul>
+              </li>
+
+              <!--Dropdown end-->
+              <li class="nav-item">
+                <a class="nav-link" href="/about">About</a>
+                <!--href="/about": refer to .js. It is a route-->
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/contact">Contact</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/login">Login</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#"></a>
+                <!--   <a class="nav-link" href="/chapw"></a>-->
+              </li>
+            </ul>
+            <form class="d-flex" role="search">
+              <input
+                class="form-control me-2"
+                type="search"
+                placeholder="Search"
+                aria-label="Search"
+                disabled
+              />
+              <!--  <button class="btn btn-outline-success" type="submit">Search</button>-->
+              <button type="submit" class="btn btn-success">Search</button>
+            </form>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!--<main class="container"> main should move to main page-->
+  </body>
+</html>
