@@ -414,27 +414,27 @@ app.get("/track-visitor", async (req, res) => {
 
     console.log("Tracking visitor IP:", ipAddress);
 
-    // Try to update visitor's visited_at timestamp
+    // 1. Update visitor's visited_at if exists
     const updateVisitor = await db.query(
       "UPDATE visitors SET visited_at = NOW() WHERE ip_address = $1",
       [ipAddress]
     );
 
+    // 2. Insert visitor if not found
     if (updateVisitor.rowCount === 0) {
-      // If visitor not found, insert new record
       await db.query(
         "INSERT INTO visitors (ip_address, visited_at) VALUES ($1, NOW())",
         [ipAddress]
       );
     }
 
-    // Always increment total visit count
-    const updateResult = await db.query(
+    // 3. Always increment total visits count in visits table
+    const updateVisits = await db.query(
       "UPDATE visits SET total_count = total_count + 1, last_updated = NOW() WHERE id = 1"
     );
 
-    if (updateResult.rowCount === 0) {
-      // If no visits row yet, create it
+    // 4. Insert visits row if none exists
+    if (updateVisits.rowCount === 0) {
       await db.query(
         "INSERT INTO visits (id, total_count, last_updated) VALUES (1, 1, NOW())"
       );
@@ -447,7 +447,6 @@ app.get("/track-visitor", async (req, res) => {
   }
 });
 
-// ----------------------------
 // Admin-only Visitor Stats Page
 // ----------------------------
 app.get("/hnpage", ensureAdmin, async (req, res) => {
