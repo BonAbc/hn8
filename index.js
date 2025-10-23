@@ -18,7 +18,19 @@ import connectPg from "connect-pg-simple";
 dotenv.config();
 
 const app = express();
-
+// ----------------------------
+// HTTPS Redirect Middleware
+// ----------------------------
+app.use((req, res, next) => {
+  // Only redirect in production
+  if (
+    process.env.NODE_ENV === "production" &&
+    req.headers["x-forwarded-proto"] !== "https"
+  ) {
+    return res.redirect(`https://${req.headers.host}${req.url}`);
+  }
+  next();
+});
 // ----------------------------
 // Compression & Security
 // ----------------------------
