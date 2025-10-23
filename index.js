@@ -77,21 +77,6 @@ app.use(
   })
 );
 
-//app.use(
-//session({
-//  store: new PgSession({ pool: db, tableName: "session" }),
-//  secret: process.env.SESSION_SECRET || "fallbacksecret",
-//  resave: false,
-//   saveUninitialized: false,
-// cookie: {
-//    secure: process.env.NODE_ENV === "production",
-//      sameSite: "lax",
-//   httpOnly: true,
-//     maxAge: 1000 * 60 * 30, // 30 minutes
-// },
-//  })
-//);
-
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
@@ -553,14 +538,6 @@ app.get("/hnpage", ensureAdmin, async (req, res) => {
 app.use((err, req, res, next) => {
   console.error("❌ Uncaught error:", err);
   res.status(500).send("Server error");
-});
-
-// ----------------------------
-// Start Server
-// ----------------------------
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
 });
 
 // end adding tracking
