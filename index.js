@@ -139,23 +139,6 @@ function ensureAuthenticated(req, res, next) {
   res.redirect("/login");
 }
 
-function ensureAdmin(req, res, next) {
-  if (
-    req.isAuthenticated &&
-    req.isAuthenticated() &&
-    adminEmails.includes(req.user.email)
-  ) {
-    return next();
-  }
-
-  return res.status(403).render("HN.ejs", {
-    message: "Thank you for visiting Hieu Nguyen Page.",
-    defaultDate: getToday(),
-  });
-}
-// ----------------------------
-// Routes (Home, About, Contact, Links, Calculator, Mortgage, Hana)
-// ----------------------------
 app.get("/", (req, res) =>
   res.render("index.ejs", { defaultDate: getToday() })
 );
@@ -202,6 +185,12 @@ app.get("/mortgage", (req, res) =>
 );
 app.get("/hana", (req, res) =>
   res.render("hana.ejs", { defaultDate: getToday() })
+);
+app.get("/hnpage", (req, res) =>
+  res.render("HN.ejs", {
+    defaultDate: getToday(),
+    message: "Thank you for visiting HN Page",
+  })
 );
 
 // ----------------------------
@@ -402,140 +391,6 @@ app.post("/chapw", async (req, res) => {
   }
 });
 
-app.set("trust proxy", true); // needed to capture real IP behind proxies
-
-// ----------------------------
-// Visitor Tracking Route
-// ----------------------------
-app.get("/hnpage", async (req, res) => {
-  try {
-    // ----------------------------
-    // 1️⃣ Track Visitor
-    // ----------------------------
-    const ipAddress =
-      req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
-      req.ip ||
-      req.connection.remoteAddress;
-
-    console.log("📍 Tracking visitor IP:", ipAddress);
-
-    // Update visitor record
-    const updateVisitor = await db.query(
-      "UPDATE visitors SET visited_at = NOW() WHERE ip_address = $1",
-      [ipAddress]
-    );
-
-    // Insert if not found
-    if (updateVisitor.rowCount === 0) {
-      await db.query(
-        "INSERT INTO visitors (ip_address, visited_at) VALUES ($1, NOW())",
-        [ipAddress]
-      );
-    }
-
-    // Update visits count
-    const updateVisits = await db.query(
-      "UPDATE visits SET total_count = total_count + 1, last_updated = NOW() WHERE id = 1"
-    );
-
-    // Insert visits record if missing
-    if (updateVisits.rowCount === 0) {
-      await db.query(
-        "INSERT INTO visits (id, total_count, last_updated) VALUES (1, 1, NOW())"
-      );
-    }
-
-    // ----------------------------
-    // 2️⃣ Check if Admin
-    // ----------------------------
-    const isAdmin =
-      req.isAuthenticated &&
-      req.isAuthenticated() &&
-      adminEmails.includes(req.user?.email);
-
-    if (!isAdmin) {
-      // Not admin → thank-you page
-      return res.status(403).render("HN.ejs", {
-        message: "Thank you for visiting Hieu Nguyen Page.",
-        defaultDate: getToday(),
-      });
-    }
-
-    // ----------------------------
-    // 3️⃣ If Admin → Show Report
-    // ----------------------------
-    const limit = 20;
-    const page = parseInt(req.query.page) || 1;
-    const offset = (page - 1) * limit;
-    const { startDate, endDate, search } = req.query;
-
-    let baseQuery = "FROM visitors WHERE 1=1";
-    const params = [];
-    let paramIndex = 1;
-
-    if (startDate) {
-      baseQuery += ` AND visited_at >= $${paramIndex}`;
-      params.push(startDate);
-      paramIndex++;
-    }
-
-    if (endDate) {
-      baseQuery += ` AND visited_at <= $${paramIndex}`;
-      params.push(endDate + " 23:59:59");
-      paramIndex++;
-    }
-
-    if (search) {
-      baseQuery += ` AND ip_address ILIKE $${paramIndex}`;
-      params.push(`%${search}%`);
-      paramIndex++;
-    }
-
-    // Count total visitors
-    const countResult = await db.query(`SELECT COUNT(*) ${baseQuery}`, params);
-    const totalVisitors = parseInt(countResult.rows[0].count, 10);
-    const totalPages = Math.ceil(totalVisitors / limit);
-
-    // Get visitor details
-    const visitorsResult = await db.query(
-      `SELECT ip_address, visited_at ${baseQuery} ORDER BY visited_at DESC LIMIT $${paramIndex} OFFSET $${
-        paramIndex + 1
-      }`,
-      [...params, limit, offset]
-    );
-
-    // Get visit summary
-    const visitsResult = await db.query(
-      "SELECT total_count, last_updated FROM visits WHERE id = 1"
-    );
-    const visitStats = visitsResult.rows[0] || {
-      total_count: 0,
-      last_updated: null,
-    };
-
-    // Render admin report
-    res.render("thongsuot.ejs", {
-      totalCount: visitStats.total_count,
-      lastUpdated: visitStats.last_updated,
-      visitors: visitorsResult.rows,
-      defaultDate: getToday(),
-      startDate: startDate || "",
-      endDate: endDate || "",
-      search: search || "",
-      currentPage: page,
-      totalPages,
-      adminEmail: req.user?.email || "Admin",
-      message: "Visitor statistics loaded successfully.",
-    });
-  } catch (error) {
-    console.error("❌ Error loading /hnpage:", error);
-    res.status(500).send("Internal server error");
-  }
-});
-
-// Visitor Tracking Route end
-
-// ----------------------------
 // Global Error Handler
 // ----------------------------
 app.use((err, req, res, next) => {
@@ -552,5 +407,5 @@ app.listen(port, () => {
 });
 // for local dev only
 //app.listen(port, () => {
-//  console.log(`🚀 Server running on http://localhost:${port}`);
+// console.log(`🚀 Server running on http://localhost:${port}`);
 //});
