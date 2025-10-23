@@ -16,7 +16,7 @@ import compression from "compression";
 import connectPg from "connect-pg-simple";
 
 dotenv.config();
-const __dirname = dirname(fileURLToPath(import.meta.url));
+
 const app = express();
 
 // ----------------------------
@@ -29,6 +29,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 function getToday() {
   return new Date().toISOString().split("T")[0];
@@ -152,14 +154,19 @@ function ensureAuthenticated(req, res, next) {
 }
 
 function ensureAdmin(req, res, next) {
-  if (req.isAuthenticated() && adminEmails.includes(req.user.email))
+  if (
+    req.isAuthenticated &&
+    req.isAuthenticated() &&
+    adminEmails.includes(req.user.email)
+  ) {
     return next();
+  }
+
   return res.status(403).render("HN.ejs", {
     message: "Thank you for visiting Hieu Nguyen Page.",
     defaultDate: getToday(),
   });
 }
-
 // ----------------------------
 // Routes (Home, About, Contact, Links, Calculator, Mortgage, Hana)
 // ----------------------------
@@ -412,89 +419,96 @@ app.post("/chapw", async (req, res) => {
 // ----------------------------
 // Visitor Tracking
 // ----------------------------
+
+app.set("trust proxy", true); // needed to capture real IP behind proxies
+
+// ----------------------------
+// Visitor Tracking Route
+// ----------------------------
 app.get("/track-visitor", async (req, res) => {
   try {
-    // Get visitor IP from headers or connection info
     const ipAddress =
-      req.headers["x-forwarded-for"] || req.connection.remoteAddress || req.ip;
+      req.ip || req.headers["x-forwarded-for"] || req.connection.remoteAddress;
 
-    // Check if visitor exists
+    console.log("Tracking visitor IP:", ipAddress);
+
+    // Check if visitor already exists
     const existingVisitor = await db.query(
       "SELECT * FROM visitors WHERE ip_address = $1",
       [ipAddress]
     );
 
     if (existingVisitor.rows.length === 0) {
-      // New visitor: insert IP and timestamp
+      // Insert new visitor record
       await db.query(
-        "INSERT INTO visitors (ip_address, visited_at) VALUES ($1, NOW()) RETURNING *",
+        "INSERT INTO visitors (ip_address, visited_at) VALUES ($1, NOW())",
         [ipAddress]
       );
-      // Update total count and timestamp in visits table
-      await db.query(
+
+      // Update or insert visit stats
+      const updateResult = await db.query(
         "UPDATE visits SET total_count = total_count + 1, last_updated = NOW() WHERE id = 1"
       );
+
+      if (updateResult.rowCount === 0) {
+        await db.query(
+          "INSERT INTO visits (id, total_count, last_updated) VALUES (1, 1, NOW())"
+        );
+      }
     } else {
-      // Existing visitor: update last visit timestamp
+      // Existing visitor: update timestamp
       await db.query(
         "UPDATE visitors SET visited_at = NOW() WHERE ip_address = $1",
         [ipAddress]
       );
     }
 
-    res.send("Visitor tracked");
+    res.send("Visitor tracked successfully.");
   } catch (error) {
-    console.error("Error tracking visitor:", error);
+    console.error("❌ Error tracking visitor:", error);
     res.status(500).send("Internal server error");
   }
 });
 
-//end new app.get tracked visitor
-
-// Route: Admin-only visitor stats page with pagination, date range filter, and IP search filter
+// ----------------------------
+// Admin-only Visitor Stats Page
+// ----------------------------
 app.get("/hnpage", ensureAdmin, async (req, res) => {
   try {
-    // 1. Pagination setup: how many items per page and which page
-    const limit = 20; // Number of visitors per page
-    const page = parseInt(req.query.page) || 1; // Current page, default to 1
-    const offset = (page - 1) * limit; // Calculate offset for SQL query
+    const limit = 20;
+    const page = parseInt(req.query.page) || 1;
+    const offset = (page - 1) * limit;
 
-    // 2. Read filter query params from URL
     const { startDate, endDate, search } = req.query;
 
-    // 3. Build base SQL query for visitors with dynamic filters
-    // '1=1' is a trick to simplify query building (always true)
     let baseQuery = "FROM visitors WHERE 1=1";
     const params = [];
-    let paramIndex = 1; // Track SQL param index for $1, $2, etc.
+    let paramIndex = 1;
 
-    // 4. Add date range filter if startDate provided
     if (startDate) {
       baseQuery += ` AND visited_at >= $${paramIndex}`;
       params.push(startDate);
       paramIndex++;
     }
 
-    // 5. Add date range filter if endDate provided (include whole day until 23:59:59)
     if (endDate) {
       baseQuery += ` AND visited_at <= $${paramIndex}`;
       params.push(endDate + " 23:59:59");
       paramIndex++;
     }
 
-    // 6. Add IP address search filter if provided (case-insensitive search)
     if (search) {
       baseQuery += ` AND ip_address ILIKE $${paramIndex}`;
       params.push(`%${search}%`);
       paramIndex++;
     }
 
-    // 7. Get total count of filtered visitors for pagination
+    // Count total
     const countResult = await db.query(`SELECT COUNT(*) ${baseQuery}`, params);
     const totalVisitors = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalVisitors / limit);
 
-    // 8. Fetch filtered visitors with pagination (limit + offset)
+    // Fetch visitors
     const visitorsResult = await db.query(
       `SELECT ip_address, visited_at ${baseQuery} ORDER BY visited_at DESC LIMIT $${paramIndex} OFFSET $${
         paramIndex + 1
@@ -502,7 +516,7 @@ app.get("/hnpage", ensureAdmin, async (req, res) => {
       [...params, limit, offset]
     );
 
-    // 9. Fetch total_count and last_updated from visits table (single row)
+    // Fetch overall stats
     const visitsResult = await db.query(
       "SELECT total_count, last_updated FROM visits WHERE id = 1"
     );
@@ -511,30 +525,42 @@ app.get("/hnpage", ensureAdmin, async (req, res) => {
       last_updated: null,
     };
 
-    // 10. Render the visitor stats page, passing data, filters, pagination info, and admin info
     res.render("thongsuot.ejs", {
       totalCount: visitStats.total_count,
       lastUpdated: visitStats.last_updated,
       visitors: visitorsResult.rows,
-      defaultDate: new Date().toISOString().split("T")[0],
+      defaultDate: getToday(),
 
-      // Keep filters for form inputs so user can see active filters
       startDate: startDate || "",
       endDate: endDate || "",
       search: search || "",
 
-      // Pagination details
       currentPage: page,
       totalPages,
-
-      // Admin info and success message
       adminEmail: req.user?.email || "Admin",
       message: "Visitor statistics loaded successfully.",
     });
   } catch (error) {
-    console.error("Error fetching visitor stats:", error);
+    console.error("❌ Error fetching visitor stats:", error);
     res.status(500).send("Internal server error");
   }
+});
+// Visitor Tracking Route end
+
+// ----------------------------
+// Global Error Handler
+// ----------------------------
+app.use((err, req, res, next) => {
+  console.error("❌ Uncaught error:", err);
+  res.status(500).send("Server error");
+});
+
+// ----------------------------
+// Start Server
+// ----------------------------
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
 
 // end adding tracking
