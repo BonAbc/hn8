@@ -1,0 +1,77 @@
+<%- include("partials/header.ejs") %>
+
+<main>
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+
+  <!---->
+  <h1>Contact us</h1>
+
+  <!-- Click-to-call button -->
+  <!--<a href="tel:+1847-208-9053" class="call-button" id="callNowBtn">
+    📞 Call Us: 847-208-9053
+  </a>-->
+
+  <a href="tel:+18472089053" class="call-button">📞 Call Us: 847-208-9053</a>
+
+  <!--<a
+    href="#"
+    onclick="alert('Pretending to call: 123-456-7890'); return false;"
+  >
+    📞 Call Us: 847-208-9053
+  </a>-->
+  <h5>Email us : hn@hieuncpa.com</h5>
+
+  <div class="contact">
+    <form action="/contact" method="post">
+      <input
+        name="name"
+        type="text"
+        class="feedback-input"
+        placeholder="Name"
+      />
+      <input
+        name="phone"
+        type="text"
+        class="feedback-input"
+        placeholder="Phone"
+      />
+      <input
+        name="email"
+        type="text"
+        class="feedback-input"
+        placeholder="Email"
+      />
+      <input
+        name="communication"
+        type="text"
+        class="feedback-input"
+        placeholder="Communication Preference"
+      />
+      <textarea
+        name="text"
+        class="feedback-input"
+        placeholder="Comment"
+      ></textarea>
+      <input id="contact" type="submit" value="SUBMIT" />
+      <!--Refer to CSS , so it is a form, without CSS it does not look right-->
+    </form>
+  </div>
+
+  <!--Why i add header and footer, the form work-->
+
+  <% if (thanks) { %>
+  <h3 id="thanks-message"><%= thanks %></h3>
+  <% } else { %>
+  <h3 id="thanks-message"></h3>
+  <% } %>
+</main>
+<!-- Link external JS -->
+<script src="/js/contact.js"></script>
+<!-- Link external JS end -->
+
+<%- include("partials/footer.ejs") %>
