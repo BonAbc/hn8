@@ -28,9 +28,10 @@ app.set("trust proxy", 1);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
+
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = dirname(__filename);
+app.set("views", path.join(__dirname, "views"));
 
 function getToday() {
   return new Date().toISOString().split("T")[0];
