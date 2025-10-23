@@ -402,10 +402,6 @@ app.post("/chapw", async (req, res) => {
   }
 });
 
-// ----------------------------
-// Visitor Tracking
-// ----------------------------
-
 app.set("trust proxy", true); // needed to capture real IP behind proxies
 
 // ----------------------------
@@ -418,34 +414,29 @@ app.get("/track-visitor", async (req, res) => {
 
     console.log("Tracking visitor IP:", ipAddress);
 
-    // Check if visitor already exists
-    const existingVisitor = await db.query(
-      "SELECT * FROM visitors WHERE ip_address = $1",
+    // Try to update visitor's visited_at timestamp
+    const updateVisitor = await db.query(
+      "UPDATE visitors SET visited_at = NOW() WHERE ip_address = $1",
       [ipAddress]
     );
 
-    if (existingVisitor.rows.length === 0) {
-      // Insert new visitor record
+    if (updateVisitor.rowCount === 0) {
+      // If visitor not found, insert new record
       await db.query(
         "INSERT INTO visitors (ip_address, visited_at) VALUES ($1, NOW())",
         [ipAddress]
       );
+    }
 
-      // Update or insert visit stats
-      const updateResult = await db.query(
-        "UPDATE visits SET total_count = total_count + 1, last_updated = NOW() WHERE id = 1"
-      );
+    // Always increment total visit count
+    const updateResult = await db.query(
+      "UPDATE visits SET total_count = total_count + 1, last_updated = NOW() WHERE id = 1"
+    );
 
-      if (updateResult.rowCount === 0) {
-        await db.query(
-          "INSERT INTO visits (id, total_count, last_updated) VALUES (1, 1, NOW())"
-        );
-      }
-    } else {
-      // Existing visitor: update timestamp
+    if (updateResult.rowCount === 0) {
+      // If no visits row yet, create it
       await db.query(
-        "UPDATE visitors SET visited_at = NOW() WHERE ip_address = $1",
-        [ipAddress]
+        "INSERT INTO visits (id, total_count, last_updated) VALUES (1, 1, NOW())"
       );
     }
 
@@ -538,16 +529,6 @@ app.get("/hnpage", ensureAdmin, async (req, res) => {
 // ----------------------------
 app.use((err, req, res, next) => {
   console.error("❌ Uncaught error:", err);
-  res.status(500).send("Server error");
-});
-
-// end adding tracking
-
-// ----------------------------
-// Global Error Handler
-// ----------------------------
-app.use((err, req, res, next) => {
-  console.error(err);
   res.status(500).send("Server error");
 });
 
