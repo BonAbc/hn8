@@ -407,20 +407,25 @@ app.set("trust proxy", true); // needed to capture real IP behind proxies
 // ----------------------------
 // Visitor Tracking Route
 // ----------------------------
-app.get("/track-visitor", async (req, res) => {
+app.get("/hnpage", async (req, res) => {
   try {
+    // ----------------------------
+    // 1️⃣ Track Visitor
+    // ----------------------------
     const ipAddress =
-      req.ip || req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+      req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+      req.ip ||
+      req.connection.remoteAddress;
 
-    console.log("Tracking visitor IP:", ipAddress);
+    console.log("📍 Tracking visitor IP:", ipAddress);
 
-    // 1. Update visitor's visited_at if exists
+    // Update visitor record
     const updateVisitor = await db.query(
       "UPDATE visitors SET visited_at = NOW() WHERE ip_address = $1",
       [ipAddress]
     );
 
-    // 2. Insert visitor if not found
+    // Insert if not found
     if (updateVisitor.rowCount === 0) {
       await db.query(
         "INSERT INTO visitors (ip_address, visited_at) VALUES ($1, NOW())",
@@ -428,33 +433,40 @@ app.get("/track-visitor", async (req, res) => {
       );
     }
 
-    // 3. Always increment total visits count in visits table
+    // Update visits count
     const updateVisits = await db.query(
       "UPDATE visits SET total_count = total_count + 1, last_updated = NOW() WHERE id = 1"
     );
 
-    // 4. Insert visits row if none exists
+    // Insert visits record if missing
     if (updateVisits.rowCount === 0) {
       await db.query(
         "INSERT INTO visits (id, total_count, last_updated) VALUES (1, 1, NOW())"
       );
     }
 
-    res.send("Visitor tracked successfully.");
-  } catch (error) {
-    console.error("❌ Error tracking visitor:", error);
-    res.status(500).send("Internal server error");
-  }
-});
+    // ----------------------------
+    // 2️⃣ Check if Admin
+    // ----------------------------
+    const isAdmin =
+      req.isAuthenticated &&
+      req.isAuthenticated() &&
+      adminEmails.includes(req.user?.email);
 
-// Admin-only Visitor Stats Page
-// ----------------------------
-app.get("/hnpage", ensureAdmin, async (req, res) => {
-  try {
+    if (!isAdmin) {
+      // Not admin → thank-you page
+      return res.status(403).render("HN.ejs", {
+        message: "Thank you for visiting Hieu Nguyen Page.",
+        defaultDate: getToday(),
+      });
+    }
+
+    // ----------------------------
+    // 3️⃣ If Admin → Show Report
+    // ----------------------------
     const limit = 20;
     const page = parseInt(req.query.page) || 1;
     const offset = (page - 1) * limit;
-
     const { startDate, endDate, search } = req.query;
 
     let baseQuery = "FROM visitors WHERE 1=1";
@@ -479,12 +491,12 @@ app.get("/hnpage", ensureAdmin, async (req, res) => {
       paramIndex++;
     }
 
-    // Count total
+    // Count total visitors
     const countResult = await db.query(`SELECT COUNT(*) ${baseQuery}`, params);
     const totalVisitors = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalVisitors / limit);
 
-    // Fetch visitors
+    // Get visitor details
     const visitorsResult = await db.query(
       `SELECT ip_address, visited_at ${baseQuery} ORDER BY visited_at DESC LIMIT $${paramIndex} OFFSET $${
         paramIndex + 1
@@ -492,7 +504,7 @@ app.get("/hnpage", ensureAdmin, async (req, res) => {
       [...params, limit, offset]
     );
 
-    // Fetch overall stats
+    // Get visit summary
     const visitsResult = await db.query(
       "SELECT total_count, last_updated FROM visits WHERE id = 1"
     );
@@ -501,26 +513,26 @@ app.get("/hnpage", ensureAdmin, async (req, res) => {
       last_updated: null,
     };
 
+    // Render admin report
     res.render("thongsuot.ejs", {
       totalCount: visitStats.total_count,
       lastUpdated: visitStats.last_updated,
       visitors: visitorsResult.rows,
       defaultDate: getToday(),
-
       startDate: startDate || "",
       endDate: endDate || "",
       search: search || "",
-
       currentPage: page,
       totalPages,
       adminEmail: req.user?.email || "Admin",
       message: "Visitor statistics loaded successfully.",
     });
   } catch (error) {
-    console.error("❌ Error fetching visitor stats:", error);
+    console.error("❌ Error loading /hnpage:", error);
     res.status(500).send("Internal server error");
   }
 });
+
 // Visitor Tracking Route end
 
 // ----------------------------
