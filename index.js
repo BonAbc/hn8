@@ -449,8 +449,11 @@ app.post("/chapw", async (req, res) => {
 });
 //add track
 app.set("trust proxy", true); // needed to capture real IP behind proxies
+
 // Visitor Tracking Route
 // ----------------------------
+const { DateTime } = require("luxon");
+
 app.get("/hnpage", async (req, res) => {
   try {
     // ----------------------------
@@ -549,16 +552,18 @@ app.get("/hnpage", async (req, res) => {
     );
 
     // ----------------------------
-    // 4️⃣ Convert timestamps to Chicago time for frontend
+    // Convert visited_at to Chicago time
     // ----------------------------
-    const options = { timeZone: "America/Chicago", hour12: false };
-
-    const visitors = visitorsResult.rows.map((v) => ({
+    const visitorsChicago = visitorsResult.rows.map((v) => ({
       ...v,
-      visited_at: new Date(v.visited_at).toLocaleString("en-US", options),
+      visited_at: DateTime.fromISO(v.visited_at, { zone: "UTC" })
+        .setZone("America/Chicago")
+        .toFormat("HH:mm:ss"), // or "yyyy-MM-dd HH:mm:ss" if you want date too
     }));
 
+    // ----------------------------
     // Get visit summary
+    // ----------------------------
     const visitsResult = await db.query(
       "SELECT total_count, last_updated FROM visits WHERE id = 1"
     );
@@ -567,20 +572,23 @@ app.get("/hnpage", async (req, res) => {
       last_updated: null,
     };
 
+    // Convert last_updated to Chicago time
     const visitStats = {
       total_count: visitStatsRaw.total_count,
       last_updated: visitStatsRaw.last_updated
-        ? new Date(visitStatsRaw.last_updated).toLocaleString("en-US", options)
+        ? DateTime.fromJSDate(visitStatsRaw.last_updated)
+            .setZone("America/Chicago")
+            .toFormat("yyyy-MM-dd HH:mm:ss")
         : null,
     };
 
     // ----------------------------
-    // 5️⃣ Render admin report
+    // Render report
     // ----------------------------
     res.render("fio.ejs", {
       totalCount: visitStats.total_count,
       lastUpdated: visitStats.last_updated,
-      visitors,
+      visitors: visitorsChicago,
       defaultDate: getToday(),
       startDate: startDate || "",
       endDate: endDate || "",
@@ -595,8 +603,6 @@ app.get("/hnpage", async (req, res) => {
     res.status(500).send("Internal server error");
   }
 });
-
-// Visitor Tracking Route end
 
 //end track
 
