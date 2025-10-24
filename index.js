@@ -174,6 +174,18 @@ function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) return next();
   res.redirect("/login");
 }
+//end ensure Authenticated
+// function ensureAdmin
+function ensureAdmin(req, res, next) {
+  if (req.isAuthenticated() && adminEmails.includes(req.user.email))
+    return next();
+  return res.status(403).render("HN.ejs", {
+    message: "Thank you for visiting Hieu Nguyen Page.",
+    defaultDate: getToday(),
+  });
+}
+
+// end function ensureAdmin
 
 app.get("/", (req, res) =>
   res.render("index.ejs", { defaultDate: getToday() })
@@ -222,12 +234,13 @@ app.get("/mortgage", (req, res) =>
 app.get("/hana", (req, res) =>
   res.render("hana.ejs", { defaultDate: getToday() })
 );
-app.get("/hnpage", (req, res) =>
-  res.render("HN.ejs", {
-    defaultDate: getToday(),
-    message: "Thank you for visiting HN Page",
-  })
-);
+//Add if remove of track, remove ensureAdmin
+//app.get("/hnpage", (req, res) =>
+// res.render("HN.ejs", {
+//   defaultDate: getToday(),
+//  message: "Thank you for visiting HN Page",
+//  })
+//);
 
 // ----------------------------
 // Admin & Auth Routes
@@ -426,6 +439,105 @@ app.post("/chapw", async (req, res) => {
     });
   }
 });
+//add track
+app.get("/track-visitor", async (req, res) => {
+  try {
+    const ipAddress =
+      req.headers["x-forwarded-for"] || req.connection.remoteAddress || req.ip;
+    const existing = await db.query(
+      "SELECT * FROM visitors WHERE ip_address=$1",
+      [ipAddress]
+    );
+    if (existing.rows.length === 0) {
+      await db.query(
+        "INSERT INTO visitors (ip_address, visited_at) VALUES ($1, NOW())",
+        [ipAddress]
+      );
+      await db.query(
+        "UPDATE visits SET total_count=total_count+1,last_updated=NOW() WHERE id=1"
+      );
+    } else {
+      await db.query(
+        "UPDATE visitors SET visited_at=NOW() WHERE ip_address=$1",
+        [ipAddress]
+      );
+    }
+    res.send("Visitor tracked");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Internal server error");
+  }
+});
+
+// ----------------------------
+// Admin Visitor Page
+// ----------------------------
+app.get("/hnpage", ensureAdmin, async (req, res) => {
+  try {
+    const limit = 20;
+    const page = parseInt(req.query.page) || 1;
+    const offset = (page - 1) * limit;
+    const { startDate, endDate, search } = req.query;
+
+    let baseQuery = "FROM visitors WHERE 1=1";
+    const params = [];
+    let idx = 1;
+
+    if (startDate) {
+      baseQuery += ` AND visited_at >= $${idx}`;
+      params.push(startDate);
+      idx++;
+    }
+    if (endDate) {
+      baseQuery += ` AND visited_at <= $${idx}`;
+      params.push(endDate + " 23:59:59");
+      idx++;
+    }
+    if (search) {
+      baseQuery += ` AND ip_address ILIKE $${idx}`;
+      params.push(`%${search}%`);
+      idx++;
+    }
+
+    const countResult = await db.query(`SELECT COUNT(*) ${baseQuery}`, params);
+    const totalVisitors = parseInt(countResult.rows[0].count, 10);
+    const totalPages = Math.ceil(totalVisitors / limit);
+
+    const visitorsResult = await db.query(
+      `SELECT ip_address, visited_at ${baseQuery} ORDER BY visited_at DESC LIMIT $${idx} OFFSET $${
+        idx + 1
+      }`,
+      [...params, limit, offset]
+    );
+
+    const visitsResult = await db.query(
+      "SELECT total_count, last_updated FROM visits WHERE id=1"
+    );
+    const visitStats = visitsResult.rows[0] || {
+      total_count: 0,
+      last_updated: null,
+    };
+
+    res.render("fio.ejs", {
+      totalCount: visitStats.total_count,
+      lastUpdated: visitStats.last_updated,
+      visitors: visitorsResult.rows,
+      defaultDate: getToday(),
+      startDate: startDate || "",
+      endDate: endDate || "",
+      search: search || "",
+      currentPage: page,
+      totalPages,
+      adminEmail: req.user?.email || "Admin",
+      message: "Visitor statistics loaded successfully.",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Internal server error");
+  }
+});
+
+//end track
 
 // Global Error Handler
 // ----------------------------

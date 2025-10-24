@@ -191,6 +191,7 @@ html {
 }
 
 /* Mobile Devices (≤ 768px) */
+/* 📱 Mobile Devices (≤ 768px) */
 @media (max-width: 768px) {
   body {
     font-size: 15px;
@@ -208,18 +209,20 @@ html {
   .container {
     width: 95%;
   }
+
+  .mortgage-wrapper {
+    flex: 1 1 100%; /* stack vertically on small screens */
+    width: 100%;
+  }
 }
 
-/* Very Small Devices (≤ 480px) */
+/* 📱 Very Small Devices (≤ 480px) */
 @media (max-width: 480px) {
   body {
     font-size: 14px;
   }
 
-  .sidebar {
-    padding: 10px;
-  }
-
+  .sidebar,
   .content {
     padding: 10px;
   }
@@ -228,5 +231,6 @@ html {
     font-size: 14px;
   }
 }
+
 /**/
 /* Media Queries */
