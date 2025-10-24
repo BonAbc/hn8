@@ -452,7 +452,6 @@ app.post("/chapw", async (req, res) => {
 app.set("trust proxy", true); // needed to capture real IP behind proxies
 
 // Visitor Tracking Route
-const { DateTime } = require("luxon");
 
 app.get("/hnpage", async (req, res) => {
   try {
