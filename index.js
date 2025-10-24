@@ -14,6 +14,7 @@ import flash from "connect-flash";
 import helmet from "helmet";
 import compression from "compression";
 import connectPg from "connect-pg-simple";
+import { DateTime } from "luxon";
 
 dotenv.config();
 
@@ -451,7 +452,6 @@ app.post("/chapw", async (req, res) => {
 app.set("trust proxy", true); // needed to capture real IP behind proxies
 
 // Visitor Tracking Route
-// ----------------------------
 const { DateTime } = require("luxon");
 
 app.get("/hnpage", async (req, res) => {
@@ -466,13 +466,11 @@ app.get("/hnpage", async (req, res) => {
 
     console.log("📍 Tracking visitor IP:", ipAddress);
 
-    // Update visitor record
     const updateVisitor = await db.query(
       "UPDATE visitors SET visited_at = NOW() WHERE ip_address = $1",
       [ipAddress]
     );
 
-    // Insert if not found
     if (updateVisitor.rowCount === 0) {
       await db.query(
         "INSERT INTO visitors (ip_address, visited_at) VALUES ($1, NOW())",
@@ -480,12 +478,10 @@ app.get("/hnpage", async (req, res) => {
       );
     }
 
-    // Update visits count
     const updateVisits = await db.query(
       "UPDATE visits SET total_count = total_count + 1, last_updated = NOW() WHERE id = 1"
     );
 
-    // Insert visits record if missing
     if (updateVisits.rowCount === 0) {
       await db.query(
         "INSERT INTO visits (id, total_count, last_updated) VALUES (1, 1, NOW())"
@@ -501,7 +497,6 @@ app.get("/hnpage", async (req, res) => {
       adminEmails.includes(req.user?.email);
 
     if (!isAdmin) {
-      // Not admin → thank-you page
       return res.status(403).render("HN.ejs", {
         message: "Thank you for visiting Hieu Nguyen Page.",
         defaultDate: getToday(),
@@ -509,7 +504,7 @@ app.get("/hnpage", async (req, res) => {
     }
 
     // ----------------------------
-    // 3️⃣ If Admin → Show Report
+    // 3️⃣ Admin report
     // ----------------------------
     const limit = 20;
     const page = parseInt(req.query.page) || 1;
@@ -538,12 +533,10 @@ app.get("/hnpage", async (req, res) => {
       paramIndex++;
     }
 
-    // Count total visitors
     const countResult = await db.query(`SELECT COUNT(*) ${baseQuery}`, params);
     const totalVisitors = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalVisitors / limit);
 
-    // Get visitor details
     const visitorsResult = await db.query(
       `SELECT ip_address, visited_at ${baseQuery} ORDER BY visited_at DESC LIMIT $${paramIndex} OFFSET $${
         paramIndex + 1
@@ -552,27 +545,29 @@ app.get("/hnpage", async (req, res) => {
     );
 
     // ----------------------------
-    // Convert visited_at to Chicago time
+    // Convert visited_at to Chicago time (safe)
     // ----------------------------
     const visitorsChicago = visitorsResult.rows.map((v) => ({
       ...v,
-      visited_at: DateTime.fromISO(v.visited_at, { zone: "UTC" })
-        .setZone("America/Chicago")
-        .toFormat("HH:mm:ss"), // or "yyyy-MM-dd HH:mm:ss" if you want date too
+      visited_at: v.visited_at
+        ? DateTime.fromISO(v.visited_at, { zone: "UTC" })
+            .setZone("America/Chicago")
+            .toFormat("HH:mm:ss")
+        : null,
     }));
 
     // ----------------------------
-    // Get visit summary
+    // Visit summary
     // ----------------------------
     const visitsResult = await db.query(
       "SELECT total_count, last_updated FROM visits WHERE id = 1"
     );
+
     const visitStatsRaw = visitsResult.rows[0] || {
       total_count: 0,
       last_updated: null,
     };
 
-    // Convert last_updated to Chicago time
     const visitStats = {
       total_count: visitStatsRaw.total_count,
       last_updated: visitStatsRaw.last_updated
