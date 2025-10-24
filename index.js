@@ -234,7 +234,7 @@ app.get("/mortgage", (req, res) =>
 app.get("/hana", (req, res) =>
   res.render("hana.ejs", { defaultDate: getToday() })
 );
-//Add if remove of track, remove ensureAdmin
+//Add below to  remove of track, and remove ensureAdmin and remove fio.ejs : has no route
 //app.get("/hnpage", (req, res) =>
 // res.render("HN.ejs", {
 //   defaultDate: getToday(),
