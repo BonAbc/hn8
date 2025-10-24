@@ -558,7 +558,7 @@ app.get("/hnpage", async (req, res) => {
     };
 
     // Render admin report
-    res.render("fio.ejs.ejs", {
+    res.render("fio.ejs", {
       totalCount: visitStats.total_count,
       lastUpdated: visitStats.last_updated,
       visitors: visitorsResult.rows,
