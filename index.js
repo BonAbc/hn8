@@ -550,15 +550,15 @@ app.get("/hnpage", async (req, res) => {
     // ----------------------------
     // Convert visited_at to Chicago time (safe)
     // ----------------------------
+
     const visitorsChicago = visitorsResult.rows.map((v) => ({
       ...v,
       visited_at: v.visited_at
-        ? DateTime.fromISO(v.visited_at, { zone: "UTC" })
-            .setZone("America/Chicago")
-            .toFormat("HH:mm:ss")
+        ? DateTime.fromJSDate(v.visited_at, {
+            zone: "America/Chicago",
+          }).toFormat("HH:mm:ss")
         : null,
     }));
-
     // ----------------------------
     // Visit summary
     // ----------------------------
