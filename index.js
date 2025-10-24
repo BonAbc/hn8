@@ -548,20 +548,39 @@ app.get("/hnpage", async (req, res) => {
       [...params, limit, offset]
     );
 
+    // ----------------------------
+    // 4️⃣ Convert timestamps to Chicago time for frontend
+    // ----------------------------
+    const options = { timeZone: "America/Chicago", hour12: false };
+
+    const visitors = visitorsResult.rows.map((v) => ({
+      ...v,
+      visited_at: new Date(v.visited_at).toLocaleString("en-US", options),
+    }));
+
     // Get visit summary
     const visitsResult = await db.query(
       "SELECT total_count, last_updated FROM visits WHERE id = 1"
     );
-    const visitStats = visitsResult.rows[0] || {
+    const visitStatsRaw = visitsResult.rows[0] || {
       total_count: 0,
       last_updated: null,
     };
 
-    // Render admin report
+    const visitStats = {
+      total_count: visitStatsRaw.total_count,
+      last_updated: visitStatsRaw.last_updated
+        ? new Date(visitStatsRaw.last_updated).toLocaleString("en-US", options)
+        : null,
+    };
+
+    // ----------------------------
+    // 5️⃣ Render admin report
+    // ----------------------------
     res.render("fio.ejs", {
       totalCount: visitStats.total_count,
       lastUpdated: visitStats.last_updated,
-      visitors: visitorsResult.rows,
+      visitors,
       defaultDate: getToday(),
       startDate: startDate || "",
       endDate: endDate || "",
