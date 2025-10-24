@@ -45,6 +45,8 @@ app.set("view engine", "ejs");
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 app.set("views", path.join(__dirname, "views"));
+const nowChicago = DateTime.now().setZone("America/Chicago").toISO();
+console.log(nowChicago);
 
 //change to https
 // Canonical URL Middleware (Production Only)
