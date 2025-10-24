@@ -45,6 +45,30 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 app.set("views", path.join(__dirname, "views"));
 
+//change to https
+// Canonical URL Middleware (Production Only)
+// ----------------------------
+function getCanonicalUrl(req) {
+  const baseUrl = process.env.BASE_URL || "https://hieuncpa.com";
+  return `${baseUrl}${req.originalUrl}`;
+}
+
+if (process.env.NODE_ENV === "production") {
+  app.use((req, res, next) => {
+    res.locals.canonical = getCanonicalUrl(req);
+    next();
+  });
+} else {
+  // Optional: helpful for local testing
+  app.use((req, res, next) => {
+    res.locals.canonical = `http://localhost:${process.env.PORT || 3000}${
+      req.originalUrl
+    }`;
+    next();
+  });
+}
+
+//end change to htttps
 function getToday() {
   return new Date().toISOString().split("T")[0];
 }
