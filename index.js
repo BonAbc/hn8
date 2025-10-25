@@ -1,10 +1,7 @@
 import express from "express";
 import bodyParser from "body-parser";
-import pkg from "pg";
-import bcrypt from "bcrypt";
 import session from "express-session";
 import passport from "passport";
-import { Strategy } from "passport-local";
 import dotenv from "dotenv";
 import path from "path";
 import { dirname } from "path";
@@ -13,27 +10,12 @@ import rateLimit from "express-rate-limit";
 import flash from "connect-flash";
 import helmet from "helmet";
 import compression from "compression";
-import connectPg from "connect-pg-simple";
-
-// ✅ Luxon import goes here
-import { DateTime } from "luxon";
 
 dotenv.config();
-
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
-// ----------------------------
-// HTTPS Redirect Middleware
-// ----------------------------
-app.use((req, res, next) => {
-  // Only redirect in production
-  if (
-    process.env.NODE_ENV === "production" &&
-    req.headers["x-forwarded-proto"] !== "https"
-  ) {
-    return res.redirect(`https://${req.headers.host}${req.url}`);
-  }
-  next();
-});
+const port = process.env.PORT || 3000;
+
 // ----------------------------
 // Compression & Security
 // ----------------------------
@@ -43,78 +25,35 @@ app.set("trust proxy", 1);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 app.set("view engine", "ejs");
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 app.set("views", path.join(__dirname, "views"));
-const nowChicago = DateTime.now().setZone("America/Chicago").toISO();
-console.log(nowChicago);
 
-//change to https
-// Canonical URL Middleware (Production Only)
-// ----------------------------
-function getCanonicalUrl(req) {
-  const baseUrl = process.env.BASE_URL || "https://hieuncpa.com";
-  return `${baseUrl}${req.originalUrl}`;
-}
-
-if (process.env.NODE_ENV === "production") {
-  app.use((req, res, next) => {
-    res.locals.canonical = getCanonicalUrl(req);
-    next();
-  });
-} else {
-  // Optional: helpful for local testing
-  app.use((req, res, next) => {
-    res.locals.canonical = `http://localhost:${process.env.PORT || 3000}${
-      req.originalUrl
-    }`;
-    next();
-  });
-}
-
-//end change to htttps
 function getToday() {
   return new Date().toISOString().split("T")[0];
 }
 
 // ----------------------------
-// PostgreSQL Connection
+// TEMP: No DB Mode
 // ----------------------------
-const { Pool } = pkg;
-const port = process.env.PORT || 3000;
-
-const db = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: parseInt(process.env.PGPORT, 10),
-  ssl: { rejectUnauthorized: false },
-});
-db.connect()
-  .then(() => console.log("✅ Postgres connected"))
-  .catch((err) => console.error("❌ Postgres connection error:", err));
+const db = {
+  query: async () => {
+    console.warn("⚠️ DB is disabled.");
+    return { rows: [], rowCount: 0 };
+  },
+};
 
 // ----------------------------
-// Session Handling
+// TEMP: In-Memory Session for Dev
 // ----------------------------
-const PgSession = connectPg(session);
 app.use(
   session({
-    store: new PgSession({
-      pool: db,
-      tableName: "session",
-      createTableIfMissing: true, // 👈 This line auto-creates the table if it's missing
-    }),
     secret: process.env.SESSION_SECRET || "fallbacksecret",
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: false,
       sameSite: "lax",
       httpOnly: true,
-      maxAge: 1000 * 60 * 30, // 30 minutes
+      maxAge: 1000 * 60 * 30,
     },
   })
 );
@@ -128,15 +67,8 @@ app.use((req, res, next) => {
 });
 
 // ----------------------------
-// Security & Rate Limiting
+// Helmet & Rate Limiting
 // ----------------------------
-const authLimiter = rateLimit({
-  windowMs: 30 * 60 * 1000,
-  max: 10,
-  message: "Too many login attempts. Try again later.",
-});
-app.use("/login", authLimiter);
-
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -152,83 +84,25 @@ app.use(
   })
 );
 
+const authLimiter = rateLimit({
+  windowMs: 30 * 60 * 1000,
+  max: 10,
+  message: "Too many login attempts. Try again later.",
+});
+app.use("/login", authLimiter);
+
 // ----------------------------
-// Password & Admin Utilities
+// Static Routes Only
 // ----------------------------
-const saltRounds = 12;
-
-function isValidPassword(password) {
-  const minLength = 8;
-  const hasNumber = /\d/;
-  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/;
-  const hasUppercase = /[A-Z]/;
-  if (!password || typeof password !== "string") return false;
-  return (
-    password.length >= minLength &&
-    hasNumber.test(password) &&
-    hasSpecialChar.test(password) &&
-    hasUppercase.test(password)
-  );
-}
-
-const adminEmails = process.env.ADMIN_EMAILS
-  ? process.env.ADMIN_EMAILS.split(",").map((email) => email.trim())
-  : [];
-
-function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) return next();
-  res.redirect("/login");
-}
-//end ensure Authenticated
-// function ensureAdmin
-//track
-function ensureAdmin(req, res, next) {
-  if (
-    req.isAuthenticated &&
-    req.isAuthenticated() &&
-    adminEmails.includes(req.user.email)
-  ) {
-    return next();
-  }
-
-  return res.status(403).render("HN.ejs", {
-    message: "Thank you for visiting Hieu Nguyen Page.",
-    defaultDate: getToday(),
-  });
-}
-// ----end track------------------------
-
-// end function ensureAdmin
-
 app.get("/", (req, res) =>
   res.render("index.ejs", { defaultDate: getToday() })
 );
 app.get("/about", (req, res) =>
   res.render("about.ejs", { defaultDate: getToday() })
 );
-
-// Contact
 app.get("/contact", (req, res) =>
   res.render("contact.ejs", { defaultDate: getToday(), thanks: null })
 );
-app.post("/contact", async (req, res) => {
-  const { name, phone, email, communication: commu, text: comment } = req.body;
-  try {
-    await db.query(
-      "INSERT INTO cliinfo (name, phone, email, commu, comment) VALUES ($1,$2,$3,$4,$5)",
-      [name, phone, email, commu, comment]
-    );
-    res.render("contact.ejs", {
-      defaultDate: getToday(),
-      thanks: "Thank you for your message",
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error saving contact message");
-  }
-});
-
-// Additional Links & Tools
 app.get("/link", (req, res) =>
   res.render("link.ejs", { defaultDate: getToday() })
 );
@@ -247,45 +121,9 @@ app.get("/mortgage", (req, res) =>
 app.get("/hana", (req, res) =>
   res.render("hana.ejs", { defaultDate: getToday() })
 );
-//Add below to  remove of track, and remove ensureAdmin and remove fio.ejs : has no route
-//app.get("/hnpage", (req, res) =>
-// res.render("HN.ejs", {
-//   defaultDate: getToday(),
-//  message: "Thank you for visiting HN Page",
-//  })
-//);
-
-// ----------------------------
-// Admin & Auth Routes
-// ----------------------------
-app.get("/tax", ensureAuthenticated, async (req, res) => {
-  try {
-    const result = await db.query("SELECT * FROM taxrate_2025 ORDER BY id");
-    res.render("tax.ejs", { defaultDate: getToday(), taxData: result.rows });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error loading tax data");
-  }
-});
-
-app.get("/mes", ensureAuthenticated, async (req, res) => {
-  if (!adminEmails.includes(req.user.email))
-    return res.status(403).render("denied.ejs", {
-      defaultDate: getToday(),
-      message: "Access denied",
-    });
-  try {
-    const result = await db.query("SELECT * FROM cliinfo ORDER BY id");
-    res.render("mes.ejs", { defaultDate: getToday(), mes: result.rows });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error loading data");
-  }
-});
-
-// ----------------------------
-// Login / Signup / Change Password
-// ----------------------------
+app.get("/hnpage", (req, res) =>
+  res.render("HN.ejs", { defaultDate: getToday() })
+);
 app.get("/login", (req, res) =>
   res.render("login.ejs", { defaultDate: getToday() })
 );
@@ -309,324 +147,40 @@ app.get("/logout", (req, res, next) => {
     });
   });
 });
-
-// Signup POST
-app.post("/signup", async (req, res) => {
-  const { username: email, password } = req.body;
-  const errors = {};
-  const formData = { email, password };
-  try {
-    const checkUser = await db.query(
-      "SELECT 1 FROM my_user WHERE email=$1 LIMIT 1",
-      [email]
-    );
-    if (checkUser.rowCount > 0)
-      return res.render("register.ejs", {
-        errors: { email: "Email exists" },
-        defaultDate: getToday(),
-        formData,
-      });
-    if (!isValidPassword(password))
-      return res.render("register.ejs", {
-        errors: { password: "Password invalid" },
-        defaultDate: getToday(),
-        formData,
-      });
-    const hash = await bcrypt.hash(password, saltRounds);
-    const result = await db.query(
-      "INSERT INTO my_user (email, pw) VALUES ($1,$2) RETURNING *",
-      [email, hash]
-    );
-    const user = result.rows[0];
-    req.login(user, (err) => {
-      if (err) return res.redirect("/login");
-      res.redirect("/tax");
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error signing up");
-  }
-});
-
-// Passport
-passport.use(
-  new Strategy(async (username, password, cb) => {
-    try {
-      const result = await db.query("SELECT * FROM my_user WHERE email=$1", [
-        username,
-      ]);
-      if (result.rows.length === 0) return cb(null, false);
-      const user = result.rows[0];
-      bcrypt.compare(password, user.pw, (err, match) => {
-        if (err) return cb(err);
-        if (match) return cb(null, user);
-        return cb(null, false);
-      });
-    } catch (err) {
-      cb(err);
-    }
-  })
+// ----------------------------
+// Disabled DB Features (Safe Notices)
+// ----------------------------
+app.post("/signup", (req, res) =>
+  res.send("🔧 Signup is currently disabled (DB not connected).")
+);
+app.post("/login", (req, res) =>
+  res.send("🔧 Login is currently disabled (DB not connected).")
+);
+app.get("/tax", (req, res) =>
+  res.send("🔧 Tax page is disabled (DB not connected).")
+);
+app.get("/mes", (req, res) =>
+  res.send("🔧 Admin messages are disabled (DB not connected).")
 );
 
-passport.serializeUser((user, cb) => cb(null, user.id));
-passport.deserializeUser(async (id, cb) => {
-  try {
-    const result = await db.query("SELECT * FROM my_user WHERE id=$1", [id]);
-    if (result.rows.length === 0) return cb(null, false);
-    cb(null, result.rows[0]);
-  } catch (err) {
-    cb(err);
-  }
+// ----------------------------
+// Healthcheck (For Render)
+// ----------------------------
+app.get("/health", (req, res) => {
+  res.send("OK");
 });
 
-// Login POST
-app.post("/login", async (req, res, next) => {
-  const { username, password } = req.body;
-  try {
-    const result = await db.query("SELECT * FROM my_user WHERE email=$1", [
-      username,
-    ]);
-    if (result.rows.length === 0) {
-      req.flash("error", "Invalid username or password");
-      return res.redirect("/login");
-    }
-
-    const user = result.rows[0];
-    const match = await bcrypt.compare(password, user.pw);
-    if (!match) {
-      req.flash("error", "Invalid username or password");
-      return res.redirect("/login");
-    }
-
-    // 🧠 Important: always RETURN req.logIn to prevent fallthrough
-    return req.logIn(user, (err) => {
-      if (err) return next(err);
-      req.session.isAdmin = adminEmails.includes(user.email);
-      return res.redirect(req.session.isAdmin ? "/mes" : "/tax");
-    });
-  } catch (err) {
-    console.error(err);
-    return next(err);
-  }
-});
-
-// Change password POST
-app.post("/chapw", async (req, res) => {
-  const { email, newPassword, confirmPassword } = req.body;
-  if (!email || !newPassword || !confirmPassword)
-    return res.render("chapw.ejs", {
-      message: "All fields required",
-      defaultDate: getToday(),
-    });
-  if (newPassword !== confirmPassword)
-    return res.render("chapw.ejs", {
-      message: "Passwords do not match",
-      defaultDate: getToday(),
-    });
-  if (!isValidPassword(newPassword))
-    return res.render("chapw.ejs", {
-      message: "Password invalid",
-      defaultDate: getToday(),
-    });
-
-  try {
-    const hashed = await bcrypt.hash(newPassword, saltRounds);
-    const result = await db.query(
-      "UPDATE my_user SET pw=$1 WHERE email=$2 RETURNING email",
-      [hashed, email.trim()]
-    );
-    if (result.rowCount === 0)
-      return res.render("chapw.ejs", {
-        message: "Email not registered",
-        defaultDate: getToday(),
-      });
-    res.render("chapw.ejs", {
-      message: "Password updated successfully!",
-      defaultDate: getToday(),
-    });
-  } catch (err) {
-    console.error(err);
-    res.render("chapw.ejs", {
-      message: "Something went wrong",
-      defaultDate: getToday(),
-    });
-  }
-});
-//add track
-app.set("trust proxy", true); // needed to capture real IP behind proxies
-
-// Visitor Tracking Route
-
-app.get("/hnpage", async (req, res) => {
-  try {
-    // ----------------------------
-    // 1️⃣ Track Visitor
-    // ----------------------------
-    const ipAddress =
-      req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
-      req.ip ||
-      req.connection.remoteAddress;
-
-    console.log("📍 Tracking visitor IP:", ipAddress);
-
-    const updateVisitor = await db.query(
-      "UPDATE visitors SET visited_at = NOW() WHERE ip_address = $1",
-      [ipAddress]
-    );
-
-    if (updateVisitor.rowCount === 0) {
-      await db.query(
-        "INSERT INTO visitors (ip_address, visited_at) VALUES ($1, NOW())",
-        [ipAddress]
-      );
-    }
-
-    const updateVisits = await db.query(
-      "UPDATE visits SET total_count = total_count + 1, last_updated = NOW() WHERE id = 1"
-    );
-
-    if (updateVisits.rowCount === 0) {
-      await db.query(
-        "INSERT INTO visits (id, total_count, last_updated) VALUES (1, 1, NOW())"
-      );
-    }
-
-    // ----------------------------
-    // 2️⃣ Check if Admin
-    // ----------------------------
-    const isAdmin =
-      req.isAuthenticated &&
-      req.isAuthenticated() &&
-      adminEmails.includes(req.user?.email);
-
-    if (!isAdmin) {
-      return res.status(403).render("HN.ejs", {
-        message: "Thank you for visiting Hieu Nguyen Page.",
-        defaultDate: getToday(),
-      });
-    }
-
-    // ----------------------------
-    // 3️⃣ Admin report
-    // ----------------------------
-    const limit = 20;
-    const page = parseInt(req.query.page) || 1;
-    const offset = (page - 1) * limit;
-    const { startDate, endDate, search } = req.query;
-
-    let baseQuery = "FROM visitors WHERE 1=1";
-    const params = [];
-    let paramIndex = 1;
-
-    if (startDate) {
-      baseQuery += ` AND visited_at >= $${paramIndex}`;
-      params.push(startDate);
-      paramIndex++;
-    }
-
-    if (endDate) {
-      baseQuery += ` AND visited_at <= $${paramIndex}`;
-      params.push(endDate + " 23:59:59");
-      paramIndex++;
-    }
-
-    if (search) {
-      baseQuery += ` AND ip_address ILIKE $${paramIndex}`;
-      params.push(`%${search}%`);
-      paramIndex++;
-    }
-
-    const countResult = await db.query(`SELECT COUNT(*) ${baseQuery}`, params);
-    const totalVisitors = parseInt(countResult.rows[0].count, 10);
-    const totalPages = Math.ceil(totalVisitors / limit);
-
-    const visitorsResult = await db.query(
-      `SELECT ip_address, visited_at ${baseQuery} ORDER BY visited_at DESC LIMIT $${paramIndex} OFFSET $${
-        paramIndex + 1
-      }`,
-      [...params, limit, offset]
-    );
-
-    // ----------------------------
-    // Convert visited_at to Chicago time (safe)
-    // ----------------------------
-    const visitorsChicago = visitorsResult.rows.map((v) => {
-      if (!v.visited_at) return { ...v, visited_at: null };
-
-      let dt;
-      if (v.visited_at instanceof Date) {
-        // JS Date object — use fromJSDate
-        dt = DateTime.fromJSDate(v.visited_at, { zone: "America/Chicago" });
-      } else {
-        // string from Postgres — use fromISO
-        dt = DateTime.fromISO(v.visited_at, { zone: "America/Chicago" });
-      }
-
-      return {
-        ...v,
-        visited_at: dt.isValid ? dt.toFormat("yyyy-MM-dd HH:mm:ss") : null,
-      };
-    });
-
-    // Visit summary
-    // ----------------------------
-    const visitsResult = await db.query(
-      "SELECT total_count, last_updated FROM visits WHERE id = 1"
-    );
-
-    const visitStatsRaw = visitsResult.rows[0] || {
-      total_count: 0,
-      last_updated: null,
-    };
-
-    const visitStats = {
-      total_count: visitStatsRaw.total_count,
-      last_updated: visitStatsRaw.last_updated
-        ? DateTime.fromJSDate(visitStatsRaw.last_updated)
-            .setZone("America/Chicago")
-            .toFormat("yyyy-MM-dd HH:mm:ss")
-        : null,
-    };
-
-    // ----------------------------
-    // Render report
-    // ----------------------------
-    res.render("fio.ejs", {
-      totalCount: visitStats.total_count,
-      lastUpdated: visitStats.last_updated,
-      visitors: visitorsChicago,
-      defaultDate: getToday(),
-      startDate: startDate || "",
-      endDate: endDate || "",
-      search: search || "",
-      currentPage: page,
-      totalPages,
-      adminEmail: req.user?.email || "Admin",
-      message: "Visitor statistics loaded successfully.",
-    });
-  } catch (error) {
-    console.error("❌ Error loading /hnpage:", error);
-    res.status(500).send("Internal server error");
-  }
-});
-
-//end track
-
+// ----------------------------
 // Global Error Handler
 // ----------------------------
 app.use((err, req, res, next) => {
-  console.error("❌ Uncaught error:", err);
+  console.error(err);
   res.status(500).send("Server error");
 });
 
 // ----------------------------
-// Start Server for both production and local.
+// Start Server
 // ----------------------------
 app.listen(port, () => {
-  const mode = process.env.NODE_ENV || "production";
-  console.log(`✅ Server running in ${mode} mode on port ${port}`);
+  console.log(`✅ Server running on port ${port}`);
 });
-// for local dev only
-//app.listen(port, () => {
-// console.log(`🚀 Server running on http://localhost:${port}`);
-//});

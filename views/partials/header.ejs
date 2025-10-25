@@ -3,54 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="CPA Services Tax Accounting" />
+    <meta name="keywords" content="CPA, Hieu CPA, Hieu Nguyen CPA" />
     <meta name="robots" content="index, follow" />
-
-    <!-- SEO Meta Tags -->
-    <title>
-      Hieu Nguyen CPA | SAP & EA Professional Services in Chicago & Suburbs
-    </title>
-    <meta
-      name="description"
-      content="Hieu Nguyen is a Licensed CPA, SAP Certified consultant, and EA professional offering expert accounting, SAP consulting, and tax advisory services in Chicago, surrounding suburbs, across the US, and worldwide."
-    />
-    <meta
-      name="keywords"
-      content="Hieu CPA, Hieu SAP, Hieu EA, Chicago CPA, SAP Consultant Chicago, Tax Services Chicago, Accounting Chicago"
-    />
-
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "AccountingService",
-        "name": "Hieu CPA",
-        "description": "CPA, SAP, and EA professional services",
-        "url": "https://hieuncpa.com",
-        "address": {
-          "@type": "PostalAddress",
-          "addressLocality": "Franklin Park",
-          "addressRegion": "IL",
-          "addressCountry": "US"
-        },
-        "areaServed": [
-          { "@type": "Place", "name": "Franklin Park, IL" },
-          { "@type": "Place", "name": "Niles, IL" },
-          { "@type": "Place", "name": "Carol Stream, IL" },
-          { "@type": "Place", "name": "Chicago, IL" },
-          { "@type": "Place", "name": "Naperville, IL" },
-          { "@type": "Country", "name": "United States" },
-          { "@type": "Country", "name": "Worldwide" }
-        ],
-        "contactPoint": {
-          "@type": "ContactPoint",
-          "telephone": "+1-847-208-9053",
-          "email": "hn@hieuncpa.com",
-          "contactType": "customer service"
-        }
-      }
-    </script>
-
-    <!-- Stylesheets -->
+    <!--<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">Original-->
+    <!--Copy link from bootstrap below-->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -61,41 +18,31 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
       rel="stylesheet"
     />
+    <!--add for login form can see password-->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.2/css/all.css"
     />
-
-    <!-- ✅ Place the canonical tag here, inside <head> -->
-    <link rel="canonical" href="<%= canonical %>" />
-
     <link rel="stylesheet" href="/styles/layout.css" />
     <link rel="stylesheet" href="/styles/content.css" />
+    <!--styles folder: static files-->
+    <title>Hieu Nguyen, CPA EA, SAP</title>
   </head>
-
   <body>
     <header>
       <!--Copy new one -->
       <nav class="navbar navbar-expand-lg custom-header">
         <div class="container-fluid">
-          <a class="navbar-brand" href="/">
-            <div class="logo-bg">
-              <img
-                src="/images/calculator.svg"
-                height="50px"
-                width="60px"
-                alt="Picture"
-              />
-              <div class="logo-text">
-                <span class="Line1">CPA</span>
-                <span class="Line2">EA</span>
-                <span class="Line3">FICO</span>
-              </div>
-            </div>
-
-            <span class="brand-name">Hieu Nguyen</span>
+          <a class="navbar-brand" href="/"
+            ><img
+              src="/images/cloudsun.svg"
+              height="50px"
+              width="70px"
+              style="background-color: yellow"
+              alt="Picture"
+            />
+            Hieu Nguyen
           </a>
-
           <button
             class="navbar-toggler"
             type="button"
@@ -149,9 +96,7 @@
 
                   <li><hr class="dropdown-divider" /></li>
                   <li>
-                    <a class="dropdown-item" href="/tax"
-                      >Tax Rate Table/Login Needed</a
-                    >
+                    <a class="dropdown-item" href="/tax">Tax Rate Table</a>
                   </li>
                   <li>
                     <a class="dropdown-item" href="/hana">SAP Accounting</a>
@@ -186,7 +131,7 @@
               <input
                 class="form-control me-2"
                 type="search"
-                placeholder="Hieu CPA"
+                placeholder="Search"
                 aria-label="Search"
                 disabled
               />

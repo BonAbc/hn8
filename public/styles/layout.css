@@ -75,52 +75,7 @@ body {
   color: gold; /* Change this to whatever color you want on hover */
 }
 /**/
-/*Update logo*/
-.logo-bg {
-  display: inline-flex; /* inline keeps logo on same line as text */
-  align-items: flex-start; /* align top of text with top of image */
-  background-color: yellow;
-  padding: 6px 5px; /* compact padding */
-  border-radius: 6px;
-  vertical-align: middle; /* align with Hieu Nguyen text */
-}
 
-.logo-img {
-  margin-right: 6px; /* space between image and text */
-  height: calc(3 * 1.1em); /* height = 3 text lines */
-  width: 50px; /* width of calculator icon */
-  display: block;
-}
-
-.logo-text {
-  display: flex;
-  flex-direction: column; /* stack CPA, EA, SAP vertically */
-  line-height: 1em;
-  font-size: 1.1rem;
-}
-
-.Line1 {
-  color: green;
-  font-weight: bold;
-}
-
-.Line2 {
-  color: green;
-  font-weight: bold;
-}
-
-.Line3 {
-  color: green;
-  font-weight: bold;
-}
-
-/*Update logo*/
-.nav-link:hover,
-.nav-link.active:hover {
-  color: gold; /* Change this to whatever color you want on hover */
-}
-
-/**/
 /*Change dropdown-item when hover*/
 .dropdown-item {
   color: black; /* Default color */
@@ -191,7 +146,6 @@ html {
 }
 
 /* Mobile Devices (≤ 768px) */
-/* 📱 Mobile Devices (≤ 768px) */
 @media (max-width: 768px) {
   body {
     font-size: 15px;
@@ -209,20 +163,18 @@ html {
   .container {
     width: 95%;
   }
-
-  .mortgage-wrapper {
-    flex: 1 1 100%; /* stack vertically on small screens */
-    width: 100%;
-  }
 }
 
-/* 📱 Very Small Devices (≤ 480px) */
+/* Very Small Devices (≤ 480px) */
 @media (max-width: 480px) {
   body {
     font-size: 14px;
   }
 
-  .sidebar,
+  .sidebar {
+    padding: 10px;
+  }
+
   .content {
     padding: 10px;
   }
@@ -231,6 +183,5 @@ html {
     font-size: 14px;
   }
 }
-
 /**/
 /* Media Queries */
