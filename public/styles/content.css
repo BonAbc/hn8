@@ -30,21 +30,36 @@ input[type="date"] {
   height: 4rem;
   border-radius: 0.75rem;
 }
-/*Home page and Feature End*/
 
-/*Home page and Carousel*/
 .custom-carousel-img {
-  max-height: 800px; /* Shrinks the overall slide */
-  object-fit: cover; /* Keeps the image from stretching */
+  max-height: 800px;
+  min-height: 800px;
   width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
 }
 
+.svg-inner-box {
+  width: 300px;
+  height: 500px;
+  background-color: lightgreen;
+  justify-content: center;
+  align-items: center;
+}
+.svg-inner-box img {
+  width: 300px;
+  height: 500px;
+  object-fit: contain;
+  display: block;
+}
 .custom-caption {
   font-size: 0.9rem; /* Smaller text */
-  bottom: 10px; /* Move caption closer to bottom */
+  bottom: 10px;
 }
 .hkn {
-  color: gold;
+  color: green;
 }
 
 /*Home page and Carousel End*/
