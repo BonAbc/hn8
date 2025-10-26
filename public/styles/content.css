@@ -45,12 +45,13 @@ input[type="date"] {
   width: 300px;
   height: 500px;
   background-color: lightgreen;
+  display: flex;
   justify-content: center;
   align-items: center;
 }
 .svg-inner-box img {
-  width: 300px;
-  height: 500px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   display: block;
 }
