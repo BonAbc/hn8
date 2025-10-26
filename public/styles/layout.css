@@ -232,5 +232,31 @@ html {
   }
 }
 
-/**/
+/*for carousel custom*/
+@media (max-width: 768px) {
+  /* Outer frame adjusts height */
+  .custom-carousel-img {
+    max-height: 60vh; /* relative to viewport */
+    min-height: auto; /* allow shrink */
+  }
+
+  /* Inner box scales */
+  .svg-inner-box {
+    width: 80%; /* scale down from 300px */
+    height: auto; /* maintain aspect ratio */
+  }
+
+  /* Image scales proportionally */
+  .svg-inner-box img {
+    width: 100%;
+    height: auto;
+  }
+
+  /* Caption smaller and closer to bottom */
+  .custom-caption {
+    font-size: 0.8rem;
+    bottom: 5px;
+  }
+}
+
 /* Media Queries */
