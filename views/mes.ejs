@@ -1,0 +1,157 @@
+
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+
+  <!---->
+  <br>
+  <h1>Message</h1>
+  <!---->
+    <h5 class="cvlb" style="color: green"><u>For references👇</u></h5>
+    <!---->
+  <!---->
+  <div class="apt">
+    <!---->
+  
+    <!---->
+    <!--Add table-->
+    <!-- Bootstrap container: adds left/right padding and centers content -->
+
+    <div class="container mt-0">
+      <!-- Bootstrap card: adds a nice box around the content with padding and shadow -->
+      <div class="card shadow"> 
+        <!-- Card header: styled with background color and text color -->
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">Message</h4>
+          <!-- Table title -->
+        </div>
+
+        <!-- Card body: contains the table, with no padding to keep it tight -->
+        <div class="card-body p-0">
+          <!-- Responsive wrapper with both horizontal and vertical scroll -->
+          <div
+            class="table-responsive"
+            style="max-height: 500px; overflow-y: auto"
+          >
+            <!-- Responsive wrapper: enables horizontal scroll on small screens -->
+            <!-- <div class="table-responsive"> -->
+
+            <table class="table table-striped" id="taxTable">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <!-- Table header field 1-->
+                  <th scope="col">Name</th>
+                  <th scope="col">Phone</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Prefrred Communication</th>
+                  <th scope="col">Feedbacks</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <!-- Check if taxData exists and has rows -->
+                <% if (mes && mes.length > 0) { %>
+                <!-- Loop over each row in taxData using forEach -->
+                <% mes.forEach((row,index)=> { %>
+           <!--row: This is the current element in the array as the loop goes through each item.-->
+           <!--index: This is the position (or index) of that current element in the array, starting from 0.-->
+                <tr>
+                  <!-- Show row number starting from 1 -->
+                  <th scope="row"><%= index + 1 %></th>
+                  <!--scope="row" means that this <th> is a row header — it labels the entire row it's in.-->
+                  <td><%= row.name %></td>
+                  <td><%= row.phone %></td>
+                  <td><%= row.email %></td>
+                  <!-- Upper range of taxable income. If null, show '—' -->
+                  <td><%= row.commu %></td> <!--Use Window + . to insert emoji-->
+                  <!-- Tax rate (e.g., 10, 12, 22) shown as percentage at the end -->
+                  <td><%= row.comment %></td> <!--last % add percentage here not in database table-->
+                </tr>
+                <% }) %> <% } else { %>
+                <tr>
+                  <td colspan="6" class="text-muted">No data available.</td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+     
+      
+      </div>
+ <!---->
+     <div class="apd">
+    <div class="card" style="width: 18rem">
+      <img src="/images/rose.png" class="card-img-top" alt="Rose" />
+      <div class="card-body">
+        <h5 class="card-title">Hoa Hường</h5>
+        <p class="card-text">EA</p>
+        <a id="m1" href="#" class="btn btn-primary">Nguyễn</a>
+      </div>
+    </div>
+
+    <div class="card" style="width: 18rem">
+      <img src="/images/HM.png" class="card-img-top" alt="Flower" />
+      <div class="card-body">
+        <h5 class="card-title">Hoa Mai</h5>
+        <p class="card-text">SAP Certified HANA FICO Professional</p>
+        <a id="m5" href="#" class="btn btn-primary">Thành</a>
+      </div>
+    </div>
+
+    <div class="card" style="width: 18rem">
+      <img src="/images/rose.png" class="card-img-top" alt="Rose" />
+      <div class="card-body">
+        <h5 class="card-title">Hoa Hồng</h5>
+        <p class="card-text">CPA</p>
+        <a id="m2" href="#" class="btn btn-primary">Hiếu</a>
+      </div>
+    </div>
+  </div>
+  <!---->
+  <div class="apd">
+    <div class="card" style="width: 18rem">
+      <img src="/images/rose.png" class="card-img-top" alt="Rose" />
+      <div class="card-body">
+        <h5 class="card-title">Hoa Hường</h5>
+        <p class="card-text">EA</p>
+        <a id="m1" href="#" class="btn btn-primary">Nguyễn</a>
+      </div>
+    </div>
+
+    <div class="card" style="width: 18rem">
+      <img src="/images/HM.png" class="card-img-top" alt="Flower" />
+      <div class="card-body">
+        <h5 class="card-title">Hoa Mai</h5>
+        <p class="card-text">SAP Certified HANA FICO Professional</p>
+        <a id="m5" href="#" class="btn btn-primary">Thành</a>
+      </div>
+    </div>
+
+    <div class="card" style="width: 18rem">
+      <img src="/images/rose.png" class="card-img-top" alt="Rose" />
+      <div class="card-body">
+        <h5 class="card-title">Hoa Hồng</h5>
+        <p class="card-text">CPA</p>
+        <a id="m2" href="#" class="btn btn-primary">Hiếu</a>
+      </div>
+    </div>
+  </div>
+  <!---->
+  <!--Refer to index.ejs how to include header and footer.ejs-->
+</main>
+<!---->
+
+<!-- Link external JS -->
+
+<!-- Link external JS end -->
+<!---->
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->
