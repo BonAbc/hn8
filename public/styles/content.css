@@ -30,6 +30,7 @@ input[type="date"] {
   height: 4rem;
   border-radius: 0.75rem;
 }
+
 /*Home page and Feature End*/
 
 /*Home page and Carousel*/
@@ -48,6 +49,7 @@ input[type="date"] {
 }
 
 /*Home page and Carousel End*/
+
 /*about Page*/
 .apd {
   display: flex;
