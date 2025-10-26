@@ -232,51 +232,5 @@ html {
   }
 }
 
-/*for carousel custom*/
-
-/* 📱 Mobile Devices (≤ 768px) */
-@media (max-width: 768px) {
-  /* Carousel container adjusts for mobile */
-  .custom-carousel-img {
-    max-height: auto; /* let content define height */
-    min-height: auto;
-    flex-direction: column;
-    padding: 5px;
-    margin-top: 10px;
-  }
-
-  /* SVG slides scale down */
-  .svg-inner-box {
-    width: 75%; /* smaller than desktop */
-    max-width: 250px;
-    height: auto; /* maintain aspect ratio */
-  }
-
-  .svg-inner-box img {
-    width: 100%;
-    height: auto;
-  }
-
-  /* Image slides (rose, HC1, etc.) scale naturally */
-  .custom-carousel-img img {
-    width: 90%; /* fit container width */
-    height: auto; /* prevent stretching */
-    max-height: 60vh; /* optional: limit vertical size */
-    object-fit: contain;
-    display: block;
-    margin: 0 auto;
-  }
-
-  /* Captions smaller on mobile */
-  .custom-caption {
-    font-size: 0.75rem;
-    bottom: 5px;
-  }
-
-  .hkn h5 {
-    font-size: 0.9rem;
-  }
-}
-/* 📱 Mobile Devices (≤ 768px) */
-
+/**/
 /* Media Queries */
