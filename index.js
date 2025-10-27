@@ -227,22 +227,7 @@ app.get("/about", (req, res) =>
 app.get("/contact", (req, res) =>
   res.render("contact.ejs", { defaultDate: getToday(), thanks: null })
 );
-//app.post("/contact", async (req, res) => {
-//  const { name, phone, email, communication: commu, text: comment } = req.body;
-// try {
-//    await db.query(
-//      "INSERT INTO cliinfo (name, phone, email, commu, comment) VALUES ($1,$2,$3,$4,$5)",
-//      [name, phone, email, commu, comment]
-//    );
-//    res.render("contact.ejs", {
-//      defaultDate: getToday(),
-//      thanks: "Thank you for your message",
-//    });
-//  } catch (err) {
-//   console.error(err);
-//   res.status(500).send("Error saving contact message");
-// }
-//});
+//app.post/contact
 
 // Additional Links & Tools
 app.get("/link", (req, res) =>
@@ -263,18 +248,14 @@ app.get("/mortgage", (req, res) =>
 app.get("/hana", (req, res) =>
   res.render("hana.ejs", { defaultDate: getToday() })
 );
-//Add below to  remove of track, and remove ensureAdmin and remove fio.ejs : has no route
-//app.get("/hnpage", (req, res) =>
-// res.render("HN.ejs", {
-//   defaultDate: getToday(),
-//  message: "Thank you for visiting HN Page",
-//  })
-//);
+app.get("/hnpage", (req, res) =>
+  res.render("HN.ejs", {
+    defaultDate: getToday(),
+    message: "Thank you for visiting HN Page",
+  })
+);
 
-// ----------------------------
-// Admin & Auth Routes
-// ----------------------------
-app.get("/tax", ensureAuthenticated, async (req, res) => {
+app.get("/tax", async (req, res) => {
   try {
     const result = await db.query("SELECT * FROM taxrate_2025 ORDER BY id");
     res.render("tax.ejs", { defaultDate: getToday(), taxData: result.rows });
@@ -284,20 +265,20 @@ app.get("/tax", ensureAuthenticated, async (req, res) => {
   }
 });
 
-app.get("/mes", ensureAuthenticated, async (req, res) => {
-  if (!adminEmails.includes(req.user.email))
-    return res.status(403).render("denied.ejs", {
-      defaultDate: getToday(),
-      message: "Access denied",
-    });
-  try {
-    const result = await db.query("SELECT * FROM cliinfo ORDER BY id");
-    res.render("mes.ejs", { defaultDate: getToday(), mes: result.rows });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error loading data");
-  }
-});
+//app.get("/mes", async (req, res) => {
+//  if (!adminEmails.includes(req.user.email))
+//    return res.status(403).render("denied.ejs", {
+//      defaultDate: getToday(),
+//      message: "Access denied",
+//    });
+//  try {
+//    const result = await db.query("SELECT * FROM cliinfo ORDER BY id");
+//    res.render("mes.ejs", { defaultDate: getToday(), mes: result.rows });
+// } catch (err) {
+//    console.error(err);
+//    res.status(500).send("Error loading data");
+//  }
+//});
 
 // ----------------------------
 // Login / Signup / Change Password
@@ -327,43 +308,6 @@ app.get("/logout", (req, res, next) => {
 });
 
 // Signup POST
-app.post("/signup", async (req, res) => {
-  const { username: email, password } = req.body;
-  const errors = {};
-  const formData = { email, password };
-  try {
-    const checkUser = await db.query(
-      "SELECT 1 FROM my_user WHERE email=$1 LIMIT 1",
-      [email]
-    );
-    // SELECT 1 : select any column of a row exist
-    if (checkUser.rowCount > 0)
-      return res.render("register.ejs", {
-        errors: { email: "Email exists" },
-        defaultDate: getToday(),
-        formData,
-      });
-    if (!isValidPassword(password))
-      return res.render("register.ejs", {
-        errors: { password: "Password invalid" },
-        defaultDate: getToday(),
-        formData,
-      });
-    const hash = await bcrypt.hash(password, saltRounds);
-    const result = await db.query(
-      "INSERT INTO my_user (email, pw) VALUES ($1,$2) RETURNING *",
-      [email, hash]
-    );
-    const user = result.rows[0];
-    req.login(user, (err) => {
-      if (err) return res.redirect("/login");
-      res.redirect("/tax");
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error signing up");
-  }
-});
 
 // Passport
 passport.use(
@@ -398,238 +342,13 @@ passport.deserializeUser(async (id, cb) => {
 });
 
 // Login POST
-app.post("/login", async (req, res, next) => {
-  const { username, password } = req.body;
-  try {
-    const result = await db.query("SELECT * FROM my_user WHERE email=$1", [
-      username,
-    ]);
-    if (result.rows.length === 0) {
-      req.flash("error", "Invalid username or password");
-      return res.redirect("/login");
-    }
-    // return redirect: move user back to browser and stop. now run the code below.
-    const user = result.rows[0];
-    const match = await bcrypt.compare(password, user.pw);
-    if (!match) {
-      req.flash("error", "Invalid username or password");
-      return res.redirect("/login");
-    }
-
-    // 🧠 Important: always RETURN req.logIn to prevent fallthrough
-    return req.logIn(user, (err) => {
-      if (err) return next(err);
-      req.session.isAdmin = adminEmails.includes(user.email);
-      return res.redirect(req.session.isAdmin ? "/mes" : "/tax");
-    });
-  } catch (err) {
-    console.error(err);
-    return next(err);
-  }
-});
 
 // Change password POST
-app.post("/chapw", async (req, res) => {
-  const { email, newPassword, confirmPassword } = req.body;
-  if (!email || !newPassword || !confirmPassword)
-    return res.render("chapw.ejs", {
-      message: "All fields required",
-      defaultDate: getToday(),
-    });
-  if (newPassword !== confirmPassword)
-    return res.render("chapw.ejs", {
-      message: "Passwords do not match",
-      defaultDate: getToday(),
-    });
-  if (!isValidPassword(newPassword))
-    return res.render("chapw.ejs", {
-      message: "Password invalid",
-      defaultDate: getToday(),
-    });
 
-  try {
-    const hashed = await bcrypt.hash(newPassword, saltRounds);
-    const result = await db.query(
-      "UPDATE my_user SET pw=$1 WHERE email=$2 RETURNING email",
-      [hashed, email.trim()]
-    );
-    if (result.rowCount === 0)
-      return res.render("chapw.ejs", {
-        message: "Email not registered",
-        defaultDate: getToday(),
-      });
-    res.render("chapw.ejs", {
-      message: "Password updated successfully!",
-      defaultDate: getToday(),
-    });
-  } catch (err) {
-    console.error(err);
-    res.render("chapw.ejs", {
-      message: "Something went wrong",
-      defaultDate: getToday(),
-    });
-  }
-});
 //add track
 app.set("trust proxy", true); // needed to capture real IP behind proxies
 
 // Visitor Tracking Route
-
-app.get("/hnpage", async (req, res) => {
-  try {
-    // ----------------------------
-    // 1️⃣ Track Visitor
-    // ----------------------------
-    const ipAddress =
-      req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
-      req.ip ||
-      req.connection.remoteAddress;
-    // x-forwarded-for : 203.0.113.5, 10.0.0.2 IP address
-    //split at comma, [0] first part, trim do not care second part
-
-    console.log("📍 Tracking visitor IP:", ipAddress);
-
-    const updateVisitor = await db.query(
-      "UPDATE visitors SET visited_at = NOW() WHERE ip_address = $1",
-      [ipAddress]
-    );
-    // where: condition ipAddress, set it at current time.
-    //now(): return current date and time
-    if (updateVisitor.rowCount === 0) {
-      await db.query(
-        "INSERT INTO visitors (ip_address, visited_at) VALUES ($1, NOW())",
-        [ipAddress]
-      );
-    }
-
-    const updateVisits = await db.query(
-      "UPDATE visits SET total_count = total_count + 1, last_updated = NOW() WHERE id = 1"
-    );
-
-    if (updateVisits.rowCount === 0) {
-      await db.query(
-        "INSERT INTO visits (id, total_count, last_updated) VALUES (1, 1, NOW())"
-      );
-    }
-
-    // ----------------------------
-    // 2️⃣ Check if Admin
-    // ----------------------------
-    const isAdmin =
-      req.isAuthenticated &&
-      req.isAuthenticated() &&
-      adminEmails.includes(req.user?.email);
-
-    if (!isAdmin) {
-      return res.status(403).render("HN.ejs", {
-        message: "Thank you for visiting Hieu Nguyen Page.",
-        defaultDate: getToday(),
-      });
-    }
-
-    // ----------------------------
-    // 3️⃣ Admin report
-    // ----------------------------
-    const limit = 20;
-    const page = parseInt(req.query.page) || 1;
-    const offset = (page - 1) * limit;
-    const { startDate, endDate, search } = req.query;
-    //
-    let baseQuery = "FROM visitors WHERE 1=1";
-    const params = [];
-    let paramIndex = 1;
-    //
-    if (startDate) {
-      baseQuery += ` AND visited_at >= $${paramIndex}`;
-      params.push(startDate);
-      paramIndex++;
-    }
-
-    if (endDate) {
-      baseQuery += ` AND visited_at <= $${paramIndex}`;
-      params.push(endDate + " 23:59:59");
-      paramIndex++;
-    }
-
-    if (search) {
-      baseQuery += ` AND ip_address ILIKE $${paramIndex}`;
-      params.push(`%${search}%`);
-      paramIndex++;
-    }
-
-    const countResult = await db.query(`SELECT COUNT(*) ${baseQuery}`, params);
-    const totalVisitors = parseInt(countResult.rows[0].count, 10);
-    const totalPages = Math.ceil(totalVisitors / limit);
-
-    const visitorsResult = await db.query(
-      `SELECT ip_address, visited_at ${baseQuery} ORDER BY visited_at DESC LIMIT $${paramIndex} OFFSET $${
-        paramIndex + 1
-      }`,
-      [...params, limit, offset]
-    );
-
-    // ----------------------------
-    // Convert visited_at to Chicago time (safe)
-    // ----------------------------
-    const visitorsChicago = visitorsResult.rows.map((v) => {
-      if (!v.visited_at) return { ...v, visited_at: null };
-
-      let dt;
-      if (v.visited_at instanceof Date) {
-        // JS Date object — use fromJSDate
-        dt = DateTime.fromJSDate(v.visited_at, { zone: "America/Chicago" });
-      } else {
-        // string from Postgres — use fromISO
-        dt = DateTime.fromISO(v.visited_at, { zone: "America/Chicago" });
-      }
-
-      return {
-        ...v,
-        visited_at: dt.isValid ? dt.toFormat("yyyy-MM-dd HH:mm:ss") : null,
-      };
-    });
-
-    // Visit summary
-    // ----------------------------
-    const visitsResult = await db.query(
-      "SELECT total_count, last_updated FROM visits WHERE id = 1"
-    );
-
-    const visitStatsRaw = visitsResult.rows[0] || {
-      total_count: 0,
-      last_updated: null,
-    };
-
-    const visitStats = {
-      total_count: visitStatsRaw.total_count,
-      last_updated: visitStatsRaw.last_updated
-        ? DateTime.fromJSDate(visitStatsRaw.last_updated)
-            .setZone("America/Chicago")
-            .toFormat("yyyy-MM-dd HH:mm:ss")
-        : null,
-    };
-
-    // ----------------------------
-    // Render report
-    // ----------------------------
-    res.render("fio.ejs", {
-      totalCount: visitStats.total_count,
-      lastUpdated: visitStats.last_updated,
-      visitors: visitorsChicago,
-      defaultDate: getToday(),
-      startDate: startDate || "",
-      endDate: endDate || "",
-      search: search || "",
-      currentPage: page,
-      totalPages,
-      adminEmail: req.user?.email || "Admin",
-      message: "Visitor statistics loaded successfully.",
-    });
-  } catch (error) {
-    console.error("❌ Error loading /hnpage:", error);
-    res.status(500).send("Internal server error");
-  }
-});
 
 //end track
 
