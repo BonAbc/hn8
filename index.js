@@ -227,22 +227,22 @@ app.get("/about", (req, res) =>
 app.get("/contact", (req, res) =>
   res.render("contact.ejs", { defaultDate: getToday(), thanks: null })
 );
-app.post("/contact", async (req, res) => {
-  const { name, phone, email, communication: commu, text: comment } = req.body;
-  try {
-    await db.query(
-      "INSERT INTO cliinfo (name, phone, email, commu, comment) VALUES ($1,$2,$3,$4,$5)",
-      [name, phone, email, commu, comment]
-    );
-    res.render("contact.ejs", {
-      defaultDate: getToday(),
-      thanks: "Thank you for your message",
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error saving contact message");
-  }
-});
+//app.post("/contact", async (req, res) => {
+//  const { name, phone, email, communication: commu, text: comment } = req.body;
+// try {
+//    await db.query(
+//      "INSERT INTO cliinfo (name, phone, email, commu, comment) VALUES ($1,$2,$3,$4,$5)",
+//      [name, phone, email, commu, comment]
+//    );
+//    res.render("contact.ejs", {
+//      defaultDate: getToday(),
+//      thanks: "Thank you for your message",
+//    });
+//  } catch (err) {
+//   console.error(err);
+//   res.status(500).send("Error saving contact message");
+// }
+//});
 
 // Additional Links & Tools
 app.get("/link", (req, res) =>
