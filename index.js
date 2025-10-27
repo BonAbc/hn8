@@ -78,12 +78,16 @@ if (process.env.NODE_ENV === "production") {
 //function getToday() {
 // return new Date().toISOString().split("T")[0];
 //}
+//function getToday() {
+// const today = new Date();
+//  const year = today.getFullYear();
+//  const month = String(today.getMonth() + 1).padStart(2, "0");
+// const day = String(today.getDate()).padStart(2, "0");
+// return `${year}-${month}-${day}`;
+//}
+
 function getToday() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return DateTime.now().setZone("America/Chicago").toFormat("yyyy-MM-dd");
 }
 // ----------------------------
 // PostgreSQL Connection
