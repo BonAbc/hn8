@@ -251,7 +251,7 @@ app.get("/hana", (req, res) =>
 app.get("/hnpage", (req, res) =>
   res.render("HN.ejs", {
     defaultDate: getToday(),
-    message: "Thank you for visiting HN Page",
+    message: "Thank you for your business.",
   })
 );
 
