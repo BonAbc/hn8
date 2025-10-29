@@ -233,5 +233,12 @@ html {
 }
 
 /*for carousel custom*/
-
+/* Slightly wider on small screens  calculator*/
+@media (max-width: 600px) {
+  .calc-block input,
+  .calc-block select {
+    width: 105%; /* small bump for mobile */
+    font-size: 18px; /* make text easier to read */
+  }
+}
 /* Media Queries */
