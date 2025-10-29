@@ -241,8 +241,8 @@ html {
   .calc-blocks select,
   .calc-blocks button {
     width: 100%; /* fill the container */
-    font-size: 16px; /* readable */
-    padding: 10px; /* enough touch space */
+    font-size: 14px; /* readable */
+    padding: 8px; /* enough touch space */
     overflow-x: auto; /* allow horizontal scroll for huge numbers */
     white-space: nowrap; /* prevents wrapping */
     box-sizing: border-box; /* includes padding in width */

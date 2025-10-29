@@ -14,6 +14,22 @@
     }
   });
 });
+//to show large number
+["num1", "num2", "result"].forEach((id) => {
+  const input = document.getElementById(id);
+
+  input.addEventListener("input", () => {
+    const length = input.value.replace(/,/g, "").length;
+
+    if (length > 10) {
+      input.style.fontSize = "12px"; // shrink for very large numbers
+    } else if (length > 7) {
+      input.style.fontSize = "14px";
+    } else {
+      input.style.fontSize = "16px"; // default
+    }
+  });
+});
 
 // Calculate when button clicked
 document.getElementById("calculateBtn").addEventListener("click", calculate);
