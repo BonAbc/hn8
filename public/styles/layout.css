@@ -234,11 +234,19 @@ html {
 
 /*for carousel custom*/
 /* Slightly wider on small screens  calculator*/
+/* --- Make all elements a bit wider & easier to use on phones --- */
 @media (max-width: 600px) {
   .calc-block input,
-  .calc-block select {
-    width: 105%; /* small bump for mobile */
-    font-size: 18px; /* make text easier to read */
+  .calc-block select,
+  .calc-block button {
+    width: 105%; /* slightly wider */
+    font-size: 18px; /* larger touch-friendly text */
+    padding: 12px; /* a bit more finger space */
+  }
+
+  .calc-block {
+    display: flex;
+    justify-content: center;
   }
 }
 /* Media Queries */
