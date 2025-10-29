@@ -235,19 +235,20 @@ html {
 /*for carousel custom*/
 /* Slightly wider on small screens  calculator*/
 /* --- Make all elements a bit wider & easier to use on phones --- */
-@media (max-width: 768px) {
-  .calc-blocks input,
-  .calc-blocks select,
-  .calc-blocks button {
-    font-size: 14px; /* larger touch-friendly text */
-    padding: 8px; /* a bit more finger space */
-  }
 
-  .calc-blocks {
-    display: flex;
-    justify-content: center;
+@media (max-width: 768px) {
+  .calc-block input,
+  .calc-block select,
+  .calc-block button {
+    width: 100%; /* fill the container */
+    font-size: 16px; /* readable */
+    padding: 10px; /* enough touch space */
+    overflow-x: auto; /* allow horizontal scroll for huge numbers */
+    white-space: nowrap; /* prevents wrapping */
+    box-sizing: border-box; /* includes padding in width */
   }
 }
+/*If no width:width inheritance from parent class: container;*/
 /* Slightly wider on small screens  calculator*/
 /* --- Make all elements a bit wider & easier to use on phones --- */
 
