@@ -239,7 +239,6 @@ html {
   .calc-blocks input,
   .calc-blocks select,
   .calc-blocks button {
-    width: 105%; /* slightly wider */
     font-size: 14px; /* larger touch-friendly text */
     padding: 8px; /* a bit more finger space */
   }
