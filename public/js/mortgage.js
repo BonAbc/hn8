@@ -60,8 +60,8 @@
 function formatOutput(value) {
   if (isNaN(value)) return "";
   return new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3,
   }).format(value);
 }
 

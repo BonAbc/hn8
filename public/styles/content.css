@@ -172,6 +172,30 @@ textarea {
   font-size: 16px;
   box-sizing: border-box;
 }
+/*input wrapprt*/
+.input-wrapper {
+  position: relative;
+  width: 100%; /* full width of container */
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding-right: 30px; /* space for % symbol */
+  box-sizing: border-box;
+  font-size: 14px;
+}
+
+.input-wrapper .unit {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #555;
+  pointer-events: none; /* ignore clicks */
+  font-size: 14px;
+}
+
+/*end Mortgage Page*/
 /*Calculator*/
 .calc-blocks {
   margin-bottom: 15px;
