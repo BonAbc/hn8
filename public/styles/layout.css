@@ -236,7 +236,7 @@ html {
 /* Slightly wider on small screens  calculator*/
 /* --- Make all elements a bit wider & easier to use on phones --- */
 @media (max-width: 768px) {
-  .calc-block input,
+  .calc-blocks input,
   .calc-block select,
   .calc-block button {
     width: 105%; /* slightly wider */
@@ -244,7 +244,7 @@ html {
     padding: 8px; /* a bit more finger space */
   }
 
-  .calc-block {
+  .calc-blocks {
     display: flex;
     justify-content: center;
   }
