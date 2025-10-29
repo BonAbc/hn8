@@ -239,7 +239,7 @@ html {
   .calc-block input,
   .calc-block select,
   .calc-block button {
-    width: 110%; /* slightly wider */
+    width: 105%; /* slightly wider */
     font-size: 16px; /* larger touch-friendly text */
     padding: 8px; /* a bit more finger space */
   }
