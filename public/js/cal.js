@@ -1,4 +1,5 @@
 // Format num1 and num2 inputs on blur (show 1,000.00 style)
+// Format num1 and num2 inputs on blur (show 1,000.00 style)
 ["num1", "num2"].forEach((id) => {
   const input = document.getElementById(id);
 
@@ -13,36 +14,22 @@
       input.value = ""; // clear invalid input
     }
   });
-});
-//to show large number
-["num1", "num2", "result"].forEach((id) => {
-  const input = document.getElementById(id);
 
-  input.addEventListener("input", () => {
-    const length = input.value.replace(/,/g, "").length;
-
-    if (length > 10) {
-      input.style.fontSize = "12px"; // shrink for very large numbers
-    } else if (length > 7) {
-      input.style.fontSize = "14px";
-    } else {
-      input.style.fontSize = "16px"; // default
-    }
-  });
+  // Shrink font dynamically as user types
+  input.addEventListener("input", () => shrinkFont(input));
 });
+
+// Shrink font function for very large numbers
+function shrinkFont(input) {
+  const length = input.value.replace(/,/g, "").length;
+
+  if (length > 12) input.style.fontSize = "12px";
+  else if (length > 9) input.style.fontSize = "14px";
+  else input.style.fontSize = "16px";
+}
 
 // Calculate when button clicked
 document.getElementById("calculateBtn").addEventListener("click", calculate);
-
-// Calculate when Enter pressed in num1, num2, or operator
-//["num1", "num2", "operator"].forEach((id) => {
-// document.getElementById(id).addEventListener("keydown", (event) => {
-//    if (event.key === "Enter") {
-//      event.preventDefault();
-//     calculate();
-//   }
-//  });
-//});
 
 function calculate() {
   const num1 = parseFloat(
@@ -56,6 +43,7 @@ function calculate() {
 
   if (isNaN(num1) || isNaN(num2)) {
     resultInput.value = "Invalid input";
+    shrinkFont(resultInput);
     return;
   }
 
@@ -88,4 +76,16 @@ function calculate() {
   }
 
   resultInput.value = result;
+  shrinkFont(resultInput); // shrink result if too long
 }
+
+// Reset button
+document.getElementById("resetBtn").addEventListener("click", () => {
+  ["num1", "num2", "result"].forEach((id) => {
+    const input = document.getElementById(id);
+    input.value = "";
+    input.style.fontSize = "16px"; // reset font size
+  });
+
+  document.getElementById("operator").value = ""; // reset operator
+});
