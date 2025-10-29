@@ -239,7 +239,7 @@ html {
   .calc-block input,
   .calc-block select,
   .calc-block button {
-    width: 105%; /* slightly wider */
+    width: 110%; /* slightly wider */
     font-size: 18px; /* larger touch-friendly text */
     padding: 12px; /* a bit more finger space */
   }
@@ -251,18 +251,5 @@ html {
 }
 /* Slightly wider on small screens  calculator*/
 /* --- Make all elements a bit wider & easier to use on phones --- */
-@media (max-width: 600px) {
-  .calc-block input,
-  .calc-block select,
-  .calc-block button {
-    width: 105%; /* slightly wider */
-    font-size: 18px; /* larger touch-friendly text */
-    padding: 12px; /* a bit more finger space */
-  }
 
-  .calc-block {
-    display: flex;
-    justify-content: center;
-  }
-}
 /* Media Queries */
