@@ -164,7 +164,15 @@ textarea {
 .calc-block {
   margin-bottom: 15px;
 }
-
+.calc-block input,
+.calc-block select,
+.calc-block button {
+  width: 100%;
+  padding: 5px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+/*
 input,
 select,
 button {
@@ -173,7 +181,7 @@ button {
   font-size: 16px;
   box-sizing: border-box;
 }
-
+*/
 button {
   background-color: #007bff;
   color: white;
