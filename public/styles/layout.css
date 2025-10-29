@@ -237,8 +237,8 @@ html {
 /* --- Make all elements a bit wider & easier to use on phones --- */
 @media (max-width: 768px) {
   .calc-blocks input,
-  .calc-block select,
-  .calc-block button {
+  .calc-blocks select,
+  .calc-blocks button {
     width: 105%; /* slightly wider */
     font-size: 16px; /* larger touch-friendly text */
     padding: 8px; /* a bit more finger space */
