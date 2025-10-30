@@ -20,7 +20,7 @@ body {
 
 /* Flex layout for body */
 body {
-  overflow-x: auto; /* always show horizontal scrollbar. If this is in html: we see 2 scroll bar vertical */
+  overflow-x: scroll; /* Auto: always show horizontal scrollbar. If this is in html: we see 2 scroll bar vertical */
   overflow-y: scroll; /* always show vertical scrollbar */
   /*   overflow-x: auto;*/ /*horizontal scroll only when needed */
   /*  overflow-y: auto;*/ /* vertical scroll only when needed */
