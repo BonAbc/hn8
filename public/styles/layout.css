@@ -274,3 +274,8 @@ html {
 }
 
 /* Media Queries */
+@media (max-width: 600px) {
+  .carousel-item {
+    height: 60vh;
+  }
+}
