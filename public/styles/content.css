@@ -40,15 +40,7 @@ input[type="date"] {
   object-fit: cover; /* Keeps the image from stretching */
   width: 100%;
   object-position: center;
-}
-/* Left button (previous) - position on the left side */
-.carousel-control-prev {
-  left: 15px; /* Slight distance from the left edge */
-}
-
-/* Right button (next) - position on the right side */
-.carousel-control-next {
-  right: 15px; /* Slight distance from the right edge */
+  position: relative;
 }
 
 .custom-caption {
