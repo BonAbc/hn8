@@ -35,14 +35,7 @@ input[type="date"] {
 
 /*Home page and Carousel*/
 /* Ensure carousel item fills the entire container */
-.carousel-item {
-  height: 80vh; /* Adjust the height responsively */
-  display: flex;
-  justify-content: center; /* Horizontally center the image */
-  align-items: center; /* Vertically center the image */
-  position: relative;
-  overflow: hidden;
-}
+
 .custom-carousel-img {
   height: 80vh;
   /* Shrinks the overall slide */
