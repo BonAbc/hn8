@@ -251,5 +251,34 @@ html {
 /*If no width:width inheritance from parent class: container;*/
 /* Slightly wider on small screens  calculator*/
 /* --- Make all elements a bit wider & easier to use on phones --- */
+/* For laptops (1024px–1440px) */
+@media (min-width: 1024px) and (max-width: 1440px) {
+  .custom-carousel-img {
+    max-height: 70vh;
+  }
+  .custom-caption h5 {
+    font-size: 2rem;
+  }
+}
+
+/* For tablets and smaller screens */
+@media (max-width: 1023px) {
+  .custom-carousel-img {
+    max-height: 50vh;
+  }
+  .custom-caption h5 {
+    font-size: 1.3rem;
+  }
+}
+
+/* For phones */
+@media (max-width: 600px) {
+  .custom-caption {
+    bottom: 5%;
+  }
+  .custom-caption h5 {
+    font-size: 1rem;
+  }
+}
 
 /* Media Queries */

@@ -35,9 +35,11 @@ input[type="date"] {
 
 /*Home page and Carousel*/
 .custom-carousel-img {
+  height: auto;
   max-height: 800px; /* Shrinks the overall slide */
   object-fit: cover; /* Keeps the image from stretching */
   width: 100%;
+  object-fit: cover;
 }
 
 .custom-caption {
