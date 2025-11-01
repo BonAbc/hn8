@@ -48,13 +48,6 @@ input[type="date"] {
   align-items: center; /* Vertical centering */
   justify-content: center; /* Horizontal centering */
 }
-/* Carousel images */
-.carousel-item img.custom-carousel-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* Keeps proportions while filling space */
-  object-position: center;
-}
 
 .custom-caption {
   font-size: 0.9rem; /* Smaller text */
