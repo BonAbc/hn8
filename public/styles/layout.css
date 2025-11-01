@@ -252,32 +252,30 @@ html {
 /* Slightly wider on small screens  calculator*/
 /* --- Make all elements a bit wider & easier to use on phones --- */
 /* For laptops (1024px–1440px) */
-@media (min-width: 1024px) and (max-width: 1440px) {
+/* Large laptops and desktops (1600px and above) */
+@media (min-width: 1600px) {
   .custom-carousel-img {
-    max-height: 70vh;
-  }
-  .custom-caption h5 {
-    font-size: 2rem;
+    height: 85vh; /* Slightly taller for big screens */
   }
 }
 
-/* For tablets and smaller screens */
-@media (max-width: 1023px) {
+/* Standard laptops (1024px–1599px) */
+@media (min-width: 1024px) and (max-width: 1599px) {
   .custom-carousel-img {
-    max-height: 50vh;
-  }
-  .custom-caption h5 {
-    font-size: 1.3rem;
+    height: 80vh; /* Perfect height for 13–17 inch laptops */
   }
 }
 
-/* For phones */
+/* Tablets (768px–1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .custom-carousel-img {
+    height: 60vh;
+  }
+}
+/* Phones */
 @media (max-width: 600px) {
-  .custom-caption {
-    bottom: 5%;
-  }
-  .custom-caption h5 {
-    font-size: 1rem;
+  .carousel-item {
+    height: 45vh;
   }
 }
 
