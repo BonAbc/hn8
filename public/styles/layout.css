@@ -249,6 +249,18 @@ html {
   }
 }
 /*If no width:width inheritance from parent class: container;*/
+/* On mobile devices, ensure space is even and image fills the container */
+@media (max-width: 768px) {
+  .carousel-item {
+    height: 50vh; /* Adjust height for mobile */
+  }
+  .custom-carousel-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center; /* Ensure the image is perfectly centered */
+  }
+}
 /* Slightly wider on small screens  calculator*/
 /* --- Make all elements a bit wider & easier to use on phones --- */
 /* For laptops (1024px–1440px) */
