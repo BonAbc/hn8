@@ -41,6 +41,10 @@ input[type="date"] {
   width: 100%;
   object-position: center;
 }
+/* Control carousel height responsively */
+.carousel-item {
+  height: 80vh; /* Base height – good for laptops */
+}
 
 .custom-caption {
   font-size: 0.9rem; /* Smaller text */
