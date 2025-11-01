@@ -47,7 +47,6 @@ input[type="date"] {
   display: flex; /* Enable flexbox */
   align-items: center; /* Vertical centering */
   justify-content: center; /* Horizontal centering */
-  position: relative;
 }
 /* Carousel images */
 .carousel-item img.custom-carousel-img {
