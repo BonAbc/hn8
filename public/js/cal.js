@@ -7,8 +7,8 @@
     const value = parseFloat(input.value.replace(/,/g, ""));
     if (!isNaN(value)) {
       input.value = value.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3,
       });
     } else {
       input.value = ""; // clear invalid input
