@@ -48,7 +48,6 @@ input[type="date"] {
   align-items: center; /* Vertical centering */
   justify-content: center; /* Horizontal centering */
   position: relative;
-  overflow: hidden;
 }
 /* Carousel images */
 .carousel-item img.custom-carousel-img {
