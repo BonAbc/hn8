@@ -272,11 +272,5 @@ html {
     height: 60vh;
   }
 }
-/* Phones */
-@media (max-width: 600px) {
-  .carousel-item {
-    height: 45vh;
-  }
-}
 
 /* Media Queries */
