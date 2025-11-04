@@ -246,7 +246,7 @@ app.get("/otherlink", async (req, res) => {
 
     // Render tax page with data
     res.render("otherlink.ejs", {
-      defaultDate: getToday,
+      defaultDate: getToday(),
       taxDatas: results.rows,
     });
   } catch (err) {

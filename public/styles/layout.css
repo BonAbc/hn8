@@ -250,7 +250,13 @@ html {
 }
 /*If no width:width inheritance from parent class: container;*/
 /* On mobile devices, ensure space is even and image fills the container */
-
+@media (max-width: 768px) {
+  .mobile-big-table th,
+  .mobile-big-table td {
+    font-size: 1.2rem; /* bigger text */
+    padding: 1rem 0.75rem; /* larger spacing inside cells */
+  }
+}
 /* Slightly wider on small screens  calculator*/
 /* --- Make all elements a bit wider & easier to use on phones --- */
 /* For laptops (1024px–1440px) */
