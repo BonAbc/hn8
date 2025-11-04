@@ -305,6 +305,16 @@ button:hover {
 }
 
 /*Tax page end*/
+/* Otherlink Page begin*/
+
+.table-hover tbody tr:hover {
+  background-color: lightyellow !important; /* light green */
+  transition: background-color 0.3s ease;
+}
+.table-hover tbody tr:hover td {
+  background-color: lightyellow !important;
+}
+/* otherlink Page End*/
 /*Log in form*/
 /* ============================================================
    GLOBAL INPUT STYLING

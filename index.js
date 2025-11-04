@@ -236,9 +236,24 @@ app.get("/link", (req, res) =>
 app.get("/anotherlink", (req, res) =>
   res.render("anotherlink.ejs", { defaultDate: getToday() })
 );
-app.get("/otherlink", (req, res) =>
-  res.render("otherlink.ejs", { defaultDate: getToday() })
-);
+//app.get("/otherlink", (req, res) =>
+//  res.render("otherlink.ejs", { defaultDate: getToday() })
+//);
+app.get("/otherlink", async (req, res) => {
+  try {
+    // Query tax data from database
+    const results = await db.query("SELECT * FROM obb ORDER BY id");
+
+    // Render tax page with data
+    res.render("otherlink.ejs", {
+      defaultDate: getToday,
+      taxDatas: results.rows,
+    });
+  } catch (err) {
+    console.error("Error loading tax data:", err);
+    res.status(500).send("Error loading tax data");
+  }
+});
 app.get("/calculate", (req, res) =>
   res.render("calculator.ejs", { defaultDate: getToday() })
 );
