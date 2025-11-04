@@ -46,23 +46,21 @@
   </div>
 
   <!---->
-  <h2></h2>
+  <h2>An Overview</h2>
   <!---->
 
-    <div class="container">
-       
   <h5 class="cvla" style="color: green"><u>For references only👇</u></h5>
-      
-      <div class="apt">
+
+  <div class="apt">
     <!---->
-  
+
     <!---->
     <!--Add table-->
     <!-- Bootstrap container: adds left/right padding and centers content -->
 
-    <div class="container mt-0">
+    <div class="container-fluid mt-0">
       <!-- Bootstrap card: adds a nice box around the content with padding and shadow -->
-      <div class="card shadow"> 
+      <div class="card shadow">
         <!-- Card header: styled with background color and text color -->
         <div class="card-header bg-success text-warning">
           <h4 class="mb-0">Key Updates: New Tax Provisions for 2025</h4>
@@ -79,33 +77,29 @@
             <!-- Responsive wrapper: enables horizontal scroll on small screens -->
             <!-- <div class="table-responsive"> -->
 
-            <table class="table table-hover " >
+            <table class="table table-hover">
               <thead>
                 <tr>
                   <th scope="col">#</th>
                   <!-- Table header field 1-->
                   <th scope="col">Effective Years</th>
                   <th scope="col">Items</th>
-                  <th scope="col">Categories</th>                  
+                  <th scope="col">Categories</th>
                   <th scope="col">Notes</th>
-                  
                 </tr>
               </thead>
 
               <tbody>
-                
-                <% if (taxDatas && taxDatas.length > 0) { %>
-                
-                <% taxDatas.forEach((row,index)=> { %>
-           
+                <% if (taxDatas && taxDatas.length > 0) { %> <%
+                taxDatas.forEach((row,index)=> { %>
+
                 <tr>
-                  
                   <th scope="row"><%= index + 1 %></th>
                   <!--scope="row" means that this <th> is a row header: bold color — it labels the entire row it's in.-->
                   <td><%= row.ed %></td>
                   <td><%= row.nb %></td>
                   <td><%= row.cr %></td>
-                 
+
                   <td><%= row.notes %></td>
                 </tr>
                 <% }) %> <% } else { %>
@@ -118,15 +112,11 @@
           </div>
         </div>
       </div>
-      <br>
-     <p> Sources: The IRS, and The One Big Beautiful </p>
-      
-      </div>
-
+      <br />
+      <p>Sources: The IRS, and The One Big Beautiful</p>
     </div>
-     
-    
-  
+  </div>
+
   <!---->
   <section class="py-5 bg-light border border-black mt-4 mb-4">
     <div class="container">
