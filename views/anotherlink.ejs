@@ -85,18 +85,17 @@
 
               <tbody>
                 <!-- Check if taxData exists and has rows -->
-                <% if (pr && pr.length > 0) { %>
+                <% if (prs && prs.length > 0) { %>
                 <!-- Loop over each row in taxData using forEach -->
-                <% pr.forEach((row,index)=> { %>
+                <% prs.forEach((row,index)=> { %>
 
                 <tr>
                   <th scope="row"><%= index + 1 %></th>
 
-                  <td><%= row.ed %></td>
-                  <td><%= row.nb %></td>
-                  <td><%= row.cr %></td>
-
-                  <td><%= row.notes %></td>
+                  <td><%= row.eed %></td>
+                  <td><%= row.nnb %></td>
+                  <td><%= row.ccr %></td>
+                  <td><%= row.note %></td>
                 </tr>
                 <% }) %> <% } else { %>
                 <tr>

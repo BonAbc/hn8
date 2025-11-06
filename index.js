@@ -233,9 +233,26 @@ app.get("/contact", (req, res) =>
 app.get("/link", (req, res) =>
   res.render("link.ejs", { defaultDate: getToday() })
 );
-app.get("/anotherlink", (req, res) =>
-  res.render("anotherlink.ejs", { defaultDate: getToday() })
-);
+//app.get("/anotherlink", (req, res) =>
+//  res.render("anotherlink.ejs", { defaultDate: getToday() })
+//);
+//Update anotherlink
+app.get("/anotherlink", async (req, res) => {
+  try {
+    // Query tax data from database
+    const pr = await db.query("SELECT * FROM obbpr ORDER BY id");
+
+    // Render tax page with data
+    res.render("anotherlink.ejs", {
+      defaultDate: getToday(),
+      prs: pr.rows,
+    });
+  } catch (err) {
+    console.error("Error loading tax data:", err);
+    res.status(500).send("Error loading tax data");
+  }
+});
+//
 //app.get("/otherlink", (req, res) =>
 //  res.render("otherlink.ejs", { defaultDate: getToday() })
 //);
