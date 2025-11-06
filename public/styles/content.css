@@ -315,6 +315,15 @@ button:hover {
   background-color: lightyellow !important;
 }
 /* otherlink Page End*/
+/* Anotherlink Page begin*/
+.hover tbody tr:hover {
+  background-color: lightcyan !important; /* light green */
+  transition: background-color 0.3s ease;
+}
+.hover tbody tr:hover td {
+  background-color: lightcyan !important;
+}
+/* Anotherlink Page End*/
 /*Log in form*/
 /* ============================================================
    GLOBAL INPUT STYLING

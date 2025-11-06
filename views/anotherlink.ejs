@@ -46,25 +46,75 @@
   </div>
 
   <!---->
-  <h2></h2>
+  <h2>Overview: Tax Year 2025</h2>
   <!---->
-  <section class="py-5 bg-light border border-black mt-4 mb-4">
-    <div class="container">
-      <p>Information will be updated.</p>
-    </div>
-  </section>
+
+  <h5 class="cvla" style="color: green"><u>For references only</u></h5>
   <!---->
-  <section class="py-5 bg-light border border-black mt-4 mb-4">
-    <div class="container">
-      <p>Information will be updated.</p>
+  <div class="apt">
+    <!---->
+
+    <!---->
+    <!--Add table-->
+    <!-- Bootstrap container: adds left/right padding and centers content -->
+
+    <div class="container-fluid mt-0">
+      <div class="card shadow">
+        <!-- Card header: styled with background color and text color -->
+        <div class="card-header bg-success text-warning">
+          <h4 class="mb-0">Key Updates: New Tax Provisions for 2025</h4>
+          <!-- Table title -->
+        </div>
+        <div class="card-body p-0">
+          <div
+            class="table-responsive"
+            style="max-height: 400px; overflow-y: auto"
+          >
+            <table class="table hover">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <!-- Table header field 1-->
+                  <th scope="col">Effective Years</th>
+                  <th scope="col">Items</th>
+                  <th scope="col">Summary</th>
+                  <th scope="col">Notes</th>
+                  <!--Add column header above and Add column content below-->
+                </tr>
+              </thead>
+
+              <tbody>
+                <!-- Check if taxData exists and has rows -->
+                <% if (pr && pr.length > 0) { %>
+                <!-- Loop over each row in taxData using forEach -->
+                <% pr.forEach((row,index)=> { %>
+
+                <tr>
+                  <th scope="row"><%= index + 1 %></th>
+
+                  <td><%= row.ed %></td>
+                  <td><%= row.nb %></td>
+                  <td><%= row.cr %></td>
+
+                  <td><%= row.notes %></td>
+                </tr>
+                <% }) %> <% } else { %>
+                <tr>
+                  <td colspan="6" class="text-muted">No tax data available.</td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <br />
+      <p>Sources: The IRS.</p>
+      <p>Tax regulations rarely stand still.</p>
     </div>
-  </section>
+  </div>
   <!---->
-  <section class="py-5 bg-light border border-black mt-4 mb-4">
-    <div class="container">
-      <p>Information will be updated.</p>
-    </div>
-  </section>
+  <!---->
   <!---->
   <h5>We Handle the Numbers, You Grow the Business.</h5>
 </main>
