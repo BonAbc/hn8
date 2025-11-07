@@ -324,7 +324,6 @@ app.get("/apti", async (req, res) => {
     });
     // [row.st] = row.tr : make a New key- value pair [IL] = 4.75
     // Today's date (ISO format yyyy-mm-dd)
-    const today = new Date().toISOString().split("T")[0];
 
     // ✅ Render view
     res.render("apti.ejs", {
