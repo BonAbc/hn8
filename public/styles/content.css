@@ -461,6 +461,49 @@ button:hover {
 
 /*End tracking visitor table*/
 
-/**/
+/*Accounting page begin*/
+.sap {
+  display: block;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 1px solid black;
+  border-radius: 8px;
+  text-align: left;
+  text-indent: 5px;
+  margin: 2px auto;
 
+  width: 100%;
+  max-width: 800px; /* max container width on large screens */
+  min-width: 280px; /* smaller min-width for mobile */
+
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.sap input {
+  width: 100%;
+  box-sizing: border-box;
+}
+/* Buttons inline with gap */
+.sap > .d-flex {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sap > .d-flex > button {
+  flex: 1 1 48%;
+  min-width: 120px;
+  height: 35px;
+  border-radius: 0; /* no rounding if you want */
+}
+
+/* Responsive for very small screens */
+@media (max-width: 480px) {
+  .sap > .d-flex > button {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}
+/*Accounting page end*/
 /**/

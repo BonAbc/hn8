@@ -46,28 +46,78 @@
     </div>
   </div>
   <!---->
-  <h2></h2>
+  <h2>Basic Accounting</h2>
   <!---->
-  <section class="py-5 bg-light border border-black mt-4 mb-4">
-    <div class="container">
-      <p>Information will be updated.</p>
+  <div class="sap">
+    <div class="mb-3">
+      <label for="ac1" class="fw-semibold"> Gross Income </label>
+
+      <input
+        type="text"
+        id="ac1"
+        name="ac1"
+        class="mx-auto"
+        style="height: 35px; padding: 2px 6px"
+        required
+      />
     </div>
-  </section>
-  <!---->
-  <section class="py-5 bg-light border border-black mt-4 mb-4">
-    <div class="container">
-      <p>Information will be updated.</p>
+    <!-- Input field 2 -->
+
+    <div class="mb-3">
+      <label for="ac2" class="fw-semibold">Total Expense</label>
+      <input
+        type="text"
+        id="ac2"
+        name="ac2"
+        class="mx-auto"
+        style="height: 35px; padding: 2px 6px"
+        required
+      />
     </div>
-  </section>
-  <!---->
-  <section class="py-5 bg-light border border-black mt-4 mb-4">
-    <div class="container">
-      <p>Information will be updated.</p>
+    <div class="mb-3">
+      <label for="ac3" class="fw-semibold">Income before tax</label>
+      <input
+        type="text"
+        id="ac3"
+        name="ac3"
+        class="mx-auto"
+        style="height: 35px; padding: 2px 6px"
+        readonly
+      />
     </div>
-  </section>
+    <div class="mb-3">
+      <label for="ac4" class="fw-semibold">Income Tax</label>
+      <input
+        type="text"
+        id="ac4"
+        name="ac4"
+        class="mx-auto"
+        style="height: 35px; padding: 2px 6px"
+        required
+      />
+    </div>
+    <div class="mb-3">
+      <label for="ac5" class="fw-semibold">Net Income</label>
+      <input
+        type="text"
+        id="ac5"
+        name="ac5"
+        class="mx-auto"
+        style="height: 35px; padding: 2px 6px"
+        readonly
+      />
+    </div>
+
+    <div class="d-flex gap-2 mt-2">
+      <button id="ac6" class="btn btn-success">Calculate</button>
+      <button id="ac7" class="btn btn-dark">Clear</button>
+    </div>
+  </div>
   <!---->
   <h5>We Handle the Numbers, You Grow the Business.</h5>
   <!--Refer to index.ejs how to include header and footer.ejs-->
 </main>
-
+<!-- Link external JS -->
+<script src="/js/ac.js"></script>
+<!-- Link external JS end -->
 <%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->
