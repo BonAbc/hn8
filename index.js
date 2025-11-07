@@ -327,8 +327,8 @@ app.get("/apti", async (req, res) => {
     const today = new Date().toISOString().split("T")[0];
 
     // ✅ Render view
-    res.render("sap", {
-      defaultDate: today,
+    res.render("apti.ejs", {
+      defaultDate: getToday(),
       fsValues,
       stValues,
       stateRates: stateRates || {}, // fallback if empty
