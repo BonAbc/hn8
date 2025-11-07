@@ -296,6 +296,49 @@ app.get("/tax", async (req, res) => {
     res.status(500).send("Error loading tax data");
   }
 });
+//Tax calculation tool
+app.get("/apti", async (req, res) => {
+  try {
+    // Query Table1: fs.fs
+    const fsResult = await db.query("SELECT fs FROM fs");
+    const fsValues = fsResult.rows.map((row) => row.fs);
+    //.map((row) => row.fs) → takes each row and extracts only the fs property.
+    //fsResult = {
+    // rows: [
+    //   { fs: "Single" },
+    //   { fs: "Married" },
+    //  { fs: "Head of Household" }
+    // ],
+    //rowCount: 3,
+    // ...other metadata
+    //};
+
+    // Query Table2: st.st, st.tr
+    const stResult = await db.query("SELECT st, tr FROM st");
+    const stValues = stResult.rows.map((row) => row.st);
+
+    // Build mapping { state: rate }
+    const stateRates = {};
+    stResult.rows.forEach((row) => {
+      stateRates[row.st] = row.tr;
+    });
+    // [row.st] = row.tr : make a New key- value pair [IL] = 4.75
+    // Today's date (ISO format yyyy-mm-dd)
+    const today = new Date().toISOString().split("T")[0];
+
+    // ✅ Render view
+    res.render("sap", {
+      defaultDate: today,
+      fsValues,
+      stValues,
+      stateRates: stateRates || {}, // fallback if empty
+    });
+  } catch (err) {
+    console.error("Error loading /sap:", err);
+    res.status(500).send("Database error");
+  }
+});
+//Tax calculation tool
 
 //app.get("/mes", async (req, res) => {
 //  if (!adminEmails.includes(req.user.email))

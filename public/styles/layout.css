@@ -260,3 +260,67 @@ html {
 /* Slightly wider on small screens  calculator*/
 /* --- Make all elements a bit wider & easier to use on phones --- */
 /* For laptops (1024px–1440px) */
+/**/
+/*Begin apti*/
+/* Two columns: State (left) and Federal (right) sapjs */
+.sap.container .row {
+  display: flex;
+  flex-wrap: wrap; /* Allows columns to wrap on smaller screens */
+  gap: 1rem; /* Space between columns */
+}
+
+.sap.container .col-md-6 {
+  flex: 1 1 48%; /* Each column takes ~48% width */
+  min-width: 250px; /* Prevent columns from becoming too narrow */
+}
+
+/* -----------------------------
+   Tablet (width <= 992px)
+----------------------------- */
+@media (max-width: 992px) {
+  .sap.container .col-md-6 {
+    flex: 1 1 100%; /* Columns stack vertically */
+  }
+
+  .sap .mb-3 {
+    flex-direction: column; /* Labels above inputs */
+    align-items: flex-start;
+  }
+
+  .sap .mb-3 label {
+    margin-bottom: 0.25rem;
+  }
+
+  .sap .mb-3 input {
+    width: 100%; /* Inputs take full width */
+  }
+
+  .d-flex.gap-2 {
+    flex-wrap: wrap; /* Buttons wrap if needed */
+    gap: 0.5rem !important; /* Reduce gap between buttons */
+  }
+}
+
+/* -----------------------------
+   Mobile (width <= 576px)
+----------------------------- */
+@media (max-width: 576px) {
+  .sap h6 {
+    font-size: 0.95rem; /* Smaller heading text */
+  }
+
+  .sap .mb-3 label {
+    width: 100%; /* Label full width */
+  }
+
+  .sap .mb-3 input {
+    width: 100%; /* Input full width */
+  }
+
+  .d-flex.gap-5 {
+    gap: 0.25rem !important; /* Reduce spacing for very small screens */
+  }
+}
+/*Accounting page begin */
+/* Responsive input fields */
+/* Buttons container: 2 buttons side by side, half width */
