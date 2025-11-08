@@ -48,17 +48,19 @@
     class="video-container position-relative border rounded p-3"
     style="max-width: 700px; margin: 20px auto"
   >
-    <!-- Video player itself -->
     <div class="ratio ratio-16x9">
-      <video id="sapVideo" preload="metadata" class="w-100">
-        <!-- Replace the path below with your actual video -->
-        <source src="/Videos/SAPCustomM.mp4" type="video/mp4" />
+      <video
+        id="sapVideo"
+        preload="metadata"
+        class="w-100"
+        poster="/images/video-poster.png"
+      >
+        <source src="/videos/SAPCustomM.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
     </div>
 
-    <!-- Simple play/pause control buttons -->
-    <div class="video-controls d-flex justify-content-center gap-3 mt-3">
+    <div class="video-controls d-flex justify-content-center gap-2 mt-3">
       <button id="playBtn" class="btn btn-success btn-sm">▶️</button>
       <button id="pauseBtn" class="btn btn-secondary btn-sm">⏸</button>
     </div>
