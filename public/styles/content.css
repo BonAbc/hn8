@@ -507,3 +507,21 @@ button:hover {
 }
 /*Accounting page end*/
 /**/
+/*hana.ejs*/
+/* Centers and spaces the buttons neatly */
+/* Make buttons tighter and shorter in length */
+.video-controls button {
+  width: auto; /* shrink to fit the icon size */
+  padding: 0.25rem 0.5rem; /* minimal padding inside the button */
+  font-size: 1.2rem; /* keep the emoji clear */
+  line-height: 1; /* removes extra vertical space */
+  border-radius: 6px; /* subtle rounded corners */
+  transition: background-color 0.2s ease;
+}
+
+/* Clean hover color, no bar effect */
+.video-controls button:hover {
+  background-color: mediumseagreen;
+  color: #fff;
+}
+/*hana.ejs end*/

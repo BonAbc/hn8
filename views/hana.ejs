@@ -43,27 +43,30 @@
     </div>
   </div>
   <!---->
-  <h2></h2>
-  <!---->
-  <section class="py-5 bg-light border border-black mt-4 mb-4">
-    <div class="container">
-      <p>Information will be updated.</p>
+  <h2>A custom feature</h2>
+  <div
+    class="video-container position-relative border rounded p-3"
+    style="max-width: 700px; margin: 20px auto"
+  >
+    <!-- Video player itself -->
+    <div class="ratio ratio-16x9">
+      <video id="sapVideo" preload="metadata" class="w-100">
+        <!-- Replace the path below with your actual video -->
+        <source src="/videos/SAPCustomM.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
     </div>
-  </section>
-  <!---->
-  <section class="py-5 bg-light border border-black mt-4 mb-4">
-    <div class="container">
-      <p>Information will be updated.</p>
+
+    <!-- Simple play/pause control buttons -->
+    <div class="video-controls d-flex justify-content-center gap-3 mt-3">
+      <button id="playBtn" class="btn btn-success btn-sm">▶️</button>
+      <button id="pauseBtn" class="btn btn-secondary btn-sm">⏸</button>
     </div>
-  </section>
-  <!---->
-  <section class="py-5 bg-light border border-black mt-4 mb-4">
-    <div class="container">
-      <p>Information will be updated.</p>
-    </div>
-  </section>
+  </div>
   <h5>We Handle the Numbers, You Grow the Business.</h5>
   <!---->
 </main>
-
+<!-- Link external JS -->
+<script src="/js/hn.js"></script>
+<!-- Link external JS end -->
 <%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->
