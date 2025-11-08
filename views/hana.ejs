@@ -44,20 +44,18 @@
   </div>
   <!---->
   <h2>A custom feature</h2>
+
   <div
     class="video-container position-relative border rounded p-3"
     style="max-width: 700px; margin: 20px auto"
   >
-    <!-- Video player itself -->
     <div class="ratio ratio-16x9">
-      <video id="sapVideo" preload="metadata" class="w-100">
-        <!-- Replace the path below with your actual video -->
-        <source src="/images/custom.mp4" type="video/mp4" />
+      <video id="sapVideo" preload="metadata" class="w-100" controls>
+        <source src="/video/vi.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
     </div>
 
-    <!-- Simple play/pause control buttons -->
     <div class="video-controls d-flex justify-content-center gap-3 mt-3">
       <button id="playBtn" class="btn btn-success btn-sm">▶️</button>
       <button id="pauseBtn" class="btn btn-secondary btn-sm">⏸</button>
@@ -67,7 +65,10 @@
   <h5>We Handle the Numbers, You Grow the Business.</h5>
   <!---->
 </main>
-<!-- Link external JS -->
-<script src="/js/hn.js"></script>
+<!-- Script at the end of body, safe for DOM -->
 <!-- Link external JS end -->
+<!-- Link external JS -->
+<script src="/js/video.js"></script>
+<!-- Link external JS end -->
+<!---->
 <%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->
