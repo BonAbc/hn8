@@ -16,7 +16,7 @@ import compression from "compression";
 import connectPg from "connect-pg-simple";
 
 import { DateTime } from "luxon";
-import multer from "multer";
+//import multer from "multer";
 
 dotenv.config();
 
@@ -47,17 +47,9 @@ app.use(express.static("public"));
 //app.use("/uploads", express.static("/uploads"));
 //Above for mp4
 app.set("view engine", "ejs");
-//
-const storage = multer.diskStorage({
-  destination: "/uploads", // absolute path to your Render persistent disk
-  filename: (req, file, cb) => {
-    cb(null, "xem.mp4"); // save uploaded file as xem.mp4
-  },
-});
 
-const upload = multer({ storage: storage });
 // Serve videos from Render persistent disk
-app.use("/images", express.static("/uploads"));
+//app.use("/images", express.static("/uploads"));
 // URL: /images/xem.mp4 → file location: /uploads/xem.mp4
 
 const __filename = fileURLToPath(import.meta.url);
