@@ -40,7 +40,8 @@ app.use(compression());
 app.set("trust proxy", 1);
 
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static("public"));
+//app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 app.set("view engine", "ejs");
 
 const __filename = fileURLToPath(import.meta.url);
