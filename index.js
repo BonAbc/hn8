@@ -43,9 +43,12 @@ app.set("trust proxy", 1);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 //app.use(express.static(path.join(__dirname, "public")));
-app.use("/uploads", express.static("/uploads"));
+//app.use("/uploads", express.static("/uploads"));
 //Above for mp4
 app.set("view engine", "ejs");
+// Serve videos from Render persistent disk
+app.use("/images", express.static("/uploads"));
+// URL: /images/xem.mp4 → file location: /uploads/xem.mp4
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
