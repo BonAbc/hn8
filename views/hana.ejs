@@ -50,11 +50,17 @@
     style="
       max-width: 700px;
       margin: 20px auto;
-      border: solid mediumseagreen 1.5px;
+      border: 1.5px solid mediumseagreen;
     "
   >
     <div class="ratio ratio-16x9">
-      <video id="sapVideo" preload="metadata" class="w-100" controls>
+      <video
+        id="sapVideo"
+        preload="metadata"
+        class="w-100"
+        controls
+        playsinline
+      >
         <source src="/images/xem.mp4" type="video/mp4" />
         <!--    <source src="/uploads/xem.mp4" type="video/mp4" />-->
         Your browser does not support the video tag.
