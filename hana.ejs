@@ -46,16 +46,23 @@
   <h2>A custom feature</h2>
 
   <div
-    class="video-container position-relative border rounded p-3"
-    style="max-width: 700px; margin: 20px auto; background-color: #f0ffff"
+    class="video-container position-relative rounded p-3"
+    style="
+      max-width: 700px;
+      margin: 20px auto;
+      border: 2px solid rgb(240, 255, 253);
+      background-color: #f9f9f9;
+    "
   >
     <div class="ratio ratio-16x9">
       <video
         id="sapVideo"
         preload="metadata"
         class="w-100"
-        controls
         playsinline
+        controlslist="nodownload noremoteplayback nofullscreen"
+        disablePictureInPicture
+        oncontextmenu="return false;"
       >
         <source src="/images/xem.mp4" type="video/mp4" />
         <!--    <source src="/uploads/xem.mp4" type="video/mp4" />-->
