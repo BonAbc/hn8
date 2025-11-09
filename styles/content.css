@@ -516,7 +516,7 @@ button:hover {
   font-size: 1.2rem; /* keep the emoji clear */
   line-height: 1; /* removes extra vertical space */
   border-radius: 6px; /* subtle rounded corners */
-  background-color: lightseagreen;
+
   transition: background-color 0.2s ease;
 }
 
