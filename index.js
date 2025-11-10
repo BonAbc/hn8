@@ -309,7 +309,7 @@ app.get("/tax", async (req, res) => {
 app.get("/apti", async (req, res) => {
   try {
     // Query Table1: fs.fs
-    const fsResult = await db.query("SELECT fs FROM fs");
+    const fsResult = await db.query("SELECT fs FROM fs order by fs");
     const fsValues = fsResult.rows.map((row) => row.fs);
     //.map((row) => row.fs) → takes each row and extracts only the fs property.
     //fsResult = {
@@ -323,7 +323,7 @@ app.get("/apti", async (req, res) => {
     //};
 
     // Query Table2: st.st, st.tr
-    const stResult = await db.query("SELECT st, tr FROM st");
+    const stResult = await db.query("SELECT st, tr FROM st order by st");
     const stValues = stResult.rows.map((row) => row.st);
 
     // Build mapping { state: rate }
