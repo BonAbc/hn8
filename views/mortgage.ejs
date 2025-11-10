@@ -13,13 +13,7 @@
   <h2 class="mo1">Mortgage Calculator</h2>
   <!-- <h3>Debt Amortization</h3>-->
   <!--Add another div-->
-  <h5>
-    This mortgage calculator is for informational and educational purpose only.
-  </h5>
-  <h5>
-    By using this tool, you acknowledge that all the numbers are your own
-    estimates.
-  </h5>
+
   <!--Add another div-->
   <!-- Mortgage Calculator UI -->
   <div class="mortgage-container">
@@ -27,17 +21,22 @@
       <!-- Purchase and Down Payment -->
       <div class="calc-block">
         <label for="num1">Purchase Price</label>
-        <input type="text" id="num1" placeholder="Enter number 1" />
+        <input type="text" id="num1" placeholder="Enter number 1" readonly />
       </div>
 
       <div class="calc-block">
         <label for="num2">Down Payment</label>
-        <input type="text" id="num2" placeholder="Enter number 2" />
+        <input type="text" id="num2" placeholder="Enter number 2" readonly />
       </div>
 
       <div class="calc-block">
         <label for="num3">Loan Amount <span style="color: red">*</span></label>
-        <input type="text" id="num3" placeholder="Auto/Enter number 3" />
+        <input
+          type="text"
+          id="num3"
+          placeholder="Auto/Enter number 3"
+          readonly
+        />
       </div>
     </div>
 
@@ -53,6 +52,7 @@
             id="num4"
             placeholder="Enter number 4 *"
             required
+            readonly
           />
           <span class="unit">%</span>
         </div>
@@ -62,7 +62,13 @@
         <label for="num5"
           >Loan Term in year <span style="color: red">*</span></label
         >
-        <input type="text" id="num5" placeholder="Enter number 5 *" required />
+        <input
+          type="text"
+          id="num5"
+          placeholder="Enter number 5 *"
+          required
+          readonly
+        />
       </div>
 
       <div class="calc-block">
@@ -75,17 +81,17 @@
       <!-- Additional Costs -->
       <div class="calc-block">
         <label for="num7">Monthly Property Tax</label>
-        <input type="text" id="num7" placeholder="Enter number 7" />
+        <input type="text" id="num7" placeholder="Enter number 7" readonly />
       </div>
 
       <div class="calc-block">
         <label for="num8">Monthly Insurance</label>
-        <input type="text" id="num8" placeholder="Enter number 8" />
+        <input type="text" id="num8" placeholder="Enter number 8" readonly />
       </div>
 
       <div class="calc-block">
         <label for="num9">Others Monthly</label>
-        <input type="text" id="num9" placeholder="Enter number 9" />
+        <input type="text" id="num9" placeholder="Enter number 9" readonly />
       </div>
     </div>
   </div>
@@ -127,10 +133,7 @@
   <br />
   <!-- <h5 style="color: darkblue">Dzui lòng chỉ giáo, nếu sơ sót.</h5> -->
   <h6>Required <span style="color: red">*</span></h6>
-  <p>
-    If Number 3 is known, just enter Number 3. Number 1 and Number 2 are not
-    needed.
-  </p>
+
   <!--Add another div-->
 
   <!-- Add another div-->
