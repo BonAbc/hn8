@@ -1,0 +1,91 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+
+  <!---->
+  <h2 id="hm">SAP Accounting</h2>
+  <!---->
+  <div class="apd">
+    <div class="card" style="width: 18rem">
+      <img src="/images/hncal.PNG" class="card-img-top" alt="Calculator" />
+
+      <div class="card-body">
+        <h5 class="card-title">Calculator</h5>
+        <p class="card-text"></p>
+        <a id="m1" href="#" class="btn btn-primary">Accuarate</a>
+      </div>
+    </div>
+
+    <div class="card" style="width: 18rem">
+      <img
+        src="/images/Database-fill-check.PNG"
+        class="card-img-top"
+        alt="Database Picture"
+      />
+      <div class="card-body">
+        <h5 class="card-title">Database</h5>
+        <p class="card-text"></p>
+        <a id="m5" href="#" class="btn btn-primary">Consistent</a>
+      </div>
+    </div>
+
+    <div class="card" style="width: 18rem">
+      <img src="/images/hnfolder.PNG" class="card-img-top" alt="Folder" />
+      <div class="card-body">
+        <h5 class="card-title">Folder</h5>
+        <p class="card-text"></p>
+        <a id="m2" href="#" class="btn btn-primary">Organized</a>
+      </div>
+    </div>
+  </div>
+  <!---->
+  <h2>A custom feature</h2>
+
+  <div
+    class="video-container position-relative rounded p-3"
+    style="
+      max-width: 700px;
+      margin: 20px auto;
+      border: 1.5px solid #3cb371;
+      background-color: #f9f9f9;
+    "
+  >
+    <div
+      class="ratio ratio-16x9"
+      style="border: 1.5px solid #3cb371; border-radius: 8px; overflow: hidden"
+    >
+      <video
+        id="sapVideo"
+        preload="metadata"
+        class="w-100"
+        playsinline
+        controlslist="nodownload noremoteplayback nofullscreen"
+        disablePictureInPicture
+        oncontextmenu="return false;"
+      >
+        <source src="/video/coi.mp4" type="video/mp4" />
+        <!--    <source src="/uploads/xem.mp4" type="video/mp4" />-->
+        Your browser does not support the video tag.
+      </video>
+    </div>
+
+    <div class="video-controls d-flex justify-content-center gap-3 mt-3">
+      <button id="playBtn" class="btn btn-success btn-sm">▶️</button>
+      <button id="pauseBtn" class="btn btn-secondary btn-sm">⏸</button>
+    </div>
+  </div>
+
+  <h5>We Handle the Numbers, You Grow the Business.</h5>
+  <!---->
+</main>
+<!-- Script at the end of body, safe for DOM -->
+<!-- Link external JS end -->
+<!-- Link external JS -->
+<script src="/js/video.js"></script>
+<!-- Link external JS end -->
+<!---->
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->

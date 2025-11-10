@@ -1,0 +1,68 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main>
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+  <br />
+  <!---->
+
+  <h1 class="cal1">Calculator</h1>
+
+  <div class="container">
+    <div class="calculator-wraper">
+      <!-- Div 1: First Number Input -->
+      <div class="calc-blocks">
+        <input type="text" id="num1" placeholder="Enter first number" />
+      </div>
+
+      <!-- Div 2: Operator Selection -->
+      <div class="calc-blocks">
+        <select id="operator">
+          <option value="">Select Operation</option>
+          <option value="+">+</option>
+          <option value="-">−</option>
+          <option value="*">×</option>
+          <option value="/">÷</option>
+          <option value="^">^ (power)</option>
+        </select>
+      </div>
+
+      <!-- Div 3: Second Number Input -->
+      <div class="calc-blocks">
+        <input type="text" id="num2" placeholder="Enter second number" />
+      </div>
+
+      <!-- Div 4: Calculate Button -->
+      <div class="calc-blocks">
+        <!--  <button onclick="calculate()">Calculate</button> Original-->
+        <button id="calculateBtn">Calculate</button>
+      </div>
+      <div class="calc-blocks">
+        <button id="resetBtn">Reset</button>
+      </div>
+
+      <!-- Div 5: Result Input -->
+      <div class="calc-blocks">
+        <input type="text" id="result" placeholder="Result" />
+      </div>
+    </div>
+    <!--Add paper for remember for next calculator-->
+    <div class="paper">
+      <h5>Notes for the calculation</h5>
+      <textarea>Just notes: </textarea>
+
+      <!--Refer to CSS , so it is a form, without CSS it does not look right-->
+    </div>
+  </div>
+  <!--Add paper for remember for next calculator-->
+  <h5>We Handle the Numbers, You Grow the Business.</h5>
+</main>
+
+<!-- Link external JS -->
+<script src="/js/cal.js"></script>
+<!-- Link external JS end -->
+
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->
