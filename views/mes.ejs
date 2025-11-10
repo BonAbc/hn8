@@ -1,0 +1,59 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+
+  <!---->
+  <br />
+  <h1>Message</h1>
+  <!---->
+  <h5 class="cvlb" style="color: green"><u>For references👇</u></h5>
+  <!---->
+  <!---->
+
+  <!---->
+  <div class="apd">
+    <div class="card" style="width: 18rem">
+      <img src="/images/hncal.PNG" class="card-img-top" alt="Calculator" />
+
+      <div class="card-body">
+        <h5 class="card-title">Calculator</h5>
+        <p class="card-text"></p>
+        <a id="m1" href="#" class="btn btn-primary">Accurate</a>
+      </div>
+    </div>
+
+    <div class="card" style="width: 18rem">
+      <img src="/images/HM.PNG" class="card-img-top" alt="Flower" />
+      <div class="card-body">
+        <h5 class="card-title">Hoa Mai</h5>
+        <p class="card-text"></p>
+        <a id="m5" href="#" class="btn btn-primary">Consistent</a>
+      </div>
+    </div>
+
+    <div class="card" style="width: 18rem">
+      <img src="/images/hnfolder.PNG" class="card-img-top" alt="Folder" />
+      <div class="card-body">
+        <h5 class="card-title">Folder</h5>
+        <p class="card-text"></p>
+        <a id="m2" href="#" class="btn btn-primary">Organized</a>
+      </div>
+    </div>
+  </div>
+  <!---->
+  <!---->
+  <!--Refer to index.ejs how to include header and footer.ejs-->
+</main>
+<!---->
+
+<!-- Link external JS -->
+
+<!-- Link external JS end -->
+<!---->
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->

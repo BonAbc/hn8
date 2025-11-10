@@ -1,0 +1,126 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+  <br />
+  <!---->
+  <h2 id="hm">Accounting</h2>
+  <!-- Vertically spaced using Bootstrap spacing classes -->
+  <!---->
+  <div class="apd">
+    <div class="card" style="width: 18rem">
+      <img src="/images/hncal.PNG" class="card-img-top" alt="Calculator" />
+
+      <div class="card-body">
+        <h5 class="card-title">Calculator</h5>
+        <p class="card-text"></p>
+        <a id="m1" href="#" class="btn btn-primary">Accurate</a>
+      </div>
+    </div>
+
+    <div class="card" style="width: 18rem">
+      <img
+        src="/images/Database-fill-check.PNG"
+        class="card-img-top"
+        alt="Database Picture"
+      />
+      <div class="card-body">
+        <h5 class="card-title">Database</h5>
+        <p class="card-text"></p>
+        <a id="m5" href="#" class="btn btn-primary">Consistent</a>
+      </div>
+    </div>
+
+    <div class="card" style="width: 18rem">
+      <img src="/images/hnfolder.PNG" class="card-img-top" alt="Folder" />
+      <div class="card-body">
+        <h5 class="card-title">Folder</h5>
+        <p class="card-text"></p>
+        <a id="m2" href="#" class="btn btn-primary">Organized</a>
+      </div>
+    </div>
+  </div>
+  <!---->
+  <h2>Basic Accounting</h2>
+  <!---->
+  <div class="sap">
+    <div class="mb-3">
+      <label for="ac1" class="fw-semibold"> Gross Income </label>
+
+      <input
+        type="text"
+        id="ac1"
+        name="ac1"
+        class="mx-auto"
+        style="height: 35px; padding: 2px 6px"
+        required
+        readonly
+      />
+    </div>
+    <!-- Input field 2 -->
+
+    <div class="mb-3">
+      <label for="ac2" class="fw-semibold">Total Expense</label>
+      <input
+        type="text"
+        id="ac2"
+        name="ac2"
+        class="mx-auto"
+        style="height: 35px; padding: 2px 6px"
+        required
+        readonly
+      />
+    </div>
+    <div class="mb-3">
+      <label for="ac3" class="fw-semibold">Income before tax</label>
+      <input
+        type="text"
+        id="ac3"
+        name="ac3"
+        class="mx-auto"
+        style="height: 35px; padding: 2px 6px"
+        readonly
+      />
+    </div>
+    <div class="mb-3">
+      <label for="ac4" class="fw-semibold">Income Tax</label>
+      <input
+        type="text"
+        id="ac4"
+        name="ac4"
+        class="mx-auto"
+        style="height: 35px; padding: 2px 6px"
+        required
+        readonly
+      />
+    </div>
+    <div class="mb-3">
+      <label for="ac5" class="fw-semibold">Net Income</label>
+      <input
+        type="text"
+        id="ac5"
+        name="ac5"
+        class="mx-auto"
+        style="height: 35px; padding: 2px 6px"
+        readonly
+      />
+    </div>
+
+    <div class="d-flex gap-2 mt-2">
+      <button id="ac6" class="btn btn-success">Calculate</button>
+      <button id="ac7" class="btn btn-dark">Clear</button>
+    </div>
+  </div>
+  <!---->
+  <h5>We Handle the Numbers, You Grow the Business.</h5>
+  <!--Refer to index.ejs how to include header and footer.ejs-->
+</main>
+<!-- Link external JS -->
+<script src="/js/ac.js"></script>
+<!-- Link external JS end -->
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->

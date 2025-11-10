@@ -1,0 +1,148 @@
+<!--Mortgage Page-->
+<%- include("partials/header.ejs") %>
+
+<main>
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+  <br />
+  <!---->
+  <h2 class="mo1">Mortgage Calculator</h2>
+  <!-- <h3>Debt Amortization</h3>-->
+  <!--Add another div-->
+  <h5>
+    This mortgage calculator is for informational and educational purpose only.
+  </h5>
+  <h5>
+    By using this tool, you acknowledge that all the numbers are your own
+    estimates.
+  </h5>
+  <!--Add another div-->
+  <!-- Mortgage Calculator UI -->
+  <div class="mortgage-container">
+    <div class="mortgage-wrapper">
+      <!-- Purchase and Down Payment -->
+      <div class="calc-block">
+        <label for="num1">Purchase Price</label>
+        <input type="text" id="num1" placeholder="Enter number 1" />
+      </div>
+
+      <div class="calc-block">
+        <label for="num2">Down Payment</label>
+        <input type="text" id="num2" placeholder="Enter number 2" />
+      </div>
+
+      <div class="calc-block">
+        <label for="num3">Loan Amount <span style="color: red">*</span></label>
+        <input type="text" id="num3" placeholder="Auto/Enter number 3" />
+      </div>
+    </div>
+
+    <div class="mortgage-wrapper">
+      <!-- Interest Rate, Loan Term, Monthly Payment -->
+      <div class="calc-block">
+        <label for="num4"
+          >Annual Interest Rate <span style="color: red">*</span>
+        </label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="num4"
+            placeholder="Enter number 4 *"
+            required
+          />
+          <span class="unit">%</span>
+        </div>
+      </div>
+
+      <div class="calc-block">
+        <label for="num5"
+          >Loan Term in year <span style="color: red">*</span></label
+        >
+        <input type="text" id="num5" placeholder="Enter number 5 *" required />
+      </div>
+
+      <div class="calc-block">
+        <label for="num6">Constant Monthly Payment </label>
+        <input type="text" id="num6" placeholder="Number 6 Auto" readonly />
+      </div>
+    </div>
+
+    <div class="mortgage-wrapper">
+      <!-- Additional Costs -->
+      <div class="calc-block">
+        <label for="num7">Monthly Property Tax</label>
+        <input type="text" id="num7" placeholder="Enter number 7" />
+      </div>
+
+      <div class="calc-block">
+        <label for="num8">Monthly Insurance</label>
+        <input type="text" id="num8" placeholder="Enter number 8" />
+      </div>
+
+      <div class="calc-block">
+        <label for="num9">Others Monthly</label>
+        <input type="text" id="num9" placeholder="Enter number 9" />
+      </div>
+    </div>
+  </div>
+  <br />
+  <br />
+  <div class="mortgage-container">
+    <div class="mortgage-wrapper">
+      <!-- Operation and Buttons -->
+      <div class="calc-block">
+        <label for="operator">Select Calculation</label>
+        <select id="operator">
+          <option value="">- Select Calculation -</option>
+          <option value="loan">
+            Loan Amount : Number 1/ Number 2 Required
+          </option>
+          <option value="payment">Monthly Payment</option>
+          <option value="total">Total Monthly Payment</option>
+        </select>
+      </div>
+    </div>
+    <div class="mortgage-wrapper">
+      <div class="calc-block">
+        <button type="button" id="calculateBtn">Calculate</button>
+        <br />
+        <button type="button" id="resetBtn" style="margin-top: 10px">
+          Reset
+        </button>
+      </div>
+    </div>
+
+    <div class="mortgage-wrapper">
+      <!-- Result -->
+      <div class="calc-block">
+        <label for="result">Monthly Total</label>
+        <input type="text" id="result" placeholder="Result Auto" readonly />
+      </div>
+    </div>
+  </div>
+  <br />
+  <!-- <h5 style="color: darkblue">Dzui lòng chỉ giáo, nếu sơ sót.</h5> -->
+  <h6>Required <span style="color: red">*</span></h6>
+  <p>
+    If Number 3 is known, just enter Number 3. Number 1 and Number 2 are not
+    needed.
+  </p>
+  <!--Add another div-->
+
+  <!-- Add another div-->
+
+  <!---->
+
+  <!--Add another div-->
+  <!---->
+  <h5>We Handle the Numbers, You Grow the Business.</h5>
+  <!---->
+</main>
+<!-- Link external JS -->
+<script src="/js/mortgage.js"></script>
+<!-- Link external JS end -->
+<%- include("partials/footer.ejs") %>
