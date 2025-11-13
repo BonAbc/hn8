@@ -530,235 +530,190 @@ button:hover {
 .invoice-container {
   background: #fff;
   padding: 40px;
-  max-width: 900px;
+  max-width: 800px;
   margin: 40px auto;
-  border-radius: 10px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   font-family: "Segoe UI", Arial, sans-serif;
   color: #333;
-  line-height: 1.5;
 }
 
-/* Section Titles */
-.invoice-container h2,
+/* ---------- Headings ---------- */
+.invoice-container h2 {
+  text-align: center;
+  color: #007bff;
+  margin-bottom: 30px;
+  letter-spacing: 0.5px;
+}
+
 .invoice-container h3 {
   color: #007bff;
-  text-align: center;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 4px;
 }
 
-/* General Layout Spacing */
-.invoice-container form > div {
-  margin-bottom: 20px;
-}
-
-/* Labels and Inputs */
-label {
-  font-weight: bold;
-  margin-right: 10px;
-  display: inline-block;
-  min-width: 100px;
-}
-
-select,
-input[type="text"],
-input[type="number"],
-input[type="date"] {
-  padding: 8px 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  width: 100%;
-  max-width: 260px;
-  box-sizing: border-box;
-  background-color: #f9f9f9;
-  transition: border-color 0.2s, background-color 0.2s;
-}
-
-select:focus,
-input:focus {
-  border-color: #007bff;
-  background-color: #fff;
-  outline: none;
-}
-
-/* Group inputs horizontally where possible */
+/* ---------- Form Layout ---------- */
 .invoice-container form > div {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
+  margin-bottom: 20px;
   align-items: center;
 }
 
-/* Items Section */
-#items {
+.invoice-container label {
+  font-weight: 600;
+  min-width: 100px;
+}
+
+/* ---------- Input & Select ---------- */
+.invoice-container input[type="text"],
+.invoice-container input[type="number"],
+.invoice-container input[type="date"],
+.invoice-container select {
+  flex: 1;
+  min-width: 180px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #f8f8f8;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.invoice-container input:focus,
+.invoice-container select:focus {
+  border-color: #007bff;
+  background: #fff;
+  outline: none;
+}
+
+/* ---------- Item Rows ---------- */
+.invoice-container #items {
   margin-top: 10px;
 }
 
-.item-row {
+.invoice-container .item-row {
   display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 10px;
   flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+  align-items: center;
 }
 
-.item-row input {
+.invoice-container .item-row input {
   flex: 1;
   min-width: 120px;
 }
 
-/* Remove Button */
-.remove-btn {
-  background-color: #ff4d4d;
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-}
-
-.remove-btn:hover {
-  background-color: #e60000;
-}
-
-/* Add Item Button */
-button[type="button"]:not(.remove-btn) {
+/* ---------- Buttons ---------- */
+.invoice-container button {
   background-color: #007bff;
-  color: white;
+  color: #fff;
   border: none;
-  border-radius: 4px;
   padding: 8px 16px;
-  cursor: pointer;
+  border-radius: 4px;
   font-size: 14px;
-  transition: background-color 0.3s;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
 }
 
-button[type="button"]:not(.remove-btn):hover {
+.invoice-container button:hover:not(:disabled) {
   background-color: #0056b3;
 }
 
-button:disabled {
+.invoice-container button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-/* Totals Section */
-.totals {
+/* Remove (🗑️) Button */
+.invoice-container .remove-btn {
+  background-color: #e74c3c;
+  padding: 6px 10px;
+}
+
+.invoice-container .remove-btn:hover {
+  background-color: #c0392b;
+}
+
+/* ---------- Totals ---------- */
+.invoice-container .totals {
   text-align: right;
+  border-top: 1px solid #eee;
   margin-top: 25px;
-  border-top: 1px solid #eaeaea;
   padding-top: 10px;
 }
 
-.totals p {
+.invoice-container .totals p {
   margin: 3px 0;
   font-size: 15px;
 }
 
-.totals h3 {
+.invoice-container .totals h3 {
   margin-top: 10px;
-  font-size: 18px;
   color: #007bff;
 }
 
-/* Payment Info Section */
-.payment-info,
+/* ---------- Payment Info ---------- */
+.invoice-container .payment-info,
 .invoice-container h3 + div {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.payment-info input {
+.invoice-container .payment-info input {
   flex: 1;
   min-width: 200px;
 }
 
-/* Save Button */
-button[type="submit"] {
-  background-color: #007bff;
-  border: none;
-  color: white;
-  border-radius: 5px;
-  padding: 10px 25px;
-  font-size: 15px;
+/* ---------- Submit Button ---------- */
+.invoice-container button[type="submit"] {
   display: block;
   margin: 30px auto 0;
-  cursor: pointer;
-  transition: background 0.3s;
+  font-weight: 600;
 }
 
-button[type="submit"]:hover {
-  background-color: #0056b3;
-}
-
-/* Table styling (if used) */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
-}
-
-table,
-th,
-td {
-  border: 1px solid #ddd;
-}
-
-th {
-  background-color: #f5f5f5;
-  font-weight: bold;
-}
-
-th,
-td {
-  padding: 10px;
-  text-align: left;
-}
-
-/* Responsive Layout */
+/* ---------- Responsive ---------- */
 @media (max-width: 600px) {
-  label {
+  .invoice-container {
+    padding: 20px;
+  }
+  .invoice-container .totals {
+    text-align: left;
+  }
+  .invoice-container label {
     min-width: 0;
     width: 100%;
   }
-  select,
-  input {
-    max-width: 100%;
-  }
-  .totals {
-    text-align: left;
+  .invoice-container input,
+  .invoice-container select {
+    width: 100%;
   }
 }
 
-/* Print/PDF */
+/* ---------- Print/PDF ---------- */
 @media print {
-  body {
-    background: #fff;
-  }
   .invoice-container {
     box-shadow: none;
     padding: 20px;
     border-radius: 0;
   }
-  button {
+  .invoice-container button {
     display: none;
   }
 }
 
-/* Avoid page breaks mid-section for PDF */
 .invoice-container,
-.header,
-.invoice-details,
-.totals,
-.payment-info,
-table {
+.invoice-container .totals,
+.invoice-container .payment-info {
   page-break-inside: avoid;
 }
 
 .invoice-container {
   page-break-after: always;
 }
-/*Invoice*?
+
 /**/
