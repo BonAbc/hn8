@@ -347,7 +347,27 @@ app.get("/apti", async (req, res) => {
   }
 });
 //Tax calculation tool
+//invoice begin
+app.get("/invoices", async (req, res) => {
+  try {
+    // Fetch all companies from the "companies" table
+    // These will populate the "From:" dropdown in the invoice form
+    const companies = (await db.query("SELECT * FROM companies")).rows;
 
+    // Fetch all clients from the "clients" table
+    // These will populate the "To:" dropdown in the invoice form
+    const clients = (await db.query("SELECT * FROM clients")).rows;
+
+    // Render the "new-invoice" EJS (or template) view
+    // Pass the fetched data and today's date to the view
+    res.render("invoices", { companies, clients, defaultDate: getToday() });
+  } catch (err) {
+    // Log and handle any errors (e.g., DB connection failure)
+    console.error(err);
+    res.status(500).send("Error loading form");
+  }
+});
+//invoice
 //app.get("/mes", async (req, res) => {
 //  if (!adminEmails.includes(req.user.email))
 //    return res.status(403).render("denied.ejs", {
