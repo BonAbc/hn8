@@ -746,19 +746,30 @@ button:hover {
 .invoice-container {
   page-break-after: always;
 }
-.invoice-container .payment-info,
+/* Target the div directly after Payment Info heading */
 .invoice-container h3 + div {
-  display: block; /* stack inputs vertically */
-  /* no gap needed since stacked */
+  display: block; /* Make container block so inputs stack */
   margin-top: 10px;
 }
 
-.invoice-container .payment-info input {
-  width: 100%; /* full width for each input */
-  flex: none; /* disable flex grow/shrink */
-  min-width: auto; /* reset min-width */
-  margin-bottom: 12px; /* space between inputs */
-  box-sizing: border-box; /* ensure padding/border inside width */
+/* Make each input full width and add spacing */
+.invoice-container h3 + div input {
+  display: block; /* inputs take full line */
+  width: 100%; /* fill the container's width */
+  box-sizing: border-box; /* include padding/border in width */
+  margin-bottom: 12px; /* spacing between inputs */
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #f8f8f8;
+  font-size: 14px;
+}
+
+/* On focus keep consistent style */
+.invoice-container h3 + div input:focus {
+  border-color: #007bff;
+  background: #fff;
+  outline: none;
 }
 
 /**/
