@@ -749,7 +749,7 @@ button:hover {
 .invoice-container .payment-info,
 .invoice-container h3 + div {
   display: block; /* stack inputs vertically */
-  gap: 0; /* no gap needed since stacked */
+  /* no gap needed since stacked */
   margin-top: 10px;
 }
 

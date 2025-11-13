@@ -102,7 +102,12 @@
 </div>
 
 <!-- Button to add new item rows dynamically -->
-<button type="button" onclick="addItem()" disabled>+ Add Item</button>
+<button type="button" onclick="addItem()" disabled style="  opacity: 1;
+          background-color: #198754;
+          border-color: #198754;
+          color: white;
+          cursor: not-allowed;">+ Add Item</button>
+    
 
 <!-- ============================= -->
 <!--          TOTALS AREA          -->
@@ -118,14 +123,18 @@
 <!-- ============================= -->
 <h3>Payment Info</h3>
 <div>
-  <input type="text" name="bank" placeholder="Bank" required readonly/>
+  <input type="text" name="bank" placeholder="Bank Name" required readonly/>
   <input type="text" name="account_name" placeholder="Account Name" required readonly />
   <input type="text" name="account_number" placeholder="Account Number" required readonly />
   <input type="text" name="routing" placeholder="Routing Number" required readonly/>
 </div>
 
 <br />
-<button type="submit" disabled>Save Invoice</button>
+<button type="submit" disabled style="  background-color: #198754;
+          border-color: #198754;
+          color: white;
+          opacity: 1;
+          cursor: not-allowed;">Save Invoice</button>
 
 <!-- ============================= -->
 <!--        SCRIPT SECTION         -->
