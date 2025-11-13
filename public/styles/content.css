@@ -530,32 +530,170 @@ button:hover {
 .invoice-container {
   background: #fff;
   padding: 40px;
-  max-width: 800px;
-  margin: auto;
-  border-radius: 8px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-  font-family: Arial, sans-serif;
+  max-width: 900px;
+  margin: 40px auto;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+  font-family: "Segoe UI", Arial, sans-serif;
   color: #333;
+  line-height: 1.5;
 }
 
-/* Header */
-.header {
+/* Section Titles */
+.invoice-container h2,
+.invoice-container h3 {
+  color: #007bff;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+/* General Layout Spacing */
+.invoice-container form > div {
+  margin-bottom: 20px;
+}
+
+/* Labels and Inputs */
+label {
+  font-weight: bold;
+  margin-right: 10px;
+  display: inline-block;
+  min-width: 100px;
+}
+
+select,
+input[type="text"],
+input[type="number"],
+input[type="date"] {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 100%;
+  max-width: 260px;
+  box-sizing: border-box;
+  background-color: #f9f9f9;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+select:focus,
+input:focus {
+  border-color: #007bff;
+  background-color: #fff;
+  outline: none;
+}
+
+/* Group inputs horizontally where possible */
+.invoice-container form > div {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: center;
 }
 
-.header h3 {
-  margin-bottom: 5px;
-  font-size: 16px;
+/* Items Section */
+#items {
+  margin-top: 10px;
 }
 
-/* Invoice Details */
-.invoice-details p {
-  margin: 5px 0;
+.item-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 
-/* Table */
+.item-row input {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* Remove Button */
+.remove-btn {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.remove-btn:hover {
+  background-color: #e60000;
+}
+
+/* Add Item Button */
+button[type="button"]:not(.remove-btn) {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+button[type="button"]:not(.remove-btn):hover {
+  background-color: #0056b3;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Totals Section */
+.totals {
+  text-align: right;
+  margin-top: 25px;
+  border-top: 1px solid #eaeaea;
+  padding-top: 10px;
+}
+
+.totals p {
+  margin: 3px 0;
+  font-size: 15px;
+}
+
+.totals h3 {
+  margin-top: 10px;
+  font-size: 18px;
+  color: #007bff;
+}
+
+/* Payment Info Section */
+.payment-info,
+.invoice-container h3 + div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.payment-info input {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* Save Button */
+button[type="submit"] {
+  background-color: #007bff;
+  border: none;
+  color: white;
+  border-radius: 5px;
+  padding: 10px 25px;
+  font-size: 15px;
+  display: block;
+  margin: 30px auto 0;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button[type="submit"]:hover {
+  background-color: #0056b3;
+}
+
+/* Table styling (if used) */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -579,71 +717,37 @@ td {
   text-align: left;
 }
 
-/* Totals */
-.totals {
-  text-align: right;
-  margin-bottom: 20px;
+/* Responsive Layout */
+@media (max-width: 600px) {
+  label {
+    min-width: 0;
+    width: 100%;
+  }
+  select,
+  input {
+    max-width: 100%;
+  }
+  .totals {
+    text-align: left;
+  }
 }
 
-.totals p {
-  margin: 5px 0;
-}
-
-.totals h3 {
-  margin-top: 10px;
-}
-
-/* Payment Info */
-.payment-info h3 {
-  margin-bottom: 10px;
-}
-
-.payment-info p {
-  margin: 3px 0;
-}
-
-/* Buttons */
-.actions {
-  display: flex;
-  justify-content: center; /* center horizontally */
-  gap: 10px; /* space between buttons */
-  margin-top: 20px;
-  text-align: center;
-}
-
-.actions button {
-  width: 140px; /* fixed width to shorten buttons */
-  padding: 10px 25px;
-  margin: 5px;
-  cursor: pointer;
-  background-color: #007bff;
-  border: none;
-  color: white;
-  border-radius: 4px;
-  font-size: 14px;
-  transition: background 0.3s;
-}
-
-.actions button:hover {
-  background-color: #0056b3;
-}
-
-/* PDF/Print adjustments */
+/* Print/PDF */
 @media print {
   body {
     background: #fff;
-  }
-  .actions {
-    display: none; /* Hide buttons in print/PDF */
   }
   .invoice-container {
     box-shadow: none;
     padding: 20px;
     border-radius: 0;
   }
+  button {
+    display: none;
+  }
 }
 
-/* Optional: prevent page break inside invoice sections for PDF */
+/* Avoid page breaks mid-section for PDF */
 .invoice-container,
 .header,
 .invoice-details,
@@ -652,62 +756,9 @@ td {
 table {
   page-break-inside: avoid;
 }
-/* Avoid cutting rows between pages */
-table,
-tr,
-td,
-th {
-  page-break-inside: avoid;
-}
 
-/* Add page breaks after each invoice container if multiple pages */
 .invoice-container {
   page-break-after: always;
 }
-
-/* Optional: Make sure your invoice container width fits the PDF page */
-.invoice-container {
-  width: 100%; /* or max-width: 800px if your PDF page is wide enough */
-}
-
-/* ============================================================
-/*Invoice: above: to show two button blue color*/
-/* Layout for each item row */
-.item-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-  align-items: center;
-}
-
-/* Style for the remove (🗑️) button */
-.remove-btn {
-  background-color: #ff4d4d;
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-}
-
-/* Hover effect for remove button */
-.remove-btn:hover {
-  background-color: #e60000;
-}
-
-/* Totals area styling */
-.totals {
-  margin-top: 16px;
-}
-
-/* General form spacing */
-input {
-  padding: 6px;
-}
-
-button {
-  margin-top: 8px;
-}
-/*Invoice end*/
+/*Invoice*?
 /**/
