@@ -746,5 +746,19 @@ button:hover {
 .invoice-container {
   page-break-after: always;
 }
+.invoice-container .payment-info,
+.invoice-container h3 + div {
+  display: block; /* stack inputs vertically */
+  gap: 0; /* no gap needed since stacked */
+  margin-top: 10px;
+}
+
+.invoice-container .payment-info input {
+  width: 100%; /* full width for each input */
+  flex: none; /* disable flex grow/shrink */
+  min-width: auto; /* reset min-width */
+  margin-bottom: 12px; /* space between inputs */
+  box-sizing: border-box; /* ensure padding/border inside width */
+}
 
 /**/
