@@ -544,7 +544,7 @@ button:hover {
 .invoice-container h2 {
   text-align: center;
 
-  color: #28a745; /* changed from #007bff to green */
+  /* changed from #007bff to green */
   margin-bottom: 30px;
   letter-spacing: 0.5px;
   font-size: 26px;
