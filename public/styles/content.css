@@ -529,6 +529,7 @@ button:hover {
 /* Container */
 
 .invoice-container {
+  background: #fff;
   padding: 40px;
   max-width: 800px;
   margin: 40px auto;
