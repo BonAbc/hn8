@@ -536,6 +536,7 @@ button:hover {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   font-family: "Segoe UI", Arial, sans-serif;
   color: #333;
+  border: 1.5px solid black;
 }
 
 /* ---------- Headings ---------- */
