@@ -551,7 +551,7 @@ button:hover {
 }
 
 .invoice-container h3 {
-  color: #28a745; /* changed from #007bff to green */
+   /* changed from #007bff to green */
   margin-bottom: 12px;
   border-bottom: 1px solid #eee;
   padding-bottom: 4px;
