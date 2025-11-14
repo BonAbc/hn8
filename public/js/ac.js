@@ -10,8 +10,11 @@ const calBtn = document.getElementById("ac6");
 const cleanBtn = document.getElementById("ac7");
 
 // Format number to US style with commas and 2 decimals
+// Format number to US style with commas and 2 decimals
 function formatNumberUS(val) {
-  const num = parseFloat(val) || 0;
+  if (val === null || val === undefined || val === "") return ""; // <-- keep empty
+  const num = parseFloat(val);
+  if (isNaN(num)) return "";
   return num.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -20,21 +23,27 @@ function formatNumberUS(val) {
 
 // Parse number safely (remove commas)
 function parseNumber(val) {
-  return parseFloat(val.replace(/,/g, "")) || 0;
+  if (!val) return null; // <-- return null if empty
+  const num = parseFloat(val.replace(/,/g, ""));
+  return isNaN(num) ? null : num;
 }
 
 // Perform calculation
 function calcu() {
-  const val1 = parseNumber(ac1.value);
-  const val2 = parseNumber(ac2.value);
-  const val4 = parseNumber(ac4.value);
+  const val1 = parseNumber(ac1.value) || 0;
+  const val2 = parseNumber(ac2.value) || 0;
+  const val4 = parseNumber(ac4.value) || 0;
 
-  ac3.value = formatNumberUS(val1 - val2);
-  ac5.value = formatNumberUS(val1 - val2 - val4);
+  // Only calculate if user has typed something
+  ac3.value = ac1.value || ac2.value ? formatNumberUS(val1 - val2) : "";
+  ac5.value =
+    ac1.value || ac2.value || ac4.value
+      ? formatNumberUS(val1 - val2 - val4)
+      : "";
 
-  // Format all other inputs in US format
+  // Format inputs only if they have value
   [ac1, ac2, ac4].forEach((input) => {
-    input.value = formatNumberUS(parseNumber(input.value));
+    if (input.value) input.value = formatNumberUS(parseNumber(input.value));
   });
 }
 
