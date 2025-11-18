@@ -666,13 +666,20 @@ button:hover {
 /* Remove (🗑️) Button */
 .invoice-container .remove-btn {
   background-color: #e74c3c;
-  padding: 6px 10px;
+  padding: 3px 5px;
 }
 
 .invoice-container .remove-btn:hover {
   background-color: #c0392b;
 }
 /* ---------- Item row---------- */
+.item-row {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 2px;
+  align-items: center;
+}
+
 .item-row input,
 .item-row select,
 .item-row button.remove-btn {
@@ -680,13 +687,7 @@ button:hover {
   padding: 3px 5px;
   box-sizing: border-box;
 }
-.item-row input,
-.item-row select,
-.item-row button.remove-btn {
-  height: 38px; /* adjust to your preference */
-  padding: 3px 5px;
-  box-sizing: border-box;
-}
+
 /* ---------- Item row---------- */
 /* ---------- Totals ---------- */
 .invoice-container .totals {
