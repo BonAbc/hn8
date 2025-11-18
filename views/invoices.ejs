@@ -101,6 +101,35 @@
             oninput="calculateTotals()"
             readonly
           />
+              <!-- Dynamic ST -->
+          <select name="st[]" required disabled>
+            <option value="">-State-</option>
+            <% states.forEach(state => { %>
+            <option value="<%= state %>"><%= state %></option>
+            <% }) %>
+          </select>
+          <input
+            type="text"
+            class="st-new"
+            placeholder="Add state"
+            onblur="addNewOption(this, 'st-dropdown')"
+            readonly
+          />
+
+          <!-- Dynamic Local -->
+          <select name="local[]" required disabled>
+            <option value="">-Local-</option>
+            <% locals.forEach(local => { %>
+            <option value="<%= local %>"><%= local %></option>
+            <% }) %>
+          </select>
+          <input
+            type="text"
+            class="local-new"
+            placeholder="Add local"
+            onblur="addNewOption(this, 'local-dropdown')"
+            readonly
+          />
     <!-- Remove button (🗑️) - deletes this item row -->
     <button type="button" class="remove-btn" disabled onclick="removeItem(this)">
       🗑️ Remove
