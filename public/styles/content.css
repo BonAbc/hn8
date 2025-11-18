@@ -623,6 +623,19 @@ button:hover {
 .invoice-container .item-row button.remove-btn {
   flex: 0 0 90px;
 }
+.item-row {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 2px;
+  align-items: center;
+}
+.item-row input,
+.item-row select,
+.item-row button.remove-btn {
+  height: 38px; /* adjust to your preference */
+  padding: 3px 5px;
+  box-sizing: border-box;
+}
 
 /* ---------- Item row---------- */
 /* --------Add Item Rows ---------- */
