@@ -359,8 +359,25 @@ app.get("/invoices", async (req, res) => {
     const clients = (await db.query("SELECT * FROM clients")).rows;
 
     // Render the "new-invoice" EJS (or template) view
+    // Fetch distinct existing states from invoice_items
+    const statesResult = await db.query(
+      "SELECT DISTINCT st FROM st ORDER BY st"
+    );
+    const states = statesResult.rows.map((r) => r.st).filter((v) => v); // remove null/empty
+
+    // Fetch distinct existing locals from invoice_items
+    const localsResult = await db.query(
+      "SELECT DISTINCT local FROM st ORDER BY local"
+    );
+    const locals = localsResult.rows.map((r) => r.local).filter((v) => v);
     // Pass the fetched data and today's date to the view
-    res.render("invoices", { companies, clients, defaultDate: getToday() });
+    res.render("invoices", {
+      companies,
+      clients,
+      defaultDate: getToday(),
+      states,
+      locals,
+    });
   } catch (err) {
     // Log and handle any errors (e.g., DB connection failure)
     console.error(err);
