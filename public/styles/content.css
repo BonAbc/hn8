@@ -544,33 +544,48 @@ button:hover {
 /* ---------- Headings ---------- */
 .invoice-container h2 {
   text-align: center;
-  margin-bottom: 20px;
+
+  /* changed from #007bff to green */
+  margin-bottom: 30px;
   letter-spacing: 0.5px;
   font-size: 26px;
 }
 
 .invoice-container h3 {
+  /* changed from #007bff to green */
   margin-bottom: 12px;
   border-bottom: 1px solid #eee;
   padding-bottom: 4px;
   font-size: 18px;
 }
 
-/* ---------- Form Inputs & Selects ---------- */
+/* ---------- Form Layout ---------- */
+.invoice-container form > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.invoice-container label {
+  font-weight: 600;
+  min-width: 120px;
+}
+
+/* ---------- Input & Select ---------- */
 .invoice-container input[type="text"],
 .invoice-container input[type="number"],
 .invoice-container input[type="date"],
 .invoice-container select {
-  padding: 6px 8px;
+  flex: 1;
+  min-width: 180px;
+  padding: 8px 12px;
   border: 1px solid #ccc;
   border-radius: 4px;
   background: #f8f8f8;
   font-size: 14px;
-  line-height: 1;
   transition: all 0.2s ease;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
 }
 
 .invoice-container input:focus,
@@ -581,68 +596,24 @@ button:hover {
 }
 
 /* ---------- Item Rows ---------- */
-#items {
+.invoice-container #items {
   margin-top: 10px;
 }
 
-.item-row {
+.invoice-container .item-row {
   display: flex;
-  gap: 5px; /* spacing between fields */
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 10px;
   align-items: center;
-  flex-wrap: nowrap; /* force single line */
 }
 
-/* Uniform height for all elements */
-.item-row input,
-.item-row select,
-.item-row button.remove-btn {
-  height: 38px;
-  padding: 6px 8px;
-  font-size: 14px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  box-sizing: border-box;
+.invoice-container .item-row input {
+  flex: 1;
+  min-width: 120px;
 }
 
-/* Widths for individual fields */
-.item-row input[name="description[]"] {
-  width: 160px;
-}
-.item-row input[name="qty[]"] {
-  width: 70px;
-}
-.item-row input[name="unit_price[]"] {
-  width: 90px;
-}
-.item-row input[name="tr[]"] {
-  width: 70px;
-}
-.item-row select[name="st[]"],
-.item-row select[name="local[]"] {
-  width: 110px;
-}
-.item-row input.st-new,
-.item-row input.local-new {
-  width: 100px;
-}
-
-/* Remove button fixed size */
-.item-row button.remove-btn {
-  flex: 0 0 70px;
-  width: 70px;
-  background-color: #e74c3c;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.item-row button.remove-btn:hover {
-  background-color: #c0392b;
-}
-
+/* ---------- Buttons ---------- */
 .invoice-container button {
   background-color: #007bff;
   color: #fff;
@@ -663,7 +634,17 @@ button:hover {
   cursor: not-allowed;
 }
 
-/* ---------- Totals & Payment Info ---------- */
+/* Remove (🗑️) Button */
+.invoice-container .remove-btn {
+  background-color: #e74c3c;
+  padding: 6px 10px;
+}
+
+.invoice-container .remove-btn:hover {
+  background-color: #c0392b;
+}
+
+/* ---------- Totals ---------- */
 .invoice-container .totals {
   text-align: right;
   border-top: 1px solid #eee;
@@ -678,11 +659,13 @@ button:hover {
 
 .invoice-container .totals h3 {
   margin-top: 10px;
-  color: #28a745;
+  color: #28a745; /* changed from #007bff to green */
   font-size: 18px;
 }
 
-.invoice-container .payment-info {
+/* ---------- Payment Info ---------- */
+.invoice-container .payment-info,
+.invoice-container h3 + div {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
@@ -690,8 +673,27 @@ button:hover {
 }
 
 .invoice-container .payment-info input {
-  flex: 1 1 calc(25% - 15px);
+  flex: 1 1 calc(25% - 15px); /* 4 inputs per row minus gap */
   min-width: 150px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #f8f8f8;
+  font-size: 14px;
+}
+
+.invoice-container .payment-info input:focus {
+  border-color: #007bff;
+  background: #fff;
+  outline: none;
+}
+
+/* ---------- Submit Button ---------- */
+.invoice-container button[type="submit"] {
+  display: block;
+  margin: 30px auto 0;
+  font-weight: 600;
+  width: 160px;
 }
 
 /* ---------- Responsive ---------- */
@@ -700,11 +702,14 @@ button:hover {
     flex-direction: column;
     align-items: flex-start;
   }
+  .invoice-container label {
+    width: 100%;
+  }
 }
 
 @media (max-width: 700px) {
   .invoice-container .payment-info input {
-    flex: 1 1 100%;
+    flex: 1 1 100%; /* stack vertically on small screens */
   }
 }
 
@@ -732,7 +737,6 @@ button:hover {
     display: none;
   }
 }
-
 /* ---------- Print/PDF ---------- */
 
 /* ---------- Page break ---------- */
