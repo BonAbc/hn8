@@ -599,18 +599,35 @@ button:hover {
   margin-top: 10px;
 }
 
+/* Clean + unified line item layout */
 .invoice-container .item-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 3px;
   margin-bottom: 10px;
   align-items: center;
 }
 
-.invoice-container .item-row input {
+/* Everything the same size */
+.invoice-container .item-row input,
+.invoice-container .item-row select,
+.invoice-container .item-row button.remove-btn {
+  height: 38px;
+  padding: 3px 5px;
+  box-sizing: border-box;
   flex: 1;
   min-width: 120px;
 }
+
+/* Remove button: fixed width so it doesn't stretch */
+.invoice-container .item-row button.remove-btn {
+  flex: 0 0 90px;
+}
+
+/* ---------- Item row---------- */
+/* --------Add Item Rows ---------- */
+
+/* --------Add Item row---------- */
 
 /* ---------- Buttons ---------- */
 .invoice-container button {
