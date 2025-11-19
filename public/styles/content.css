@@ -639,7 +639,10 @@ button:hover {
   box-sizing: border-box; /* include padding in height */
   font-size: 14px; /* consistent font size */
 }
-
+.state-local-group select,
+.state-local-group input {
+  margin-bottom: 0 !important;
+}
 /* ---------- Buttons ---------- */
 .invoice-container button {
   background-color: #007bff;
