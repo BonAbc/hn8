@@ -643,8 +643,11 @@ button:hover {
 .state-local-group input {
   margin-bottom: 0 !important;
 }
+/* above bootstrap causing 👆 */
 .remove-wrap {
   text-align: center;
+  display: block;
+  margin: 0 auto;
 }
 
 /* ---------- Buttons ---------- */
