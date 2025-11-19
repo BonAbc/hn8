@@ -643,6 +643,10 @@ button:hover {
 .state-local-group input {
   margin-bottom: 0 !important;
 }
+.remove-wrap {
+  text-align: center;
+}
+
 /* ---------- Buttons ---------- */
 .invoice-container button {
   background-color: #007bff;
