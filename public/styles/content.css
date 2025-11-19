@@ -581,7 +581,7 @@ button:hover {
   flex: 1;
   min-width: 180px;
   padding: 3px 5px;
-  height: 38px;
+
   border: 1px solid #ccc;
   border-radius: 4px;
   background: #f8f8f8;
@@ -644,6 +644,36 @@ button:hover {
 .invoice-container .remove-btn:hover {
   background-color: #c0392b;
 }
+
+/* ---------- Add state ---------- */
+.item-row {
+  display: flex;
+  gap: 8px; /* space between inputs */
+  align-items: center; /* vertical center alignment */
+  flex-wrap: wrap; /* wrap to next line if needed */
+}
+
+.item-row input,
+.item-row select,
+.item-row button {
+  height: 38px; /* uniform height */
+  font-size: 14px;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+.state-local-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.state-local-group select,
+.state-local-group input {
+  height: 38px;
+  font-size: 14px;
+}
+
+/* ---------- Add state---------- */
 
 /* ---------- Totals ---------- */
 .invoice-container .totals {
