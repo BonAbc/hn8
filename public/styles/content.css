@@ -696,11 +696,6 @@ button:hover {
   font-size: 14px;
   box-sizing: border-box;
 }
-.state-local-group {
-  display: flex;
-  gap: 8px;
-  align-items: center; /* vertical center */
-}
 
 /* Optional: if you want to show custom arrow later, you can add it with background-image */
 
@@ -850,19 +845,24 @@ button:hover {
   gap: 10px; /* space between items */
 }
 
+/* Each row for State and Local is split in two: dropdown and input side by side */
 .state-local-group > select,
 .state-local-group > input {
-  flex: 1 1 45%; /* side by side on desktop */
-  min-width: 150px;
+  /* Roughly half width each, with some min-width for usability */
+  flex: 1 1 45%;
+  min-width: 180px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  font-size: 14px;
 }
-
-@media (max-width: 600px) {
+/* Responsive for small screens */
+@media (max-width: 768px) {
   .state-local-group > select,
   .state-local-group > input {
-    flex: 1 1 100%; /* stack on mobile */
+    flex: 1 1 100%; /* full width stacked */
+    min-width: auto;
   }
 }
-
 /**/
 /**/
 /**/
