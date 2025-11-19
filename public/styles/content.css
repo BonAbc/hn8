@@ -683,32 +683,6 @@ button:hover {
   align-items: center; /* vertical center */
 }
 
-.state-local-group select,
-.state-local-group input {
-  height: 38px; /* fix height */
-  line-height: 38px; /* vertical text alignment */
-  padding: 0 10px; /* horizontal padding */
-  font-size: 14px;
-  font-family: inherit;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box;
-  background-color: #f8f8f8;
-  color: #333;
-  flex: 1; /* allow equal widths */
-  min-width: 120px; /* minimum width */
-  vertical-align: middle; /* align text inside */
-}
-
-/* Remove native select arrow to help with consistent height */
-/* Optional: if you want arrows, you can skip this */
-.state-local-group select {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: none;
-}
-
 /* Optional: if you want to show custom arrow later, you can add it with background-image */
 
 .state-local-group select,
