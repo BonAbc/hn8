@@ -581,7 +581,7 @@ button:hover {
   flex: 1;
   min-width: 180px;
   padding: 3px 5px;
-
+  align-items: center;
   border: 1px solid #ccc;
   border-radius: 4px;
   background: #f8f8f8;
@@ -623,7 +623,7 @@ button:hover {
 .invoice-container .state-local-group input,
 .invoice-container .state-local-group select {
   height: 38px; /* uniform height */
-
+  align-items: center;
   padding: 3px 5px; /* uniform padding */
   box-sizing: border-box; /* include padding in height */
   font-size: 14px; /* consistent font size */
@@ -634,7 +634,7 @@ button:hover {
 .state-local-group input,
 .state-local-group select {
   height: 38px; /* uniform height */
-
+  align-items: center;
   padding: 3px 5px; /* uniform padding */
   box-sizing: border-box; /* include padding in height */
   font-size: 14px; /* consistent font size */
