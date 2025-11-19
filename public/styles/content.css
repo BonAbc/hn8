@@ -580,7 +580,8 @@ button:hover {
 .invoice-container select {
   flex: 1;
   min-width: 180px;
-  padding: 8px 12px;
+  padding: 3px 5px;
+  height: 38px;
   border: 1px solid #ccc;
   border-radius: 4px;
   background: #f8f8f8;
