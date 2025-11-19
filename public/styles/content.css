@@ -613,6 +613,22 @@ button:hover {
   flex: 1;
   min-width: 120px;
 }
+.item-row input,
+.item-row select {
+  flex: 1;
+  min-width: 180px; /* match all */
+}
+.item-row input,
+.item-row select,
+.state-local-group input,
+.state-local-group select {
+  height: 38px; /* uniform height */
+  line-height: 1.2; /* consistent line height */
+  padding: 6px 10px; /* uniform padding */
+  box-sizing: border-box; /* include padding in height */
+  font-size: 14px; /* consistent font size */
+  vertical-align: middle; /* aligns inline-block elements */
+}
 
 /* ---------- Buttons ---------- */
 .invoice-container button {
