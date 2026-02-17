@@ -65,7 +65,30 @@ input[type="date"] {
 }
 
 /*About page end*/
+/*HN page*/
+.cpa {
+  display: flex;
+  justify-content: center; /* Center cards as a group */
+  gap: 1rem; /* Space between cards (optional) */
+  flex-wrap: wrap; /* Allow wrapping on small screens */
+  padding: 2rem;
+}
+.fi {
+  border: solid gold 3px;
+  background-color: red;
+  padding: 2rem;
+  color: gold;
+  width: 38rem;
+}
 
+#lkb {
+  border: solid 3px;
+  background-color: red;
+  width: 15rem;
+  padding-top: 1rem;
+  font-size: 2rem;
+}
+/**/
 /*Contact page and form*/
 
 form {
