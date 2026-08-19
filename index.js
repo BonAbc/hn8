@@ -155,7 +155,7 @@ app.use((req, res, next) => {
 // ----------------------------
 const authLimiter = rateLimit({
   windowMs: 30 * 60 * 1000,
-  max: 10,
+  max: 30,
   message: "Too many login attempts. Try again later.",
 });
 app.use("/login", authLimiter);
@@ -488,6 +488,58 @@ app.post("/login", (req, res, next) => {
 });
 
 // Change password POST
+app.post("/chapw", async (req, res) => {
+  const today = new Date().toISOString().split("T")[0];
+  const { email, newPassword, confirmPassword } = req.body;
+
+  if (!email || !newPassword || !confirmPassword) {
+    return res.render("chapw.ejs", {
+      message: "All fields are required",
+      defaultDate: today,
+    });
+  }
+  if (newPassword !== confirmPassword) {
+    return res.render("chapw.ejs", {
+      message: "Passwords do not match",
+      defaultDate: today,
+    });
+  }
+  if (!isValidPassword(newPassword)) {
+    return res.render("chapw.ejs", {
+      message:
+        "Password must be at least 8 characters and include a number, special character, and a capital letter",
+      defaultDate: today,
+    });
+  }
+
+  try {
+    const userResult = await db.query("SELECT * FROM my_user WHERE email=$1", [
+      email,
+    ]);
+    if (userResult.rows.length === 0) {
+      return res.render("chapw.ejs", {
+        message: "Email not registered",
+        defaultDate: today,
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+    await db.query("UPDATE my_user SET pw=$1 WHERE email=$2", [
+      hashedPassword,
+      email,
+    ]);
+    res.render("chapw.ejs", {
+      message: "Password updated successfully!",
+      defaultDate: today,
+    });
+  } catch (err) {
+    console.error("Error updating password:", err);
+    res.render("chapw.ejs", {
+      message: "Something went wrong, try again later",
+      defaultDate: today,
+    });
+  }
+});
 
 //add track
 app.set("trust proxy", true); // needed to capture real IP behind proxies
