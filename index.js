@@ -137,7 +137,7 @@ app.use(
       httpOnly: true,
       maxAge: 1000 * 60 * 30, // 30 minutes
     },
-  })
+  }),
 );
 //The secret is used to sign and verify session cookies.The secret: A password for cookies so no one can fake them.
 //app.use(session):use session for all incoming request
@@ -172,7 +172,7 @@ app.use(
       },
     },
     crossOriginEmbedderPolicy: true,
-  })
+  }),
 );
 
 // ----------------------------
@@ -226,21 +226,21 @@ function ensureAdmin(req, res, next) {
 // end function ensureAdmin
 
 app.get("/", (req, res) =>
-  res.render("index.ejs", { defaultDate: getToday() })
+  res.render("index.ejs", { defaultDate: getToday() }),
 );
 app.get("/about", (req, res) =>
-  res.render("about.ejs", { defaultDate: getToday() })
+  res.render("about.ejs", { defaultDate: getToday() }),
 );
 
 // Contact
 app.get("/contact", (req, res) =>
-  res.render("contact.ejs", { defaultDate: getToday(), thanks: null })
+  res.render("contact.ejs", { defaultDate: getToday(), thanks: null }),
 );
 //app.post/contact
 
 // Additional Links & Tools
 app.get("/link", (req, res) =>
-  res.render("link.ejs", { defaultDate: getToday() })
+  res.render("link.ejs", { defaultDate: getToday() }),
 );
 //app.get("/anotherlink", (req, res) =>
 //  res.render("anotherlink.ejs", { defaultDate: getToday() })
@@ -281,19 +281,19 @@ app.get("/otherlink", async (req, res) => {
   }
 });
 app.get("/calculate", (req, res) =>
-  res.render("calculator.ejs", { defaultDate: getToday() })
+  res.render("calculator.ejs", { defaultDate: getToday() }),
 );
 app.get("/mortgage", (req, res) =>
-  res.render("mortgage.ejs", { defaultDate: getToday() })
+  res.render("mortgage.ejs", { defaultDate: getToday() }),
 );
 app.get("/hana", (req, res) =>
-  res.render("hana.ejs", { defaultDate: getToday() })
+  res.render("hana.ejs", { defaultDate: getToday() }),
 );
 app.get("/hnpage", (req, res) =>
   res.render("HN.ejs", {
     defaultDate: getToday(),
     message: "Thank you for your business.",
-  })
+  }),
 );
 
 app.get("/tax", async (req, res) => {
@@ -361,13 +361,13 @@ app.get("/invoices", async (req, res) => {
     // Render the "new-invoice" EJS (or template) view
     // Fetch distinct existing states from invoice_items
     const statesResult = await db.query(
-      "SELECT DISTINCT st FROM st ORDER BY st"
+      "SELECT DISTINCT st FROM st ORDER BY st",
     );
     const states = statesResult.rows.map((r) => r.st).filter((v) => v); // remove null/empty
 
     // Fetch distinct existing locals from invoice_items
     const localsResult = await db.query(
-      "SELECT DISTINCT local FROM st ORDER BY local"
+      "SELECT DISTINCT local FROM st ORDER BY local",
     );
     const locals = localsResult.rows.map((r) => r.local).filter((v) => v);
     // Pass the fetched data and today's date to the view
@@ -404,17 +404,20 @@ app.get("/invoices", async (req, res) => {
 // Login / Signup / Change Password
 // ----------------------------
 app.get("/login", (req, res) =>
-  res.render("login.ejs", { defaultDate: getToday() })
+  res.render("login.ejs", {
+    defaultDate: getToday(),
+    message: req.flash("error"),
+  }),
 );
 app.get("/signup", (req, res) =>
   res.render("register.ejs", {
     errors: {},
     defaultDate: getToday(),
     formData: {},
-  })
+  }),
 );
 app.get("/chapw", (req, res) =>
-  res.render("chapw.ejs", { defaultDate: getToday(), message: null })
+  res.render("chapw.ejs", { defaultDate: getToday(), message: null }),
 );
 
 app.get("/logout", (req, res, next) => {
@@ -446,7 +449,7 @@ passport.use(
     } catch (err) {
       cb(err);
     }
-  })
+  }),
 );
 //end passport: cb is a function return: stop right there and cb function return some values.
 
@@ -462,6 +465,27 @@ passport.deserializeUser(async (id, cb) => {
 });
 
 // Login POST
+app.post("/login", (req, res, next) => {
+  passport.authenticate("local", (err, user, info) => {
+    if (err) {
+      return next(err);
+    }
+
+    if (!user) {
+      req.flash("error", info?.message || "Invalid username or password.");
+      return res.redirect("/login");
+    }
+
+    req.logIn(user, (err) => {
+      if (err) {
+        return next(err);
+      }
+
+      // Normal login → home page
+      return res.redirect("/");
+    });
+  })(req, res, next);
+});
 
 // Change password POST
 
