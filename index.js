@@ -450,7 +450,18 @@ passport.deserializeUser((user, cb) => {
 });
 
 app.post("/login", (req, res, next) => {
+  console.log("🔥 LOGIN POST HIT");
+  console.log("Login body:", {
+    email: req.body.email,
+    username: req.body.username,
+  });
+
   passport.authenticate("local", (err, user, info) => {
+    console.log("🔥 PASSPORT RESULT");
+    console.log("err:", err);
+    console.log("user:", user);
+    console.log("info:", info);
+
     if (err) {
       return next(err);
     }
@@ -461,22 +472,26 @@ app.post("/login", (req, res, next) => {
       return res.redirect("/login");
     }
 
-    // Require 2FA setup first
+    console.log("✅ USER AUTHENTICATED:", user.id);
+    console.log("2FA enabled:", user.two_factor_enabled);
+
     if (!user.two_factor_enabled) {
       req.session.pendingSetupUser = user.id;
       req.session.isAdmin = adminEmails.includes(user.email);
 
+      console.log("🚀 FIRST-TIME 2FA → /enable-2fa");
+      console.log("pendingSetupUser:", req.session.pendingSetupUser);
+
       return res.redirect("/enable-2fa");
     }
 
-    // 2FA already enabled, ask for code
     req.session.pending2FAUser = user.id;
     req.session.isAdmin = adminEmails.includes(user.email);
 
     return res.redirect("/2fa/verify-2fa");
   })(req, res, next);
 });
-
+//
 app.get("/add-user", ensureAdmin, (req, res) => {
   console.log("ENTERED /add-user");
 
