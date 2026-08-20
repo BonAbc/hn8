@@ -451,7 +451,7 @@ passport.deserializeUser((user, cb) => {
   cb(null, user);
 });
 
-app.post("/login", loginLimiter, (req, res, next) => {
+app.post("/login", authLimiter, (req, res, next) => {
   // Use passport's authenticate method with a custom callback passport is above 👌👌👌👌👌👌 line 565 👌👌👌👌👌👌
   // passport.authenticate : verify user "local" your server.
   passport.authenticate("local", (err, user, info) => {
