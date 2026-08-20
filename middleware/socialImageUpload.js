@@ -1,0 +1,56 @@
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+const uploadDir = path.join(process.cwd(), "public", "uploads", "social");
+// save
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+
+    const filename = `social-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}${ext}`;
+
+    cb(null, filename);
+  },
+});
+
+const socialFileUpload = multer({
+  storage,
+
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10 MB per file
+    files: 10, // maximum 10 files
+  },
+
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+      "application/pdf",
+    ];
+
+    if (!allowedTypes.includes(file.mimetype)) {
+      return cb(
+        new Error("Only JPG, PNG, WebP, GIF, and PDF files are allowed."),
+      );
+    }
+
+    cb(null, true);
+  },
+});
+
+export default socialFileUpload;
+
+// for social.ejs
