@@ -404,69 +404,98 @@ app.get("/logout", (req, res, next) => {
 });
 
 passport.use(
-  new Strategy(async function verify(username, password, cb) {
-    try {
-      const result = await db.query("SELECT * FROM my_user WHERE email = $1", [
-        username,
-      ]);
+  new Strategy(
+    {
+      usernameField: "email",
+      passwordField: "password",
+    },
+    async function verify(email, password, cb) {
+      try {
+        const result = await db.query(
+          `
+          SELECT *
+          FROM my_user
+          WHERE email = $1
+          `,
+          [email],
+        );
 
-      if (result.rows.length > 0) {
+        if (result.rows.length === 0) {
+          return cb(null, false, {
+            message: "Invalid username or password.",
+          });
+        }
+
         const user = result.rows[0];
 
-        // Check if account is active
         if (!user.is_active) {
           return cb(null, false, {
             message: "Your account is inactive. Please contact admin.",
           });
         }
 
-        const storedHashedPassword = user.pw;
+        const match = await bcrypt.compare(password, user.pw);
 
-        bcrypt.compare(password, storedHashedPassword, (err, match) => {
-          if (err) return cb(err);
+        if (!match) {
+          return cb(null, false, {
+            message: "Invalid username or password.",
+          });
+        }
 
-          if (match) {
-            return cb(null, user);
-          }
+        console.log("✅ PASSWORD VERIFIED:", user.id);
 
-          return cb(null, false);
-        });
+        return cb(null, user);
+      } catch (err) {
+        console.error("❌ PASSPORT STRATEGY ERROR:", err);
+        return cb(err);
       }
-
-      return cb(null, false);
-    } catch (err) {
-      return cb(err);
-    }
-  }),
+    },
+  ),
 );
-
-// Keep the same serialize/deserialize behavior
 passport.serializeUser((user, cb) => {
-  cb(null, user);
+  cb(null, user.id);
 });
 
-passport.deserializeUser((user, cb) => {
-  cb(null, user);
-});
+passport.deserializeUser(async (id, cb) => {
+  try {
+    const result = await db.query(
+      `
+      SELECT *
+      FROM my_user
+      WHERE id = $1
+      `,
+      [id],
+    );
 
+    if (result.rows.length === 0) {
+      return cb(null, false);
+    }
+
+    return cb(null, result.rows[0]);
+  } catch (err) {
+    return cb(err);
+  }
+});
+//
 app.post("/login", (req, res, next) => {
   console.log("🔥 LOGIN POST HIT");
-  console.log("Login body:", {
-    email: req.body.email,
-    username: req.body.username,
-  });
 
-  passport.authenticate("local", (err, user, info) => {
+  console.log("Login email:", req.body.email);
+
+  passport.authenticate("local", async (err, user, info) => {
     console.log("🔥 PASSPORT RESULT");
     console.log("err:", err);
     console.log("user:", user);
     console.log("info:", info);
 
     if (err) {
+      console.error("❌ Passport error:", err);
       return next(err);
     }
 
     if (!user) {
+      console.log("❌ INVALID LOGIN");
+
       req.flash("error", info?.message || "Invalid username or password.");
 
       return res.redirect("/login");
@@ -475,20 +504,55 @@ app.post("/login", (req, res, next) => {
     console.log("✅ USER AUTHENTICATED:", user.id);
     console.log("2FA enabled:", user.two_factor_enabled);
 
+    // ==========================================
+    // FIRST-TIME 2FA
+    // ==========================================
+
     if (!user.two_factor_enabled) {
       req.session.pendingSetupUser = user.id;
       req.session.isAdmin = adminEmails.includes(user.email);
 
+      // Make sure there is NO authenticated Passport
+      // login yet.
+      req.session.pending2FAUser = null;
+
       console.log("🚀 FIRST-TIME 2FA → /enable-2fa");
+
       console.log("pendingSetupUser:", req.session.pendingSetupUser);
 
-      return res.redirect("/enable-2fa");
+      return req.session.save((sessionErr) => {
+        if (sessionErr) {
+          console.error("❌ SESSION SAVE ERROR:", sessionErr);
+
+          return next(sessionErr);
+        }
+
+        console.log("✅ FIRST-TIME 2FA SESSION SAVED");
+
+        return res.redirect("/enable-2fa");
+      });
     }
+
+    // ==========================================
+    // EXISTING USER — 2FA VERIFICATION
+    // ==========================================
 
     req.session.pending2FAUser = user.id;
     req.session.isAdmin = adminEmails.includes(user.email);
 
-    return res.redirect("/2fa/verify-2fa");
+    req.session.pendingSetupUser = null;
+
+    console.log("🔐 EXISTING USER → /2fa/verify-2fa");
+
+    return req.session.save((sessionErr) => {
+      if (sessionErr) {
+        console.error("❌ SESSION SAVE ERROR:", sessionErr);
+
+        return next(sessionErr);
+      }
+
+      return res.redirect("/2fa/verify-2fa");
+    });
   })(req, res, next);
 });
 //
