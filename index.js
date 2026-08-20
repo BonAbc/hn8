@@ -16,8 +16,25 @@ import compression from "compression";
 import connectPg from "connect-pg-simple";
 
 import { DateTime } from "luxon";
-//import multer from "multer";
 
+import http from "http";
+
+import { Server } from "socket.io";
+
+import { authenticator } from "@otplib/preset-default";
+import QRCode from "qrcode";
+
+import liveSocket from "./sockets/liveSocket.js";
+
+import webtraffic from "./middleware/webtraffic.js";
+
+import { ensureAdmin } from "./middleware/author.js";
+
+import socialFileUpload from "./middleware/socialImageUpload.js";
+
+import methodOverride from "method-override";
+
+//
 dotenv.config();
 
 const app = express();
@@ -42,6 +59,10 @@ app.use(compression());
 app.set("trust proxy", 1);
 
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+
+app.use(methodOverride("_method"));
+
 app.use(express.static("public"));
 //app.use(express.static(path.join(__dirname, "public")));
 //app.use("/uploads", express.static("/uploads"));
@@ -149,10 +170,26 @@ app.use((req, res, next) => {
   res.locals.message = req.flash("error");
   next();
 });
+const server = http.createServer(app);
 
-// ----------------------------
-// Security & Rate Limiting
-// ----------------------------
+const io = new Server(server);
+
+liveSocket(io);
+
+app.use(webtraffic(db, io));
+
+const secret = authenticator.generateSecret();
+
+authenticator.options = {
+  digits: 6,
+  step: 30,
+};
+
+const token = authenticator.generate(secret);
+// use in Line 591 : generate(secret: variable can change)👆👆👆👆👆
+console.log("Secret:", secret);
+console.log("Token:", token);
+
 const authLimiter = rateLimit({
   windowMs: 30 * 60 * 1000,
   max: 30,
@@ -175,9 +212,6 @@ app.use(
   }),
 );
 
-// ----------------------------
-// Password & Admin Utilities
-// ----------------------------
 const saltRounds = 12;
 // take parameter password
 function isValidPassword(password) {
@@ -193,8 +227,7 @@ function isValidPassword(password) {
     hasUppercase.test(password)
   );
 }
-// test is a method name
-//const hasNumber = /\d/;  pattern: any digit (0–9)
+
 const adminEmails = process.env.ADMIN_EMAILS
   ? process.env.ADMIN_EMAILS.split(",").map((email) => email.trim())
   : [];
@@ -203,15 +236,12 @@ function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) return next();
   res.redirect("/login");
 }
-//end ensure Authenticated
-// function ensureAdmin
-//track
+
 function ensureAdmin(req, res, next) {
   if (
     req.isAuthenticated &&
     req.isAuthenticated() &&
     adminEmails.includes(req.user.email)
-    //adminEmails line 180
   ) {
     return next();
   }
@@ -221,9 +251,6 @@ function ensureAdmin(req, res, next) {
     defaultDate: getToday(),
   });
 }
-// ----end track------------------------
-
-// end function ensureAdmin
 
 app.get("/", (req, res) =>
   res.render("index.ejs", { defaultDate: getToday() }),
@@ -242,10 +269,7 @@ app.get("/contact", (req, res) =>
 app.get("/link", (req, res) =>
   res.render("link.ejs", { defaultDate: getToday() }),
 );
-//app.get("/anotherlink", (req, res) =>
-//  res.render("anotherlink.ejs", { defaultDate: getToday() })
-//);
-//Update anotherlink
+
 app.get("/anotherlink", async (req, res) => {
   try {
     // Query tax data from database
@@ -261,10 +285,7 @@ app.get("/anotherlink", async (req, res) => {
     res.status(500).send("Error loading tax data");
   }
 });
-//
-//app.get("/otherlink", (req, res) =>
-//  res.render("otherlink.ejs", { defaultDate: getToday() })
-//);
+
 app.get("/otherlink", async (req, res) => {
   try {
     // Query tax data from database
@@ -311,18 +332,7 @@ app.get("/apti", async (req, res) => {
     // Query Table1: fs.fs
     const fsResult = await db.query("SELECT fs FROM fs order by fs");
     const fsValues = fsResult.rows.map((row) => row.fs);
-    //.map((row) => row.fs) → takes each row and extracts only the fs property.
-    //fsResult = {
-    // rows: [
-    //   { fs: "Single" },
-    //   { fs: "Married" },
-    //  { fs: "Head of Household" }
-    // ],
-    //rowCount: 3,
-    // ...other metadata
-    //};
 
-    // Query Table2: st.st, st.tr
     const stResult = await db.query("SELECT st, tr FROM st order by st");
     const stValues = stResult.rows.map((row) => row.st);
 
@@ -331,8 +341,6 @@ app.get("/apti", async (req, res) => {
     stResult.rows.forEach((row) => {
       stateRates[row.st] = row.tr;
     });
-    // [row.st] = row.tr : make a New key- value pair [IL] = 4.75
-    // Today's date (ISO format yyyy-mm-dd)
 
     // ✅ Render view
     res.render("apti.ejs", {
@@ -346,8 +354,7 @@ app.get("/apti", async (req, res) => {
     res.status(500).send("Database error");
   }
 });
-//Tax calculation tool
-//invoice begin
+
 app.get("/invoices", async (req, res) => {
   try {
     // Fetch all companies from the "companies" table
@@ -384,24 +391,7 @@ app.get("/invoices", async (req, res) => {
     res.status(500).send("Error loading form");
   }
 });
-//invoice
-//app.get("/mes", async (req, res) => {
-//  if (!adminEmails.includes(req.user.email))
-//    return res.status(403).render("denied.ejs", {
-//      defaultDate: getToday(),
-//      message: "Access denied",
-//    });
-//  try {
-//    const result = await db.query("SELECT * FROM cliinfo ORDER BY id");
-//    res.render("mes.ejs", { defaultDate: getToday(), mes: result.rows });
-// } catch (err) {
-//    console.error(err);
-//    res.status(500).send("Error loading data");
-//  }
-//});
 
-// ----------------------------
-// Login / Signup / Change Password
 // ----------------------------
 app.get("/login", (req, res) =>
   res.render("login.ejs", {
@@ -430,63 +420,726 @@ app.get("/logout", (req, res, next) => {
   });
 });
 
-// Signup POST
-
-// Passport
 passport.use(
-  new Strategy(async (username, password, cb) => {
+  new Strategy(async function verify(username, password, cb) {
     try {
-      const result = await db.query("SELECT * FROM my_user WHERE email=$1", [
+      const result = await db.query("SELECT * FROM my_user WHERE email = $1", [
         username,
       ]);
-      if (result.rows.length === 0) return cb(null, false);
-      const user = result.rows[0];
-      bcrypt.compare(password, user.pw, (err, match) => {
-        if (err) return cb(err);
-        if (match) return cb(null, user);
+
+      if (result.rows.length > 0) {
+        const user = result.rows[0];
+        // Check if account is active
+        if (!user.is_active) {
+          return cb(null, false, {
+            message: "Your account is inactive. Please contact admin.",
+          });
+        }
+
+        const storedHashedPassword = user.pw; //
+
+        bcrypt.compare(password, storedHashedPassword, (err, match) => {
+          if (err) return cb(err);
+          if (match) {
+            return cb(null, user);
+          } else {
+            return cb(null, false);
+          }
+        });
+      } else {
         return cb(null, false);
-      });
+      }
     } catch (err) {
-      cb(err);
+      return cb(err);
     }
   }),
 );
-//end passport: cb is a function return: stop right there and cb function return some values.
 
-passport.serializeUser((user, cb) => cb(null, user.id));
-passport.deserializeUser(async (id, cb) => {
-  try {
-    const result = await db.query("SELECT * FROM my_user WHERE id=$1", [id]);
-    if (result.rows.length === 0) return cb(null, false);
-    cb(null, result.rows[0]);
-  } catch (err) {
-    cb(err);
-  }
+// Keep the same serialize/deserialize behaviour as your original
+passport.serializeUser((user, cb) => {
+  cb(null, user);
+  // save user 👌👌
+});
+passport.deserializeUser((user, cb) => {
+  cb(null, user);
 });
 
-// Login POST
-app.post("/login", (req, res, next) => {
+app.post("/login", loginLimiter, (req, res, next) => {
+  // Use passport's authenticate method with a custom callback passport is above 👌👌👌👌👌👌 line 565 👌👌👌👌👌👌
+  // passport.authenticate : verify user "local" your server.
   passport.authenticate("local", (err, user, info) => {
     if (err) {
+      // If an error occurred during authentication, pass it to Express error handler
       return next(err);
+      // authenticate is a method 👌👌👌👌👌
     }
-
+    //👌👌👌👌👌 user from Line 999 original 👌👌👌👌👌
     if (!user) {
+      // Authentication failed (wrong username/password)
+      // Use failure message from passport or default one
       req.flash("error", info?.message || "Invalid username or password.");
+      //popup modal
+      //req.session.showLoginModal = true;
+      // req.session.loginMessage = "Invalid username or password.";
+      // Redirect back to login page
       return res.redirect("/login");
     }
 
-    req.logIn(user, (err) => {
-      if (err) {
-        return next(err);
-      }
+    // Add 2FA 👌👌👌👌👌👌
+    // 👇 ADD 2FA CHECK HERE
 
-      // Normal login → home page
-      return res.redirect("/");
-    });
+    // Require 2FA setup first
+    if (!user.two_factor_enabled) {
+      req.session.pendingSetupUser = user.id; // that is why refer to line 706/640
+      req.session.isAdmin = adminEmails.includes(user.email);
+      //👌👌👌👌👌👌 above is add pendingSetupUser 👌👌👌👌👌👌 go to line 568
+      return res.redirect("/enable-2fa");
+      //👌👌👌👌👌👌 scan QR code: from Line 👌👌👌👌👌👌
+    }
+
+    // 2FA already enabled, ask for code
+    req.session.pending2FAUser = user.id;
+    req.session.isAdmin = adminEmails.includes(user.email);
+
+    return res.redirect("/2fa/verify-2fa");
   })(req, res, next);
 });
 
+app.get("/add-user", ensureAdmin, (req, res) => {
+  console.log("ENTERED /add-user");
+  res.render("adduserbyadmin.ejs", { defaultDate: today() });
+});
+
+//Admin add user 👆
+app.post("/add-user", ensureAdmin, async (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  const group_id = parseInt(req.body.group_id, 10);
+
+  // Validate group ID
+  if (!Number.isInteger(group_id) || group_id < 1) {
+    return res.send("Invalid group ID.");
+  }
+
+  try {
+    // Check existing user
+    const checkUser = await db.query("SELECT * FROM my_user WHERE email = $1", [
+      email,
+    ]);
+
+    if (checkUser.rows.length > 0) {
+      return res.send("Email already exists.");
+    }
+
+    // Same validation as signup
+    if (!isValidPassword(password)) {
+      return res.send("Invalid password.");
+    }
+
+    // Hash password
+    bcrypt.hash(password, saltRounds, async (err, hash) => {
+      if (err) {
+        console.error("Error hashing password:", err);
+        return res.status(500).send("Error creating user");
+      }
+
+      try {
+        await db.query(
+          `INSERT INTO my_user
+           (email, pw, two_factor_enabled, group_id)
+           VALUES ($1, $2, $3, $4)`,
+          [email, hash, false, group_id],
+        );
+
+        // Admin stays logged in
+        return res.redirect("/web/traffic/test");
+      } catch (insertErr) {
+        console.error("Error inserting user:", insertErr);
+        return res.status(500).send("Error creating user");
+      }
+    });
+  } catch (error) {
+    console.error("Add user route error:", error);
+    res.status(500).send("Error creating user");
+  }
+});
+app.get("/users/loveme", ensureAdmin, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = 6;
+    const offset = (page - 1) * limit;
+
+    const groupId = req.query.group_id;
+
+    console.log("GROUP FILTER:", groupId);
+
+    let result;
+    let countResult;
+
+    if (groupId) {
+      result = await db.query(
+        `SELECT id, email, is_active, group_id
+         FROM my_user
+         WHERE group_id = $1
+         ORDER BY id
+         LIMIT $2 OFFSET $3`,
+        [groupId, limit, offset],
+      );
+
+      countResult = await db.query(
+        `SELECT COUNT(*)
+         FROM my_user
+         WHERE group_id = $1`,
+        [groupId],
+      );
+    } else {
+      result = await db.query(
+        `SELECT id, email, is_active, group_id
+         FROM my_user
+         ORDER BY id
+         LIMIT $1 OFFSET $2`,
+        [limit, offset],
+      );
+
+      countResult = await db.query(
+        `SELECT COUNT(*)
+         FROM my_user`,
+      );
+    }
+
+    const totalUsers = parseInt(countResult.rows[0].count, 10);
+    const totalPages = Math.ceil(totalUsers / limit);
+
+    res.render("users.ejs", {
+      users: result.rows,
+      currentPage: page,
+      totalPages,
+      groupId,
+      defaultDate: today(),
+      message: req.query.message,
+    });
+  } catch (err) {
+    console.error("Load users error:", err);
+    res.status(500).send("Error loading users");
+  }
+});
+app.delete("/user/:id", ensureAdmin, async (req, res) => {
+  const userId = req.params.id;
+  const groupId = req.query.group_id;
+
+  try {
+    await db.query("UPDATE my_user SET is_active = false WHERE id = $1", [
+      userId,
+    ]);
+
+    const redirectUrl = groupId
+      ? `/users/loveme?group_id=${encodeURIComponent(groupId)}&message=disabled`
+      : `/users/loveme?message=disabled`;
+
+    res.redirect(redirectUrl);
+  } catch (err) {
+    console.error("Deactivate user error:", err);
+    res.status(500).send("Error deactivating user");
+  }
+});
+//Admin add user edit 👆
+//Admin add user/reactivate 👆
+app.put("/user/:id", ensureAdmin, async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    await db.query("UPDATE my_user SET is_active = true WHERE id = $1", [
+      userId,
+    ]);
+
+    res.redirect("/users/loveme?message=reactivated");
+  } catch (err) {
+    console.error("Reactivate user error:", err);
+    res.status(500).send("Error reactivating user");
+  }
+});
+//Admin add user edit 👆
+app.get("/user/:id/edit", ensureAdmin, async (req, res) => {
+  const userId = req.params.id;
+  const groupId = req.query.group_id;
+
+  try {
+    const result = await db.query(
+      `SELECT *
+       FROM my_user
+       WHERE id = $1`,
+      [userId],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).send("User not found");
+    }
+
+    res.render("users-edit.ejs", {
+      user: result.rows[0],
+      groupId,
+      defaultDate: today(),
+    });
+  } catch (err) {
+    console.error("Load edit user error:", err);
+    res.status(500).send("Error loading user");
+  }
+});
+//Admin add user edit 👆
+app.patch("/user/:id", ensureAdmin, async (req, res) => {
+  const userId = req.params.id;
+  const { email, group_id } = req.body;
+
+  // Preserve the filter that was used when opening Edit
+  const filterGroupId = req.query.group_id;
+
+  try {
+    await db.query(
+      `UPDATE my_user
+       SET email = $1,
+           group_id = $2
+       WHERE id = $3`,
+      [email, group_id, userId],
+    );
+
+    const redirectUrl = filterGroupId
+      ? `/users/loveme?group_id=${encodeURIComponent(filterGroupId)}&message=updated`
+      : `/users/loveme?message=updated`;
+
+    res.redirect(redirectUrl);
+  } catch (err) {
+    console.error("Update user error:", err);
+    res.status(500).send("Error updating user");
+  }
+});
+app.get("/web/traffic/test", ensureAdmin, async (req, res) => {
+  const page = Number(req.query.page) || 1;
+  const limit = 10;
+  const offset = (page - 1) * limit;
+
+  const result = await db.query(
+    `
+        SELECT *
+        FROM webtraffic
+        ORDER BY created_at DESC
+        LIMIT $1 OFFSET $2
+        `,
+    [limit, offset],
+  );
+
+  const count = await db.query(
+    `
+        SELECT COUNT(*) 
+        FROM webtraffic
+        `,
+  );
+
+  const total = Number(count.rows[0].count);
+  const totalPages = Math.ceil(total / limit);
+
+  res.render("webtraffic", {
+    visitors: result.rows,
+    page,
+    total, // add this
+    totalPages,
+    defaultDate: getToday(),
+  });
+});
+//
+app.post("/web/traffic/test/delete-selected", ensureAdmin, async (req, res) => {
+  try {
+    let ids = req.body.ids;
+
+    if (!ids) {
+      return res.redirect("/web/traffic/test");
+    }
+
+    // If only one checkbox was selected
+    if (!Array.isArray(ids)) {
+      ids = [ids];
+    }
+
+    ids = ids.map(Number).filter((id) => Number.isInteger(id));
+
+    if (ids.length > 0) {
+      await db.query(
+        `
+        DELETE FROM webtraffic
+        WHERE id = ANY($1::int[])
+        `,
+        [ids],
+      );
+    }
+
+    const page = Number(req.body.page) || 1;
+
+    res.redirect(`/web/traffic/test?page=${page}`);
+  } catch (error) {
+    console.error("Delete selected error:", error);
+    res.status(500).send("Failed to delete selected visitors");
+  }
+});
+app.get("/enable-2fa", (req, res) => {
+  res.render("enable-2fa.ejs", {
+    defaultDate: getToday(),
+  });
+});
+//Add 2FA Page 👌👌👌👌👌👌
+//Add 2FA Page 👌👌👌👌👌👌
+app.post("/enable-2fa", async (req, res) => {
+  const userId = req.session.pendingSetupUser;
+  //👌👌👌👌👌👌 from Line 999 👌👌👌👌👌👌 pendingSetupUser 1068
+  // Get user information
+  const result = await db.query(
+    `
+    SELECT email
+    FROM my_user
+    WHERE id = $1
+    `,
+    [userId],
+  );
+
+  const email = result.rows[0].email;
+
+  // Generate secret 👌👌👌👌👌👌
+  const secret = authenticator.generateSecret();
+  // Line 117 👆👆👆👆👆
+  // Generate secret 👌👌👌👌👌👌 stored by database and Authenticator app the same secrete
+  // Save secret 👌👌👌👌👌👌
+  await db.query(
+    `
+    UPDATE my_user
+    SET two_factor_secret = $1
+    WHERE id = $2
+    `,
+    [secret, userId],
+  );
+  //App stored {
+  // "issuer": "HieuWebsite",
+  // "account": "user@example.com",
+  // "secret": "JBSWY3DPEHPK3PXP",
+  //"algorithm": "SHA1",
+  // "digits": 6,
+  // "period": 30
+  //}
+  // Create QR data 👌👌👌👌👌👌 from Line 862
+  const otpauth = authenticator.keyuri(email, "Dana Awesome", secret); // order is stricted
+  // HieuWebsite is not part of the calculation
+  //otpauth://totp/HieuWebsite:user@example.com?
+  //secret=JBSWY3DPEHPK3PXP
+  //&issuer=HieuWebsite
+  //&algorithm=SHA1
+  //&digits=6
+  //&period=30
+  // Create QR data 👌👌👌👌👌👌
+  // Create QR image 👌👌👌👌👌👌
+  // Render to setup-2fa.ejs > route verify-2fa-setup no app.get("/verify-2fa-setup") 👌👌👌👌👌👌
+  const qrCode = await QRCode.toDataURL(otpauth);
+  // Create QR image 👌👌👌👌👌👌
+  res.render("setup-2fa.ejs", {
+    defaultDate: getToday(),
+    qrCode,
+  });
+});
+//Add 2FA enable 👌👌👌👌👌👌
+//Add Add 2FA enable 👌👌👌👌👌👌
+//Add Add 2FA enable 👌👌👌👌👌👌
+app.get("/verify-2fa-setup", (req, res) => {
+  res.render("setup-2fa", { qrCode: "", defaultDate: today() });
+});
+//Add 2FA enable 👌👌👌👌👌👌
+//Add Add 2FA enable 👌👌👌👌👌👌
+
+//Add message table 👌👌👌👌👌👌
+//Add 2FA Page 👌👌👌👌👌👌
+//Add message table 👌👌👌👌👌👌
+app.post("/verify-2fa-setup", async (req, res) => {
+  const userId = req.session.pendingSetupUser;
+  // 👌👌👌👌👌👌 Refer to Line 973 👌👌👌👌👌👌 Line 1068 original
+  // Code typed by user from Google Authenticator
+  const code = req.body.code;
+  // received from app authenticator 👌👌👌👌👌👌
+  // Get secret from database
+  const result = await db.query(
+    `
+    SELECT * 
+    FROM my_user
+    WHERE id = $1
+    `,
+    [userId],
+  );
+
+  const user = result.rows[0];
+
+  // Verify code
+  const isValid = authenticator.verify({
+    token: code,
+    secret: user.two_factor_secret,
+  });
+  //js and authenticator does the same calculation 👌👌👌👌👌👌
+  //Secret:👌👌👌👌👌👌 unique for each user.
+  //JBSWY3DPEHPK3PXP 👌👌👌👌👌👌: app generate codes continously
+
+  //Current time:
+  //2026-07-10 10:15:20
+
+  //Calculation:
+  //HMAC(secret, time)
+
+  //Result:
+  //483921
+  //
+  if (!isValid) {
+    return res.send("Wrong code");
+  }
+
+  // Enable 2FA
+  await db.query(
+    `
+    UPDATE my_user
+    SET two_factor_enabled = true
+    WHERE id = $1
+    `,
+    [userId],
+  );
+  //👌👌👌👌App TOTP work offline: continously generate code from phone not server👌👌👌👌👌👌👌👌
+  // Get full user and create login session 👌👌👌👌👌👌 secret should be encrypted???
+  req.logIn(user, (err) => {
+    if (err) {
+      return res.send("Login error");
+    }
+
+    delete req.session.pendingSetupUser;
+
+    return res.redirect("/");
+  });
+});
+//Add 2FA Page 👌👌👌👌👌👌
+//Add 2FA Page 👌👌👌👌👌👌
+//Add 2FA Page 👌👌👌👌👌👌
+// Add 2FA Page 👌👌👌👌👌👌
+app.get("/2fa/verify-2fa", (req, res) => {
+  res.render("verify-2fa.ejs", {
+    defaultDate: today(),
+  });
+});
+
+// Add 2FA Verify 👌👌👌👌👌👌
+app.post("/2fa/verify-2fa", async (req, res, next) => {
+  const code = req.body.code;
+
+  const userId = req.session.pending2FAUser;
+
+  // Safety check: no pending 2FA session
+  if (!userId) {
+    return res.redirect("/login");
+  }
+
+  const result = await db.query(
+    `
+    SELECT *
+    FROM my_user
+    WHERE id = $1 
+    `,
+    [userId],
+  );
+
+  const user = result.rows[0];
+
+  // Safety check: user not found
+  if (!user) {
+    delete req.session.pending2FAUser;
+    return res.redirect("/login");
+  }
+
+  // =====================================
+  // CHECK 2FA LOCK
+  // =====================================
+
+  if (user.two_fa_lock_until && new Date(user.two_fa_lock_until) > new Date()) {
+    return res.render("verify-2fa.ejs", {
+      message: "Your account is locked. Please try again later.",
+      defaultDate: today(),
+    });
+  }
+  // =====================================
+  // LOCK EXPIRED -> RESET COUNTER
+  // =====================================
+
+  if (
+    user.two_fa_lock_until &&
+    new Date(user.two_fa_lock_until) <= new Date()
+  ) {
+    await db.query(
+      `
+    UPDATE my_user
+    SET
+      failed_2fa_attempts = 0,
+      two_fa_lock_until = NULL
+    WHERE id = $1
+    `,
+      [user.id],
+    );
+
+    user.failed_2fa_attempts = 0;
+    user.two_fa_lock_until = null;
+  }
+
+  // =====================================
+  // VERIFY AUTHENTICATOR CODE
+  // =====================================
+
+  const isValid = authenticator.verify({
+    token: code,
+    secret: user.two_factor_secret,
+  });
+  // use field: user.two_factor_secret,
+  // =====================================
+  // INVALID 2FA CODE
+  // =====================================
+
+  if (!isValid) {
+    const attempts = user.failed_2fa_attempts + 1;
+
+    // Third failed attempt = lock 1 hour
+    if (attempts >= 3) {
+      await db.query(
+        `
+        UPDATE my_user
+        SET
+          failed_2fa_attempts = $1,
+          two_fa_lock_until = NOW() + INTERVAL '1 minute'
+        WHERE id = $2
+        `,
+        [attempts, user.id],
+      );
+      // interval ' 1 second'
+      return res.render("verify-2fa.ejs", {
+        message:
+          "Too many failed verification attempts. Account locked for 1 hour.",
+        defaultDate: today(),
+      });
+    }
+
+    // First and second failures
+
+    await db.query(
+      `
+      UPDATE my_user
+      SET failed_2fa_attempts = $1
+      WHERE id = $2
+      `,
+      [attempts, user.id],
+    );
+
+    return res.render("verify-2fa.ejs", {
+      message: `Invalid verification code. ${2 - attempts} attempt(s) remaining. 2nd failure, your account will be locked for 1 hour`,
+      defaultDate: today(),
+    });
+  }
+
+  await db.query(
+    `
+    UPDATE my_user
+    SET
+      failed_2fa_attempts = 0,
+      two_fa_lock_until = NULL
+    WHERE id = $1
+    `,
+    [user.id],
+  );
+
+  if (req.session.pendingPasswordChange) {
+    const { userId, newPassword, expires } = req.session.pendingPasswordChange;
+
+    // Check expiration
+
+    if (Date.now() > expires) {
+      delete req.session.pendingPasswordChange;
+      delete req.session.pending2FAUser;
+
+      return res.send("Password change request expired");
+    }
+
+    // bcrypt AFTER successful 2FA
+
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    await db.query(
+      `
+      UPDATE my_user
+      SET 
+      pw = $1,
+      pw_change_approved = false
+      WHERE id = $2
+      `,
+      [hashedPassword, userId],
+    );
+    // when change > move here for 2 FA, set field to false not from route chapw
+    delete req.session.pendingPasswordChange;
+    delete req.session.pending2FAUser;
+
+    return res.render("chapw.ejs", {
+      message: "Password updated successfully!",
+      defaultDate: today(),
+    });
+  }
+
+  req.logIn(user, (err) => {
+    if (err) {
+      console.log("=== 2fa-verify-2fa ===");
+      console.log("Authenticated:", req.isAuthenticated());
+
+      console.log("Session ID:", req.sessionID);
+
+      console.log("User:", req.user);
+
+      return next(err);
+    }
+    // Recompute admin status
+    req.session.isAdmin = adminEmails.includes(user.email);
+    console.log("User:", req.user);
+    console.log("User Admin:", req.user.isAdmin);
+    console.log("Session Admin:", req.session.isAdmin);
+    // Remove temporary 2FA session
+
+    delete req.session.pending2FAUser;
+
+    if (req.session.isAdmin) {
+      return res.redirect("/");
+    } else {
+      return res.redirect("/");
+    }
+    //
+  });
+});
+app.get("/reset-2fa", ensureAdmin, async (req, res) => {
+  res.render("startover2fa.ejs", { defaultDate: today() });
+});
+//Add message table 👌👌👌👌👌👌 Use when a hack use selectively
+app.post("/reset-2fa", ensureAdmin, async (req, res) => {
+  // const userId = req.user.id;
+  //const userId = req.body.userId;
+  const email = req.body.email;
+
+  // Remove old secret 👌👌👌👌👌👌 from startover2fa.js👌👌👌👌👌👌
+  await db.query(
+    `
+    UPDATE my_user
+    SET 
+      two_factor_secret = NULL,
+      two_factor_enabled = false,
+      failed_2fa_attempts = 0,
+    two_fa_lock_until = NULL
+    WHERE email = $1  
+   
+    `,
+    [email],
+  );
+
+  res.redirect("/login");
+});
 // Change password POST
 app.post("/chapw", async (req, res) => {
   const today = new Date().toISOString().split("T")[0];
@@ -498,12 +1151,14 @@ app.post("/chapw", async (req, res) => {
       defaultDate: today,
     });
   }
+
   if (newPassword !== confirmPassword) {
     return res.render("chapw.ejs", {
       message: "Passwords do not match",
       defaultDate: today,
     });
   }
+
   if (!isValidPassword(newPassword)) {
     return res.render("chapw.ejs", {
       message:
@@ -516,6 +1171,7 @@ app.post("/chapw", async (req, res) => {
     const userResult = await db.query("SELECT * FROM my_user WHERE email=$1", [
       email,
     ]);
+
     if (userResult.rows.length === 0) {
       return res.render("chapw.ejs", {
         message: "Email not registered",
@@ -523,18 +1179,40 @@ app.post("/chapw", async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-    await db.query("UPDATE my_user SET pw=$1 WHERE email=$2", [
-      hashedPassword,
-      email,
-    ]);
-    res.render("chapw.ejs", {
-      message: "Password updated successfully!",
-      defaultDate: today,
-    });
+    const user = userResult.rows[0];
+
+    // Store password change request temporarily
+    // Store password change request temporarily
+    req.session.pendingPasswordChange = {
+      userId: user.id,
+      email: user.email,
+      newPassword: newPassword,
+      expires: Date.now() + 5 * 60 * 1000,
+    };
+    // bcrypt AFTER successful 2FA  👌👌👌👌👌👌
+    // Admin approval check
+    if (!user.two_factor_enabled) {
+      if (!user.pw_change_approved) {
+        return res.render("chapw.ejs", {
+          message:
+            "Password change requires administrator approval. Please contact your administrator.",
+          defaultDate: today,
+        });
+      }
+
+      // Approved by admin, continue password change
+      return res.redirect("/complete-password-change");
+    }
+
+    // User has 2FA enabled
+    req.session.pending2FAUser = user.id;
+
+    return res.redirect("/2fa/verify-2fa");
+    // bcrypt AFTER successful 2FA  👌👌👌👌👌👌 Refer to Line 771
   } catch (err) {
-    console.error("Error updating password:", err);
-    res.render("chapw.ejs", {
+    console.error("Error preparing password update:", err);
+
+    return res.render("chapw.ejs", {
       message: "Something went wrong, try again later",
       defaultDate: today,
     });
@@ -543,12 +1221,2579 @@ app.post("/chapw", async (req, res) => {
 
 //add track
 app.set("trust proxy", true); // needed to capture real IP behind proxies
+app.get("/admin/password-approval", (req, res) => {
+  if (!req.user || !adminEmails.includes(req.user.email)) {
+    return res.status(403).send("Access denied");
+  }
 
-// Visitor Tracking Route
+  res.render("password-approval.ejs", {
+    defaultDate: getToday(),
+    message: req.query.message || "",
+  });
+});
+//✌✌✌ end sign up ✌✌✌
+//✌✌✌ end sign up ✌✌✌
+app.post("/admin/password-approval", async (req, res) => {
+  if (!req.user || !adminEmails.includes(req.user.email)) {
+    return res.status(403).send("Access denied");
+  }
 
-//end track
+  const { email } = req.body;
 
-// Global Error Handler
+  try {
+    const checkUser = await db.query(
+      `
+  SELECT email, pw_change_approved
+  FROM my_user
+  WHERE email = $1
+  `,
+      [email],
+    );
+
+    if (checkUser.rows.length === 0) {
+      return res.redirect(
+        "/admin/password-approval?message=User email not found",
+      );
+    }
+
+    if (checkUser.rows[0].pw_change_approved) {
+      return res.redirect(
+        "/admin/password-approval?message=This password change is already approved",
+      );
+    }
+
+    await db.query(
+      `
+  UPDATE my_user
+  SET pw_change_approved = true
+  WHERE email = $1
+  `,
+      [email],
+    );
+
+    return res.redirect(
+      "/admin/password-approval?message=Password change approved",
+    );
+    // res.send("Password change approved");
+  } catch (err) {
+    console.error(err);
+    res.send("Error approving password change");
+  }
+});
+//✌✌✌ end sign up ✌✌✌
+//✌✌✌ end sign up authenticator ✌✌✌
+//✌✌✌ end sign up authenticator ✌✌✌
+app.get("/complete-password-change", async (req, res) => {
+  const pending = req.session.pendingPasswordChange;
+
+  if (!pending) {
+    return res.redirect("/chapw");
+  }
+  // when enter > render below. First /chapw ✌✌✌ ✌✌✌
+  res.render("complete-password-change.ejs", {
+    message: "Your password change has been approved.",
+    defaultDate: getToday(),
+  });
+});
+
+//✌✌✌ end sign up ✌✌✌
+app.post("/complete-password-change", async (req, res) => {
+  const { newPassword, confirmPassword } = req.body;
+
+  const pending = req.session.pendingPasswordChange;
+
+  if (!pending) {
+    return res.redirect("/chapw");
+  }
+
+  if (newPassword !== confirmPassword) {
+    return res.render("complete-password-change.ejs", {
+      message: "Passwords do not match.",
+      defaultDate: getToday(),
+    });
+  }
+
+  try {
+    // Check admin approval
+    const result = await db.query(
+      `
+      SELECT pw_change_approved
+      FROM my_user
+      WHERE id = $1
+      `,
+      [pending.userId],
+    );
+
+    if (result.rows.length === 0) {
+      return res.render("complete-password-change.ejs", {
+        message: "User not found.",
+        defaultDate: getToday(),
+      });
+    }
+
+    if (!result.rows[0].pw_change_approved) {
+      return res.render("complete-password-change.ejs", {
+        message: "Waiting for administrator approval.",
+        defaultDate: getToday(),
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    await db.query(
+      `
+      UPDATE my_user
+      SET 
+        pw = $1,
+        pw_change_approved = false
+      WHERE id = $2
+      `,
+      [hashedPassword, pending.userId],
+    );
+    console.log("Updated user:", pending.userId);
+    console.log("New hash:", hashedPassword);
+    // Clear recovery session
+    delete req.session.pendingPasswordChange;
+
+    // return res.render("signin.ejs", {
+    // defaultDate: getToday(),
+    //}); 👌👌 cause troubles
+    // Redirect to normal login route
+    return res.redirect("/login");
+  } catch (err) {
+    console.error("Password change error:", err);
+
+    return res.render("complete-password-change.ejs", {
+      message: "Something went wrong. Try again later.",
+      defaultDate: getToday(),
+    });
+  }
+});
+const colors = [
+  "#e1ffe4",
+  "#ffe4e1",
+  "#e4e1ff",
+  "#fff8dc",
+  "#7fc8a9",
+  "#e0ffff",
+  "#f2cc8f",
+  "#add8e6",
+  "#e9c46a",
+  "#a8dadc",
+];
+
+const ALLOWED_TARGETS = ["post", "comment", "reply"];
+
+const ALLOWED_REACTIONS = [
+  "like",
+  "dislike",
+  "heart",
+  "horse",
+  "rose",
+  "fly",
+  "call",
+  "website",
+  "email",
+  "smile",
+  "victory",
+];
+
+// ============================================================
+// SOCIAL POST / FEED
+// ============================================================
+app.get("/social/post", ensureAuthenticated, async (req, res) => {
+  try {
+    // ========================================================
+    // CURRENT USER
+    // ================first 2: table my_user; last one: social_post_media===========
+
+    const userId = req.user?.id || null;
+    const userEmail = req.user?.email || null;
+
+    const postId = req.query.postId ? parseInt(req.query.postId, 10) : null;
+
+    console.log("========================================");
+    console.log("SOCIAL GET");
+    console.log("userId:", userId);
+    console.log("userEmail:", userEmail);
+    console.log("postId:", postId);
+
+    if (req.query.postId && !Number.isInteger(postId)) {
+      return res.status(400).send("Invalid post ID.");
+    }
+
+    // ========================================================
+    // CURRENT USER GROUP
+    // ========================================================
+
+    let userGroupId = null;
+    // if user id = value > select its group id.
+    if (userId) {
+      const groupResult = await db.query(
+        `
+        SELECT group_id
+        FROM my_user
+        WHERE id = $1
+        `,
+        [userId],
+      );
+
+      userGroupId = groupResult.rows[0]?.group_id ?? null;
+    }
+    // userId is Line 2729
+    // above get group_id from current✌ user id table my_user: How to get value from Different fields on the records. ✌
+    console.log("SOCIAL userGroupId:", userGroupId);
+
+    // ========================================================
+    // ADMIN CHECK
+    // ========================================================
+
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const isAdmin =
+      !!userEmail && adminEmails.includes(userEmail.toLowerCase());
+    // !!: covert to true/false if userEmail also adminEmail > true
+    console.log("SOCIAL isAdmin:", isAdmin);
+
+    // ========================================================
+    // PAGINATION
+    // ================10 is 0 to 9: base 10 system; decimal system 1,1: at least 1 : if not 1 larger====
+
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+
+    const limit = 6;
+    const offset = (page - 1) * limit;
+
+    let totalPosts = 0;
+    let totalPages = 1;
+
+    // ========================================================
+    // COUNT NORMAL FEED
+    // ========================================================
+
+    if (!postId) {
+      let totalPostsResult;
+      // ::integer count(*): count all rows/record > convert to integer
+      if (isAdmin) {
+        totalPostsResult = await db.query(`
+          SELECT COUNT(*)::INTEGER AS total
+          FROM social_posts
+        `);
+      } else {
+        totalPostsResult = await db.query(
+          `
+          SELECT COUNT(*)::INTEGER AS total
+          FROM social_posts p
+
+          JOIN my_user u
+            ON u.id = p.user_id
+
+          WHERE
+            p.visibility = 'everyone'
+
+            OR p.user_id = $1
+
+
+            OR (
+              p.visibility = 'group_only'
+              AND $2::INTEGER IS NOT NULL
+              AND u.group_id = $2::INTEGER
+            )
+          `,
+          [userId, userGroupId],
+        );
+      }
+
+      totalPosts = Number(totalPostsResult.rows[0]?.total) || 0;
+
+      totalPages = Math.max(Math.ceil(totalPosts / limit), 1);
+
+      if (page > totalPages && totalPosts > 0) {
+        return res.redirect(`/social/post?page=${totalPages}`);
+      }
+    }
+
+    // ===================Line 2742: join: 2 table =====================================
+    // LOAD POSTS ✌
+    // ========================================================
+
+    let postsResult;
+
+    // ========================================================
+    // SINGLE POST
+    // /social/post?postId=26
+    // ===========================Line 2797 join=============================
+
+    if (postId) {
+      postsResult = await db.query(
+        `
+        SELECT
+          p.id,
+          p.user_id,
+          p.content,
+          p.color,
+          p.visibility,
+          p.created_at,
+          p.updated_at,
+          u.email,
+          u.group_id
+
+        FROM social_posts p
+
+        JOIN my_user u
+          ON u.id = p.user_id
+
+        WHERE
+          p.id = $1
+
+          AND (
+            p.visibility = 'everyone'
+
+            OR p.user_id = $2
+
+            OR $3 = TRUE
+
+            OR (
+              p.visibility = 'group_only'
+              AND $4::INTEGER IS NOT NULL
+              AND u.group_id = $4::INTEGER
+            )
+          )
+
+        LIMIT 1
+        `,
+        [postId, userId, isAdmin, userGroupId],
+      );
+      // postId: table social_post_media: line 2811 refer to Line
+      console.log("SINGLE POST RESULT:", postsResult.rows);
+
+      if (!postsResult.rowCount) {
+        return res.status(404).send("Post not found.");
+      }
+    }
+    // Line 2881: technique: find if current user group ID equal to post user group ID: another technique.compare VALUE of the same FIELD ✌
+    // ======== Line 2683: Current userid =user group id.Next: join Line 2797:user_id of post > find id of post user > Line 2813: group_id of post user; ======
+    //Line 2819: userGroupId is current user > compared: Line 2813: groupid of post user to current user.✌
+    // ADMIN FEED
+    // ========================================================
+    else if (isAdmin) {
+      postsResult = await db.query(
+        `
+        SELECT
+          p.id,
+          p.user_id,
+          p.content,
+          p.color,
+          p.visibility,
+          p.created_at,
+          p.updated_at,
+          u.email,
+          u.group_id
+
+        FROM social_posts p
+
+        JOIN my_user u
+          ON u.id = p.user_id
+
+        ORDER BY
+          p.created_at DESC,
+          p.id DESC
+
+        LIMIT $1
+        OFFSET $2
+        `,
+        [limit, offset],
+      );
+    }
+
+    // ========================================================
+    // NORMAL USER FEED
+    // ========================================================
+    else {
+      postsResult = await db.query(
+        `
+        SELECT
+          p.id,
+          p.user_id,
+          p.content,
+          p.color,
+          p.visibility,
+          p.created_at,
+          p.updated_at,
+          u.email,
+          u.group_id
+
+        FROM social_posts p
+
+        JOIN my_user u
+          ON u.id = p.user_id
+
+        WHERE
+          p.visibility = 'everyone'
+
+          OR p.user_id = $1
+
+          OR (
+            p.visibility = 'group_only'
+            AND $2::INTEGER IS NOT NULL
+            AND u.group_id = $2::INTEGER
+          )
+
+        ORDER BY
+          p.created_at DESC,
+          p.id DESC
+
+        LIMIT $3
+        OFFSET $4
+        `,
+        [userId, userGroupId, limit, offset],
+      );
+    }
+
+    // ========================================================
+    // POST MEDIA
+    // ========================================================
+
+    const mediaResult = await db.query(`
+      SELECT
+        id,
+        post_id,
+        file_url,
+        file_name,
+        mime_type,
+        file_size,
+         media_text,
+        created_at
+
+      FROM social_post_media
+
+      ORDER BY
+        created_at ASC,
+        id ASC
+    `);
+
+    console.log("SOCIAL MEDIA COUNT:", mediaResult.rows.length);
+
+    // ========================================================
+    // MEDIA LOOKUP
+    // ========================================================
+
+    const mediaByPost = {};
+
+    for (const row of mediaResult.rows) {
+      if (!mediaByPost[row.post_id]) {
+        mediaByPost[row.post_id] = [];
+      }
+
+      mediaByPost[row.post_id].push({
+        id: row.id,
+        postId: row.post_id,
+        fileUrl: row.file_url,
+        fileName: row.file_name,
+        mimeType: row.mime_type,
+        fileSize: row.file_size,
+
+        // IMPORTANT
+        mediaText: row.media_text,
+
+        createdAt: row.created_at,
+      });
+    }
+
+    // ========================================================
+    // COMMENTS
+    // ========================================================
+
+    const commentsResult = await db.query(`
+      SELECT
+        c.id,
+        c.post_id,
+        c.user_id,
+        c.content,
+        c.created_at,
+        c.updated_at,
+        u.email
+
+      FROM social_comments c
+
+      JOIN my_user u
+        ON u.id = c.user_id
+
+      ORDER BY
+        c.created_at ASC,
+        c.id ASC
+    `);
+
+    // ========================================================
+    // REPLIES
+    // ========================================================
+
+    const repliesResult = await db.query(`
+      SELECT
+        r.id,
+        r.comment_id,
+        r.parent_reply_id,
+        r.user_id,
+        r.content,
+        r.created_at,
+        r.updated_at,
+        u.email
+
+      FROM social_replies r
+
+      JOIN my_user u
+        ON u.id = r.user_id
+
+      ORDER BY
+        r.created_at ASC,
+        r.id ASC
+    `);
+
+    // ========================================================
+    // REACTION COUNTS
+    // ========================================================
+
+    const reactionsResult = await db.query(`
+      SELECT
+        target_type,
+        target_id,
+        reaction_type,
+        COUNT(*)::INTEGER AS count
+
+      FROM social_reactions
+
+      GROUP BY
+        target_type,
+        target_id,
+        reaction_type
+    `);
+
+    // ========================================================
+    // CURRENT USER REACTIONS
+    // ========================================================
+
+    let myReactionsResult = {
+      rows: [],
+    };
+
+    if (userId) {
+      myReactionsResult = await db.query(
+        `
+        SELECT
+          target_type,
+          target_id,
+          reaction_type
+
+        FROM social_reactions
+
+        WHERE user_id = $1
+        `,
+        [userId],
+      );
+    }
+
+    // ========================================================
+    // REACTION COUNTS LOOKUP
+    // ========================================================
+
+    const reactionCounts = {};
+
+    for (const row of reactionsResult.rows) {
+      const key = `${row.target_type}:${row.target_id}`;
+
+      if (!reactionCounts[key]) {
+        reactionCounts[key] = {};
+      }
+
+      reactionCounts[key][row.reaction_type] = Number(row.count);
+    }
+
+    // ========================================================
+    // MY REACTIONS LOOKUP
+    // ========================================================
+
+    const myReactions = {};
+
+    for (const row of myReactionsResult.rows) {
+      const key = `${row.target_type}:${row.target_id}`;
+
+      myReactions[key] = row.reaction_type;
+    }
+
+    // ========================================================
+    // REACTION HELPER
+    // ========================================================
+
+    function getReactions(targetType, targetId) {
+      const key = `${targetType}:${targetId}`;
+
+      return {
+        like: reactionCounts[key]?.like || 0,
+        dislike: reactionCounts[key]?.dislike || 0,
+        heart: reactionCounts[key]?.heart || 0,
+        horse: reactionCounts[key]?.horse || 0,
+        rose: reactionCounts[key]?.rose || 0,
+        fly: reactionCounts[key]?.fly || 0,
+        call: reactionCounts[key]?.call || 0,
+        website: reactionCounts[key]?.website || 0,
+        email: reactionCounts[key]?.email || 0,
+        smile: reactionCounts[key]?.smile || 0,
+        victory: reactionCounts[key]?.victory || 0,
+        myReaction: myReactions[key] || null,
+      };
+    }
+
+    // ========================================================
+    // BUILD REPLIES
+    // ========================================================
+
+    const repliesById = {};
+    const repliesByComment = {};
+
+    for (const row of repliesResult.rows) {
+      repliesById[row.id] = {
+        id: row.id,
+        commentId: row.comment_id,
+        parentReplyId: row.parent_reply_id || null,
+        userId: row.user_id,
+        email: row.email,
+        content: row.content,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        reactions: getReactions("reply", row.id),
+        replies: [],
+      };
+    }
+
+    for (const row of repliesResult.rows) {
+      const reply = repliesById[row.id];
+
+      if (!row.parent_reply_id) {
+        if (!repliesByComment[row.comment_id]) {
+          repliesByComment[row.comment_id] = [];
+        }
+
+        repliesByComment[row.comment_id].push(reply);
+      } else {
+        const parentReply = repliesById[row.parent_reply_id];
+
+        if (parentReply) {
+          parentReply.replies.push(reply);
+        }
+      }
+    }
+
+    // ========================================================
+    // BUILD COMMENTS
+    // ========================================================
+
+    const commentsByPost = {};
+
+    for (const row of commentsResult.rows) {
+      if (!commentsByPost[row.post_id]) {
+        commentsByPost[row.post_id] = [];
+      }
+
+      commentsByPost[row.post_id].push({
+        id: row.id,
+        postId: row.post_id,
+        userId: row.user_id,
+        email: row.email,
+        content: row.content,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        reactions: getReactions("comment", row.id),
+        replies: repliesByComment[row.id] || [],
+      });
+    }
+
+    // ========================================================
+    // BUILD POSTS
+    // ========================================================
+
+    const posts = postsResult.rows.map((row) => ({
+      id: row.id,
+      userId: row.user_id,
+      email: row.email,
+      content: row.content,
+      color: row.color,
+      visibility: row.visibility,
+
+      // NEW
+      media: mediaByPost[row.id] || [],
+
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+
+      reactions: getReactions("post", row.id),
+
+      comments: commentsByPost[row.id] || [],
+    }));
+
+    // ========================================================
+    // DEBUG
+    // ========================================================
+
+    console.log(
+      "SOCIAL POSTS:",
+      posts.map((p) => ({
+        id: p.id,
+        mediaCount: p.media.length,
+        media: p.media,
+        content: p.content,
+      })),
+    );
+
+    // ========================================================
+    // RENDER
+    // ========================================================
+
+    return res.render("social", {
+      posts,
+
+      media: mediaResult.rows,
+      currentUserId: userId,
+      currentUserEmail: userEmail,
+      isAdmin,
+
+      defaultDate: today(),
+
+      page,
+      totalPosts,
+      totalPages,
+    });
+  } catch (err) {
+    console.error("========================================");
+    console.error("LOAD SOCIAL FEED ERROR");
+    console.error("message:", err.message);
+    console.error("code:", err.code);
+    console.error("detail:", err.detail);
+    console.error("stack:", err.stack);
+    console.error("========================================");
+
+    return res.status(500).send(`Unable to load social feed: ${err.message}`);
+  }
+});
+//
+// socialFileUpload handle upload and pasted from multer
+app.post(
+  "/social/post/create",
+  ensureAuthenticated,
+  socialFileUpload.array("files", 10),
+
+  async (req, res) => {
+    const client = await db.connect();
+
+    try {
+      // ======================================================
+      // CURRENT USER
+      // ======================================================
+
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: "Please log in.",
+        });
+      }
+
+      console.log("========================================");
+      console.log("CREATE SOCIAL POST");
+      console.log("userId:", userId);
+      console.log("body:", req.body);
+      console.log("files:", req.files);
+      console.log("========================================");
+
+      // ======================================================
+      // POST CONTENT
+      // ======================================================
+
+      const content = String(req.body.content || "").trim();
+
+      // ======================================================
+      // FILES
+      // ======================================================
+
+      const files = req.files || [];
+
+      // ======================================================
+      // VALIDATE CONTENT LENGTH
+      // ======================================================
+
+      if (content.length > 5000) {
+        return res.status(400).json({
+          success: false,
+          error: "Post is too long. Maximum 5000 characters.",
+        });
+      }
+
+      // ======================================================
+      // NO CONTENT + NO FILES
+      // ======================================================
+
+      if (!content && files.length === 0) {
+        console.log("POST REJECTED: empty post");
+
+        return res.status(400).json({
+          success: false,
+          error: "Post cannot be empty.",
+        });
+      }
+
+      // ======================================================
+      // MEDIA TEXT
+      // ======================================================
+
+      let mediaTexts = req.body.media_text || [];
+
+      if (!Array.isArray(mediaTexts)) {
+        mediaTexts = [mediaTexts];
+      }
+
+      // ======================================================
+      // VISIBILITY
+      // ======================================================
+
+      const allowedVisibility = ["everyone", "admin_only", "group_only"];
+
+      const visibility = allowedVisibility.includes(req.body.visibility)
+        ? req.body.visibility
+        : "everyone";
+
+      // ======================================================
+      // RANDOM COLOR
+      // ======================================================
+
+      const color = colors[Math.floor(Math.random() * colors.length)];
+
+      // ======================================================
+      // BEGIN TRANSACTION
+      // ======================================================
+
+      await client.query("BEGIN");
+
+      // ======================================================
+      // CREATE POST
+      // ======================================================
+
+      const postResult = await client.query(
+        `
+        INSERT INTO social_posts
+        (
+          user_id,
+          content,
+          color,
+          visibility
+        )
+        VALUES
+        ($1, $2, $3, $4)
+        RETURNING id
+        `,
+        [userId, content, color, visibility],
+      );
+
+      const postId = postResult.rows[0].id;
+
+      console.log("NEW POST ID:", postId);
+
+      // ======================================================
+      // SAVE MEDIA
+      // ======================================================
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        console.log("SAVING FILE:", {
+          filename: file.filename,
+          originalname: file.originalname,
+          mimetype: file.mimetype,
+          size: file.size,
+        });
+
+        const fileUrl = `/uploads/social/${file.filename}`;
+
+        const mediaText =
+          typeof mediaTexts[i] === "string"
+            ? mediaTexts[i].trim().slice(0, 5000)
+            : "";
+
+        await client.query(
+          `
+          INSERT INTO social_post_media
+          (
+            post_id,
+            file_url,
+            file_name,
+            mime_type,
+            file_size,
+            media_text
+          )
+          VALUES
+          ($1, $2, $3, $4, $5, $6)
+          `,
+          [
+            postId,
+            fileUrl,
+            file.originalname,
+            file.mimetype,
+            file.size,
+            mediaText,
+          ],
+        );
+      }
+
+      // ======================================================
+      // COMMIT
+      // ======================================================
+
+      await client.query("COMMIT");
+
+      // ======================================================
+      // SUCCESS
+      // ======================================================
+
+      const postUrl = `/social/post?postId=${encodeURIComponent(
+        String(postId),
+      )}`;
+
+      console.log("========================================");
+      console.log("POST CREATED SUCCESSFULLY");
+      console.log("postId:", postId);
+      console.log("files:", files.length);
+      console.log("url:", postUrl);
+      console.log("========================================");
+
+      return res.status(200).json({
+        success: true,
+        postId: String(postId),
+        url: postUrl,
+      });
+    } catch (err) {
+      // ======================================================
+      // ROLLBACK
+      // ======================================================
+
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackError) {
+        console.error("Rollback error:", rollbackError);
+      }
+
+      // ======================================================
+      // ERROR LOG
+      // ======================================================
+
+      console.error("========================================");
+      console.error("CREATE POST ERROR");
+      console.error("message:", err.message);
+      console.error("code:", err.code);
+      console.error("detail:", err.detail);
+      console.error("constraint:", err.constraint);
+      console.error("stack:", err.stack);
+      console.error("========================================");
+
+      // ======================================================
+      // ERROR RESPONSE
+      // ======================================================
+
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Unable to create post.",
+      });
+    } finally {
+      client.release();
+    }
+  },
+);
+
+// ============================================================
+// EDIT POST
+// ============================================================
+
+app.post("/social/post/edit", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+
+    const postId = req.body.id;
+
+    const content = (req.body.content || "").trim();
+
+    if (!userId) {
+      return res.status(401).send("Please log in.");
+    }
+
+    if (!postId) {
+      return res.status(400).send("Post ID is required.");
+    }
+
+    if (!content) {
+      return res.redirect("/social/post");
+    }
+
+    if (content.length > 5000) {
+      return res.status(400).send("Post is too long.");
+    }
+
+    const result = await db.query(
+      `
+      UPDATE social_posts
+      SET
+        content = $1,
+        updated_at = NOW()
+      WHERE id = $2
+        AND user_id = $3
+      RETURNING id
+      `,
+      [content, postId, userId],
+    );
+
+    if (!result.rowCount) {
+      return res.status(403).send("You cannot edit this post.");
+    }
+
+    //res.redirect("/social/post");
+    res.redirect(`/social/post?postId=${postId}`);
+  } catch (err) {
+    console.error("Edit post error:", err);
+
+    res.status(500).send("Unable to edit post.");
+  }
+});
+
+// ============================================================
+// DELETE POST
+// ============================================================
+
+// ============================================================
+// DELETE POST
+// Owner OR Admin can delete
+// ============================================================
+
+app.post("/social/post/delete", ensureAuthenticated, async (req, res) => {
+  const client = await db.connect();
+
+  try {
+    const userId = req.user?.id || null;
+    const userEmail = req.user?.email || null;
+
+    const postId = req.body.id;
+
+    // ========================================================
+    // ADMIN CHECK
+    // ========================================================
+
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const isAdmin =
+      !!userEmail && adminEmails.includes(userEmail.toLowerCase());
+
+    console.log("DELETE POST userId =", userId);
+    console.log("DELETE POST userEmail =", userEmail);
+    console.log("DELETE POST isAdmin =", isAdmin);
+    console.log("DELETE POST postId =", postId);
+
+    // ========================================================
+    // VALIDATION
+    // ========================================================
+
+    if (!userId) {
+      client.release();
+
+      return res.status(401).send("Please log in.");
+    }
+
+    if (!postId) {
+      client.release();
+
+      return res.status(400).send("Post ID is required.");
+    }
+
+    // ========================================================
+    // BEGIN TRANSACTION
+    // ========================================================
+
+    await client.query("BEGIN");
+
+    // ========================================================
+    // VERIFY PERMISSION
+    //
+    // Owner can delete own post.
+    // Admin can delete ANY post.
+    // ========================================================
+
+    const postResult = await client.query(
+      `
+      SELECT id
+      FROM social_posts
+      WHERE id = $1
+        AND (
+          user_id = $2
+          OR $3 = true
+        )
+      FOR UPDATE
+      `,
+      [postId, userId, isAdmin],
+    );
+
+    if (!postResult.rowCount) {
+      await client.query("ROLLBACK");
+      client.release();
+
+      return res.status(403).send("You cannot delete this post.");
+    }
+
+    // ========================================================
+    // DELETE REPLY REACTIONS
+    // ========================================================
+
+    await client.query(
+      `
+      DELETE FROM social_reactions
+      WHERE target_type = 'reply'
+        AND target_id IN (
+          SELECT r.id
+          FROM social_replies r
+          JOIN social_comments c
+            ON c.id = r.comment_id
+          WHERE c.post_id = $1
+        )
+      `,
+      [postId],
+    );
+
+    // ========================================================
+    // DELETE COMMENT REACTIONS
+    // ========================================================
+
+    await client.query(
+      `
+      DELETE FROM social_reactions
+      WHERE target_type = 'comment'
+        AND target_id IN (
+          SELECT id
+          FROM social_comments
+          WHERE post_id = $1
+        )
+      `,
+      [postId],
+    );
+
+    // ========================================================
+    // DELETE POST REACTIONS
+    // ========================================================
+
+    await client.query(
+      `
+      DELETE FROM social_reactions
+      WHERE target_type = 'post'
+        AND target_id = $1
+      `,
+      [postId],
+    );
+
+    // ========================================================
+    // DELETE REPLIES
+    // ========================================================
+
+    await client.query(
+      `
+      DELETE FROM social_replies
+      WHERE comment_id IN (
+        SELECT id
+        FROM social_comments
+        WHERE post_id = $1
+      )
+      `,
+      [postId],
+    );
+
+    // ========================================================
+    // DELETE COMMENTS
+    // ========================================================
+
+    await client.query(
+      `
+      DELETE FROM social_comments
+      WHERE post_id = $1
+      `,
+      [postId],
+    );
+
+    // ========================================================
+    // DELETE POST
+    //
+    // Owner OR admin.
+    // ========================================================
+
+    await client.query(
+      `
+      DELETE FROM social_posts
+      WHERE id = $1
+        AND (
+          user_id = $2
+          OR $3 = true
+        )
+      `,
+      [postId, userId, isAdmin],
+    );
+
+    // ========================================================
+    // COMMIT
+    // ========================================================
+
+    await client.query("COMMIT");
+
+    client.release();
+
+    res.redirect("/social/post");
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackErr) {
+      console.error("Rollback error:", rollbackErr);
+    }
+
+    client.release();
+
+    console.error("Delete post error:", err);
+
+    res.status(500).send("Unable to delete post.");
+  }
+});
+
+app.post("/social/post/comment", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+
+    const postId = req.body.postId;
+
+    const content = (req.body.comment || "").trim();
+
+    if (!userId) {
+      return res.status(401).send("Please log in.");
+    }
+
+    if (!postId) {
+      return res.status(400).send("Post ID is required.");
+    }
+
+    if (!content) {
+      return res.redirect("/social/post");
+    }
+
+    if (content.length > 2000) {
+      return res.status(400).send("Comment is too long.");
+    }
+
+    // Verify post exists
+
+    const postResult = await db.query(
+      `
+      SELECT id
+      FROM social_posts
+      WHERE id = $1
+      `,
+      [postId],
+    );
+
+    if (!postResult.rowCount) {
+      return res.status(404).send("Post not found.");
+    }
+
+    await db.query(
+      `
+      INSERT INTO social_comments
+        (
+          post_id,
+          user_id,
+          content
+        )
+      VALUES
+        ($1, $2, $3)
+      `,
+      [postId, userId, content],
+    );
+
+    //res.redirect("/social/post");
+    res.redirect(`/social/post?postId=${postId}`);
+  } catch (err) {
+    console.error("Comment error:", err);
+
+    res.status(500).send("Unable to add comment.");
+  }
+});
+
+app.post("/social/comment/edit", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const commentId = req.body.id;
+    const content = (req.body.content || "").trim();
+
+    console.log("========================================");
+    console.log("SOCIAL COMMENT EDIT");
+    console.log("userId:", userId);
+    console.log("commentId:", commentId);
+    console.log("content:", content);
+
+    if (!userId) {
+      return res.status(401).send("Please log in.");
+    }
+
+    const parsedCommentId = Number(commentId);
+
+    if (!Number.isInteger(parsedCommentId) || parsedCommentId <= 0) {
+      return res.status(400).send("Invalid comment ID.");
+    }
+
+    if (!content) {
+      return res.status(400).send("Comment cannot be empty.");
+    }
+
+    if (content.length > 2000) {
+      return res.status(400).send("Comment is too long.");
+    }
+
+    const commentResult = await db.query(
+      `
+      SELECT
+        id,
+        post_id,
+        user_id
+      FROM social_comments
+      WHERE id = $1
+      `,
+      [parsedCommentId],
+    );
+
+    console.log("COMMENT LOOKUP:", commentResult.rows);
+
+    if (!commentResult.rowCount) {
+      return res.status(404).send("Comment not found.");
+    }
+
+    const comment = commentResult.rows[0];
+
+    if (String(comment.user_id) !== String(userId)) {
+      return res.status(403).send("You cannot edit this comment.");
+    }
+
+    const postId = Number(comment.post_id);
+
+    console.log("COMMENT POST ID:", postId);
+
+    if (!Number.isInteger(postId) || postId <= 0) {
+      console.error("BAD COMMENT POST ID:", comment.post_id);
+
+      return res.status(500).send("Invalid post ID.");
+    }
+
+    const updateResult = await db.query(
+      `
+      UPDATE social_comments
+      SET
+        content = $1,
+        updated_at = NOW()
+      WHERE
+        id = $2
+        AND user_id = $3
+      RETURNING
+        id,
+        post_id
+      `,
+      [content, parsedCommentId, userId],
+    );
+
+    console.log("COMMENT UPDATED:", updateResult.rows);
+
+    if (!updateResult.rowCount) {
+      return res.status(403).send("You cannot edit this comment.");
+    }
+
+    console.log("REDIRECT:", `/social/post?postId=${postId}`);
+
+    return res.redirect(`/social/post?postId=${encodeURIComponent(postId)}`);
+  } catch (err) {
+    console.error("SOCIAL COMMENT EDIT ERROR:", err);
+
+    return res.status(500).send("Unable to edit comment.");
+  }
+});
+
+app.post("/social/comment/delete", ensureAuthenticated, async (req, res) => {
+  const client = await db.connect();
+
+  try {
+    const userId = req.user?.id;
+    const commentId = req.body.id;
+
+    if (!userId) {
+      client.release();
+      return res.status(401).send("Please log in.");
+    }
+
+    if (!commentId) {
+      client.release();
+      return res.status(400).send("Comment ID is required.");
+    }
+
+    await client.query("BEGIN");
+
+    const commentResult = await client.query(
+      `
+      SELECT
+        id,
+        post_id
+      FROM social_comments
+      WHERE id = $1
+        AND user_id = $2
+      FOR UPDATE
+      `,
+      [commentId, userId],
+    );
+
+    if (!commentResult.rowCount) {
+      await client.query("ROLLBACK");
+      client.release();
+
+      return res.status(403).send("You cannot delete this comment.");
+    }
+
+    const postId = commentResult.rows[0].post_id;
+
+    await client.query(
+      `
+      DELETE FROM social_reactions
+      WHERE target_type = 'reply'
+        AND target_id IN (
+          SELECT id
+          FROM social_replies
+          WHERE comment_id = $1
+        )
+      `,
+      [commentId],
+    );
+
+    await client.query(
+      `
+      DELETE FROM social_reactions
+      WHERE target_type = 'comment'
+        AND target_id = $1
+      `,
+      [commentId],
+    );
+
+    await client.query(
+      `
+      DELETE FROM social_replies
+      WHERE comment_id = $1
+      `,
+      [commentId],
+    );
+
+    await client.query(
+      `
+      DELETE FROM social_comments
+      WHERE id = $1
+        AND user_id = $2
+      `,
+      [commentId, userId],
+    );
+
+    await client.query("COMMIT");
+
+    client.release();
+
+    res.redirect(`/social/post?postId=${postId}`);
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackErr) {
+      console.error("Comment delete rollback error:", rollbackErr);
+    }
+
+    client.release();
+
+    console.error("Delete comment error:", err);
+
+    res.status(500).send("Unable to delete comment.");
+  }
+});
+
+app.post("/social/comment/reply", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+
+    const commentId = req.body.commentId;
+
+    const parentReplyId = req.body.parentReplyId || null;
+
+    const content = (req.body.reply || "").trim();
+
+    if (!userId) {
+      return res.status(401).send("Please log in.");
+    }
+
+    if (!content) {
+      return res.redirect("/social/post");
+    }
+
+    if (content.length > 2000) {
+      return res.status(400).send("Reply is too long.");
+    }
+
+    if (parentReplyId) {
+      // ------------------------------------------------------
+      // Find parent reply + its post
+      // ------------------------------------------------------
+
+      const parentReplyResult = await db.query(
+        `
+        SELECT
+          r.id,
+          r.comment_id,
+          r.parent_reply_id,
+          c.post_id
+        FROM social_replies r
+        JOIN social_comments c
+          ON c.id = r.comment_id
+        WHERE r.id = $1
+        `,
+        [parentReplyId],
+      );
+
+      if (!parentReplyResult.rowCount) {
+        return res.status(404).send("Parent reply not found.");
+      }
+
+      const parentReply = parentReplyResult.rows[0];
+
+      if (commentId && String(commentId) !== String(parentReply.comment_id)) {
+        return res.status(400).send("Reply does not belong to this comment.");
+      }
+
+      if (parentReply.parent_reply_id) {
+        return res
+          .status(400)
+          .send("Replies can only be added one level deep.");
+      }
+
+      // ------------------------------------------------------
+      // Insert D
+      // ------------------------------------------------------
+
+      await db.query(
+        `
+        INSERT INTO social_replies
+          (
+            comment_id,
+            parent_reply_id,
+            user_id,
+            content
+          )
+        VALUES
+          ($1, $2, $3, $4)
+        `,
+        [parentReply.comment_id, parentReply.id, userId, content],
+      );
+
+      return res.redirect(`/social/post?postId=${parentReply.post_id}`);
+    }
+
+    if (!commentId) {
+      return res.status(400).send("Comment ID is required.");
+    }
+
+    const commentResult = await db.query(
+      `
+      SELECT
+        id,
+        post_id
+      FROM social_comments
+      WHERE id = $1
+      `,
+      [commentId],
+    );
+
+    if (!commentResult.rowCount) {
+      return res.status(404).send("Comment not found.");
+    }
+
+    await db.query(
+      `
+      INSERT INTO social_replies
+        (
+          comment_id,
+          parent_reply_id,
+          user_id,
+          content
+        )
+      VALUES
+        ($1, NULL, $2, $3)
+      `,
+      [commentId, userId, content],
+    );
+
+    return res.redirect(`/social/post?postId=${commentResult.rows[0].post_id}`);
+  } catch (err) {
+    console.error("Reply error:", err);
+
+    res.status(500).send("Unable to add reply.");
+  }
+});
+
+app.post("/social/reply/edit", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const replyId = req.body.id;
+    const content = (req.body.content || "").trim();
+
+    console.log("========================================");
+    console.log("SOCIAL REPLY EDIT");
+    console.log("userId:", userId);
+    console.log("replyId:", replyId);
+    console.log("content:", content);
+
+    // ----------------------------------------------------------
+    // LOGIN
+    // ----------------------------------------------------------
+
+    if (!userId) {
+      return res.status(401).send("Please log in.");
+    }
+
+    const parsedReplyId = Number(replyId);
+
+    if (!Number.isInteger(parsedReplyId) || parsedReplyId <= 0) {
+      return res.status(400).send("Invalid reply ID.");
+    }
+
+    if (!content) {
+      return res.status(400).send("Reply cannot be empty.");
+    }
+
+    if (content.length > 2000) {
+      return res.status(400).send("Reply is too long.");
+    }
+
+    const result = await db.query(
+      `
+      UPDATE social_replies AS r
+      SET
+        content = $1,
+        updated_at = NOW()
+      FROM social_comments AS c
+      WHERE
+        r.id = $2
+        AND r.user_id = $3
+        AND c.id = r.comment_id
+      RETURNING
+        r.id,
+        r.comment_id,
+        c.post_id
+      `,
+      [content, parsedReplyId, userId],
+    );
+
+    console.log("EDIT RESULT:", result.rows);
+
+    if (!result.rowCount) {
+      return res.status(403).send("You cannot edit this reply.");
+    }
+
+    const postId = Number(result.rows[0].post_id);
+
+    console.log("EDIT POST ID:", postId);
+
+    if (!Number.isInteger(postId) || postId <= 0) {
+      console.error(
+        "Invalid post ID returned from reply edit:",
+        result.rows[0],
+      );
+
+      return res.status(500).send("Invalid post ID.");
+    }
+
+    return res.redirect(`/social/post?postId=${encodeURIComponent(postId)}`);
+  } catch (err) {
+    console.error("Edit reply error:", err);
+
+    return res.status(500).send("Unable to edit reply.");
+  }
+});
+
+app.post("/social/reply/delete", ensureAuthenticated, async (req, res) => {
+  const client = await db.connect();
+
+  try {
+    const userId = req.user?.id;
+
+    const replyId = req.body.id;
+
+    if (!userId) {
+      client.release();
+
+      return res.status(401).send("Please log in.");
+    }
+
+    if (!replyId) {
+      client.release();
+
+      return res.status(400).send("Reply ID is required.");
+    }
+
+    await client.query("BEGIN");
+
+    const replyResult = await client.query(
+      `
+      SELECT
+        r.id,
+        r.parent_reply_id,
+        c.post_id
+      FROM social_replies r
+      JOIN social_comments c
+        ON c.id = r.comment_id
+      WHERE r.id = $1
+        AND r.user_id = $2
+      FOR UPDATE
+      `,
+      [replyId, userId],
+    );
+
+    if (!replyResult.rowCount) {
+      await client.query("ROLLBACK");
+
+      client.release();
+
+      return res.status(403).send("You cannot delete this reply.");
+    }
+
+    const reply = replyResult.rows[0];
+
+    if (!reply.parent_reply_id) {
+      await client.query(
+        `
+        DELETE FROM social_reactions
+        WHERE target_type = 'reply'
+          AND target_id IN (
+            SELECT id
+            FROM social_replies
+            WHERE parent_reply_id = $1
+          )
+        `,
+        [replyId],
+      );
+    }
+
+    await client.query(
+      `
+      DELETE FROM social_reactions
+      WHERE target_type = 'reply'
+        AND target_id = $1
+      `,
+      [replyId],
+    );
+
+    await client.query(
+      `
+      DELETE FROM social_replies
+      WHERE id = $1
+        AND user_id = $2
+      `,
+      [replyId, userId],
+    );
+
+    await client.query("COMMIT");
+
+    client.release();
+
+    res.redirect(`/social/post?postId=${reply.post_id}`);
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackErr) {
+      console.error("Reply delete rollback error:", rollbackErr);
+    }
+
+    client.release();
+
+    console.error("Delete reply error:", err);
+
+    res.status(500).send("Unable to delete reply.");
+  }
+});
+//
+app.post("/social/reaction", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+
+    const targetType = req.body.targetType;
+
+    const targetId = req.body.targetId;
+
+    const reactionType = req.body.reactionType;
+
+    if (!userId) {
+      return res.status(401).send("Please log in.");
+    }
+
+    if (!ALLOWED_TARGETS.includes(targetType)) {
+      return res.status(400).send("Invalid target.");
+    }
+
+    if (!ALLOWED_REACTIONS.includes(reactionType)) {
+      return res.status(400).send("Invalid reaction.");
+    }
+
+    if (!targetId) {
+      return res.status(400).send("Target ID is required.");
+    }
+
+    let targetResult;
+
+    if (targetType === "post") {
+      targetResult = await db.query(
+        `
+        SELECT
+          id,
+          id AS post_id
+        FROM social_posts
+        WHERE id = $1
+        `,
+        [targetId],
+      );
+    }
+
+    if (targetType === "comment") {
+      targetResult = await db.query(
+        `
+        SELECT
+          c.id,
+          c.post_id
+        FROM social_comments c
+        WHERE c.id = $1
+        `,
+        [targetId],
+      );
+    }
+
+    if (targetType === "reply") {
+      targetResult = await db.query(
+        `
+        SELECT
+          r.id,
+          c.post_id
+        FROM social_replies r
+        JOIN social_comments c
+          ON c.id = r.comment_id
+        WHERE r.id = $1
+        `,
+        [targetId],
+      );
+    }
+
+    if (!targetResult?.rowCount) {
+      return res.status(404).send("Target not found.");
+    }
+
+    const postId = targetResult.rows[0].post_id;
+
+    const existing = await db.query(
+      `
+      SELECT
+        id,
+        reaction_type
+      FROM social_reactions
+      WHERE user_id = $1
+        AND target_type = $2
+        AND target_id = $3
+      `,
+      [userId, targetType, targetId],
+    );
+
+    if (
+      existing.rows.length &&
+      existing.rows[0].reaction_type === reactionType
+    ) {
+      await db.query(
+        `
+        DELETE FROM social_reactions
+        WHERE id = $1
+        `,
+        [existing.rows[0].id],
+      );
+    } else if (existing.rows.length) {
+      await db.query(
+        `
+        UPDATE social_reactions
+        SET
+          reaction_type = $1
+        WHERE id = $2
+        `,
+        [reactionType, existing.rows[0].id],
+      );
+    } else {
+      await db.query(
+        `
+        INSERT INTO social_reactions
+          (
+            user_id,
+            target_type,
+            target_id,
+            reaction_type
+          )
+        VALUES
+          ($1, $2, $3, $4)
+        ON CONFLICT
+          (
+            user_id,
+            target_type,
+            target_id
+          )
+        DO UPDATE SET
+          reaction_type = EXCLUDED.reaction_type
+        `,
+        [userId, targetType, targetId, reactionType],
+      );
+    }
+
+    res.redirect(`/social/post?postId=${postId}`);
+  } catch (err) {
+    console.error("Reaction error:", err);
+
+    res.status(500).send("Unable to process reaction.");
+  }
+});
+//
+app.get("/social/search", ensureAuthenticated, async (req, res) => {
+  try {
+    // ========================================================
+    // CURRENT USER
+    // ========================================================
+
+    const userId = req.user?.id || null;
+    const userEmail = req.user?.email || null;
+
+    console.log("SOCIAL SEARCH req.user =", req.user);
+
+    let userGroupId = null;
+
+    if (userId) {
+      const groupResult = await db.query(
+        `
+        SELECT group_id
+        FROM my_user
+        WHERE id = $1
+        `,
+        [userId],
+      );
+
+      userGroupId = groupResult.rows[0]?.group_id ?? null;
+    }
+
+    console.log("SOCIAL SEARCH userGroupId =", userGroupId);
+
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const isAdmin =
+      !!userEmail && adminEmails.includes(userEmail.toLowerCase());
+
+    console.log("SOCIAL SEARCH userEmail =", userEmail);
+    console.log("SOCIAL SEARCH isAdmin =", isAdmin);
+
+    // ========================================================
+    // SEARCH INPUT
+    // ========================================================
+
+    const q = (req.query.q || "").trim();
+    const user = (req.query.user || "").trim();
+
+    let visibility = "";
+
+    let dateFrom = (req.query.dateFrom || "").trim();
+    let dateTo = (req.query.dateTo || "").trim();
+
+    // ========================================================
+    // ADMIN VISIBILITY FILTER
+    // ========================================================
+
+    if (isAdmin) {
+      visibility = (req.query.visibility || "").trim();
+
+      // ------------------------------------------------------
+      // ONLY THESE VISIBILITY VALUES ARE ALLOWED
+      // ------------------------------------------------------
+
+      const allowedVisibility = ["everyone", "admin_only", "group_only"];
+
+      if (!allowedVisibility.includes(visibility)) {
+        visibility = "";
+      }
+    }
+
+    const validDate = (value) => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return false;
+      }
+
+      const [year, month, day] = value.split("-").map(Number);
+
+      const date = new Date(Date.UTC(year, month - 1, day));
+
+      return (
+        date.getUTCFullYear() === year &&
+        date.getUTCMonth() === month - 1 &&
+        date.getUTCDate() === day
+      );
+    };
+
+    // --------------------------------------------------------
+    // VALIDATE DATE FROM
+    // --------------------------------------------------------
+
+    if (dateFrom && !validDate(dateFrom)) {
+      dateFrom = "";
+    }
+
+    // --------------------------------------------------------
+    // VALIDATE DATE TO
+    // --------------------------------------------------------
+
+    if (dateTo && !validDate(dateTo)) {
+      dateTo = "";
+    }
+
+    // --------------------------------------------------------
+    // INVALID DATE RANGE
+    // --------------------------------------------------------
+
+    if (dateFrom && dateTo && dateFrom > dateTo) {
+      dateFrom = "";
+      dateTo = "";
+    }
+
+    console.log("SOCIAL SEARCH filters =", {
+      visibility,
+      dateFrom,
+      dateTo,
+    });
+
+    // ========================================================
+    // PAGINATION
+    // ========================================================
+
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    // ========================================================
+    // BUILD WHERE CONDITIONS
+    // ========================================================
+
+    const conditions = [];
+    const values = [];
+
+    if (isAdmin) {
+    } else {
+      // ------------------------------------------------------
+      // CURRENT USER ID
+      // ------------------------------------------------------
+
+      const userIdParam = values.length + 1;
+
+      values.push(userId);
+
+      const groupIdParam = values.length + 1;
+
+      values.push(userGroupId);
+
+      conditions.push(`
+        (
+          -- Everyone
+          p.visibility = 'everyone'
+
+          -- Owner can see own post
+          OR p.user_id = $${userIdParam}
+
+          -- Same group can see group posts
+          OR (
+            p.visibility = 'group_only'
+            AND $${groupIdParam}::INTEGER IS NOT NULL
+            AND u.group_id = $${groupIdParam}::INTEGER
+          )
+        )
+      `);
+    }
+
+    if (isAdmin && visibility) {
+      values.push(visibility);
+
+      conditions.push(`p.visibility = $${values.length}`);
+    }
+
+    if (dateFrom) {
+      values.push(dateFrom);
+
+      conditions.push(`p.created_at >= $${values.length}::DATE`);
+    }
+
+    if (dateTo) {
+      values.push(dateTo);
+
+      conditions.push(
+        `p.created_at < ($${values.length}::DATE + INTERVAL '1 day')`,
+      );
+    }
+
+    if (q) {
+      values.push(`%${q}%`);
+
+      conditions.push(`p.content ILIKE $${values.length}`);
+    }
+
+    if (user) {
+      values.push(`%${user}%`);
+
+      conditions.push(`u.email ILIKE $${values.length}`);
+    }
+
+    const whereClause = conditions.length
+      ? `WHERE ${conditions.join(" AND ")}`
+      : "";
+
+    console.log("SOCIAL SEARCH whereClause =", whereClause);
+
+    console.log("SOCIAL SEARCH values =", values);
+
+    const totalResult = await db.query(
+      `
+      SELECT
+        COUNT(*)::INTEGER AS total
+
+      FROM social_posts p
+
+      JOIN my_user u
+        ON u.id = p.user_id
+
+      ${whereClause}
+      `,
+      values,
+    );
+
+    const totalPosts = Number(totalResult.rows[0]?.total) || 0;
+
+    let everyonePosts = 0;
+    let userAdminPosts = 0;
+    let groupPosts = 0;
+
+    if (isAdmin) {
+      const breakdownResult = await db.query(
+        `
+        SELECT
+
+          COUNT(*) FILTER (
+            WHERE p.visibility = 'everyone'
+          )::INTEGER AS everyone_posts,
+
+          COUNT(*) FILTER (
+            WHERE p.visibility = 'admin_only'
+          )::INTEGER AS user_admin_posts,
+
+          COUNT(*) FILTER (
+            WHERE p.visibility = 'group_only'
+          )::INTEGER AS group_posts
+
+        FROM social_posts p
+
+        JOIN my_user u
+          ON u.id = p.user_id
+
+        ${whereClause}
+        `,
+        values,
+      );
+
+      everyonePosts = Number(breakdownResult.rows[0]?.everyone_posts) || 0;
+
+      userAdminPosts = Number(breakdownResult.rows[0]?.user_admin_posts) || 0;
+
+      groupPosts = Number(breakdownResult.rows[0]?.group_posts) || 0;
+    }
+
+    const totalPages = Math.max(Math.ceil(totalPosts / limit), 1);
+
+    if (page > totalPages && totalPosts > 0) {
+      const params = new URLSearchParams();
+
+      if (q) {
+        params.set("q", q);
+      }
+
+      if (user) {
+        params.set("user", user);
+      }
+
+      if (dateFrom) {
+        params.set("dateFrom", dateFrom);
+      }
+
+      if (dateTo) {
+        params.set("dateTo", dateTo);
+      }
+
+      if (isAdmin && visibility) {
+        params.set("visibility", visibility);
+      }
+
+      params.set("page", totalPages);
+
+      return res.redirect(`/social/search?${params.toString()}`);
+    }
+
+    const limitParam = values.length + 1;
+    const offsetParam = values.length + 2;
+
+    const searchResult = await db.query(
+      `
+      SELECT
+        p.id,
+        p.user_id,
+        p.content,
+        p.color,
+        p.visibility,
+        p.created_at,
+        p.updated_at,
+        u.email
+
+      FROM social_posts p
+
+      JOIN my_user u
+        ON u.id = p.user_id
+
+      ${whereClause}
+
+      ORDER BY
+        p.created_at DESC,
+        p.id DESC
+
+      LIMIT $${limitParam}
+      OFFSET $${offsetParam}
+      `,
+      [...values, limit, offset],
+    );
+
+    const posts = searchResult.rows.map((row) => ({
+      id: row.id,
+
+      userId: row.user_id,
+
+      email: row.email,
+
+      content: row.content,
+
+      color: row.color,
+
+      visibility: row.visibility,
+
+      createdAt: row.created_at,
+
+      updatedAt: row.updated_at,
+    }));
+
+    res.render("social-search", {
+      defaultDate: today(),
+
+      posts,
+
+      currentUserId: userId,
+
+      currentUserEmail: userEmail,
+
+      isAdmin,
+
+      // Search
+      q,
+      user,
+
+      // Filters
+      visibility,
+      dateFrom,
+      dateTo,
+
+      // Pagination
+      page,
+
+      totalPosts,
+
+      everyonePosts,
+
+      userAdminPosts,
+
+      groupPosts,
+
+      totalPages,
+    });
+  } catch (err) {
+    console.error("Social search error:", err);
+
+    res.status(500).send("Unable to search social posts.");
+  }
+});
+
+function canDownloadSocialMedia(userEmail) {
+  const downloadAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+
+  return downloadAdminEmails.includes(
+    String(userEmail || "")
+      .trim()
+      .toLowerCase(),
+  );
+}
+//
+app.get("/social-admin-downloads", ensureAuthenticated, async (req, res) => {
+  try {
+    const userEmail = req.user?.email || "";
+
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const isAdmin = adminEmails.includes(userEmail.toLowerCase());
+
+    if (!isAdmin) {
+      return res.status(403).send("Admin access required.");
+    }
+
+    const perPage = 2;
+
+    let page = Number.parseInt(req.query.page, 10);
+
+    if (!Number.isInteger(page) || page < 1) {
+      page = 1;
+    }
+
+    const countResult = await db.query(`
+        SELECT COUNT(DISTINCT p.id) AS total
+        FROM social_posts p
+        JOIN social_post_media m
+          ON m.post_id = p.id
+      `);
+
+    const totalPosts = Number(countResult.rows[0].total);
+
+    const totalPages = Math.max(1, Math.ceil(totalPosts / perPage));
+
+    // Prevent page 999 when only 5 pages exist
+    if (page > totalPages) {
+      page = totalPages;
+    }
+
+    const offset = (page - 1) * perPage;
+
+    const result = await db.query(
+      `
+        SELECT
+          p.id AS post_id,
+          p.content,
+          p.created_at,
+          p.user_id,
+
+          u.email,
+
+          m.id AS media_id,
+          m.file_name,
+          m.file_url,
+          m.mime_type,
+          m.file_size,
+          m.created_at AS media_created_at
+
+        FROM social_posts p
+
+        JOIN my_user u
+          ON u.id = p.user_id
+
+        JOIN social_post_media m
+          ON m.post_id = p.id
+
+        WHERE p.id IN (
+          SELECT p2.id
+          FROM social_posts p2
+          JOIN social_post_media m2
+            ON m2.post_id = p2.id
+          GROUP BY p2.id, p2.created_at
+          ORDER BY p2.created_at DESC, p2.id DESC
+          LIMIT $1
+          OFFSET $2
+        )
+
+        ORDER BY
+          p.created_at DESC,
+          p.id DESC,
+          m.created_at ASC,
+          m.id ASC
+        `,
+      [perPage, offset],
+    );
+
+    const posts = [];
+
+    for (const row of result.rows) {
+      let post = posts.find((item) => String(item.id) === String(row.post_id));
+
+      if (!post) {
+        post = {
+          id: row.post_id,
+          content: row.content,
+          createdAt: row.created_at,
+          userId: row.user_id,
+          email: row.email,
+          media: [],
+        };
+
+        posts.push(post);
+      }
+
+      post.media.push({
+        id: row.media_id,
+        fileName: row.file_name,
+        fileUrl: row.file_url,
+        mimeType: row.mime_type,
+        fileSize: row.file_size,
+        createdAt: row.media_created_at,
+      });
+    }
+
+    console.log("DOWNLOAD PAGINATION:", {
+      page,
+      perPage,
+      totalPosts,
+      totalPages,
+    });
+    //
+
+    return res.render("social-admin-downloads", {
+      defaultDate: today(),
+      posts,
+      isAdmin: true,
+      canDownload: canDownloadSocialMedia(userEmail),
+      page,
+      perPage,
+      totalPosts,
+      totalPages,
+    });
+  } catch (err) {
+    console.error("Social admin downloads error:", err);
+
+    return res.status(500).send("Unable to load social downloads.");
+  }
+});
+
+app.get(
+  "/social-admin-downloads/file/:mediaId",
+  ensureAuthenticated,
+  async (req, res) => {
+    try {
+      const userEmail = req.user?.email || "";
+
+      const adminEmails = (process.env.ADMIN_EMAILS || "")
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+
+      const isAdmin = adminEmails.includes(userEmail.toLowerCase());
+
+      if (!isAdmin) {
+        return res.status(403).send("Admin access required.");
+      }
+      // restricted admin below is a function from Line 5094
+      if (!canDownloadSocialMedia(userEmail)) {
+        return res
+          .status(403)
+          .send("You are not authorized to download social media files.");
+      }
+      // ---------------------------message above sent-----------------------------
+      // MEDIA ID
+      // --------------------------------------------------------
+
+      const mediaId = Number(req.params.mediaId);
+
+      if (!Number.isInteger(mediaId) || mediaId <= 0) {
+        return res.status(400).send("Invalid media ID.");
+      }
+
+      // --------------------------------------------------------
+      // GET MEDIA
+      // --------------------------------------------------------
+
+      const result = await db.query(
+        `
+        SELECT
+          id,
+          file_url,
+          file_name,
+          mime_type
+        FROM social_post_media
+        WHERE id = $1
+        `,
+        [mediaId],
+      );
+
+      if (!result.rows.length) {
+        return res.status(404).send("Media file not found.");
+      }
+
+      const media = result.rows[0];
+
+      // --------------------------------------------------------
+      // SAFE FILE NAME
+      // --------------------------------------------------------
+
+      const filename = path.basename(media.file_url);
+
+      const filePath = path.join(
+        process.cwd(),
+        "public",
+        "uploads",
+        "social",
+        filename,
+      );
+
+      // --------------------------------------------------------
+      // FILE EXISTS?
+      // --------------------------------------------------------
+
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).send("File no longer exists.");
+      }
+
+      // --------------------------------------------------------
+      // DOWNLOAD
+      // --------------------------------------------------------
+
+      return res.download(filePath, media.file_name || filename);
+    } catch (err) {
+      console.error("Social admin file download error:", err);
+
+      return res.status(500).send("Unable to download social media file.");
+    }
+  },
+);
+//
 // ----------------------------
 app.use((err, req, res, next) => {
   console.error("❌ Uncaught error:", err);
