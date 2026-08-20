@@ -836,7 +836,7 @@ app.post("/enable-2fa", async (req, res) => {
 //Add Add 2FA enable 👌👌👌👌👌👌
 //Add Add 2FA enable 👌👌👌👌👌👌
 app.get("/verify-2fa-setup", (req, res) => {
-  res.render("setup-2fa", { qrCode: "", defaultDate: today() });
+  res.render("setup-2fa", { qrCode: "", defaultDate: getToday() });
 });
 //Add 2FA enable 👌👌👌👌👌👌
 //Add Add 2FA enable 👌👌👌👌👌👌
@@ -1346,10 +1346,6 @@ app.post("/complete-password-change", async (req, res) => {
     // Clear recovery session
     delete req.session.pendingPasswordChange;
 
-    // return res.render("signin.ejs", {
-    // defaultDate: getToday(),
-    //}); 👌👌 cause troubles
-    // Redirect to normal login route
     return res.redirect("/login");
   } catch (err) {
     console.error("Password change error:", err);
