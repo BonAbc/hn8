@@ -387,7 +387,7 @@ app.get("/login", (req, res) => {
 
   res.render("signin.ejs", {
     defaultDate: getToday(),
-    message: req.flash("error"),
+
     showLoginModal,
     showAdminLoginModal,
     alert: null,
