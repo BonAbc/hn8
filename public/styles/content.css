@@ -1,4 +1,6 @@
-/*for eacg seperate page*/
+/* ============================================================
+   GLOBAL / SHARED STYLES
+   ============================================================ */
 
 header,
 footer {
@@ -6,7 +8,7 @@ footer {
 }
 
 main {
-  text-align: center; /*Vertical align*/
+  text-align: center;
   padding: 5px;
   flex: 1 0 auto;
 }
@@ -15,106 +17,113 @@ h1 {
   text-align: center;
 }
 
-/*Home page and Date*/
-input[type="date"] {
-  width: 120px; /* adjust width as you like */
-  height: 30px; /* adjust height */
-  font-size: 14px; /* smaller font size */
-}
-/*Home page and Date*/
+/* ============================================================
+   HOME PAGE
+   ============================================================ */
 
-/*Home page and Feature*/
+/* ---------- Date ---------- */
+
+input[type="date"] {
+  width: 120px;
+  height: 30px;
+  font-size: 14px;
+}
+
+/* ---------- Feature ---------- */
+
 .feature-icon {
-  /*impact on squares*/
   width: 4rem;
   height: 4rem;
   border-radius: 0.75rem;
 }
 
-/*Home page and Feature End*/
-
-/*Home page and Carousel*/
-/* Ensure carousel item fills the entire container */
+/* ---------- Carousel ---------- */
 
 .custom-carousel-img {
-  height: 80vh;
-  /* Shrinks the overall slide */
-  object-fit: cover; /* Keeps the image from stretching */
   width: 100%;
+  height: 80vh;
+  object-fit: cover;
   object-position: center;
   position: relative;
 }
 
 .custom-caption {
-  font-size: 0.9rem; /* Smaller text */
-  bottom: 10px; /* Move caption closer to bottom */
+  bottom: 10px;
+  font-size: 0.9rem;
 }
+
 .hkn {
   color: black;
 }
 
-/*Home page and Carousel End*/
+/* ============================================================
+   ABOUT PAGE
+   ============================================================ */
 
-/*about Page*/
 .apd {
   display: flex;
-  justify-content: center; /* Center cards as a group */
-  gap: 1rem; /* Space between cards (optional) */
-  flex-wrap: wrap; /* Allow wrapping on small screens */
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
   padding: 2rem;
 }
 
-/*About page end*/
-/*HN page*/
+/* ============================================================
+   HN PAGE
+   ============================================================ */
+
 .cpa {
   display: flex;
-  justify-content: center; /* Center cards as a group */
-  gap: 1rem; /* Space between cards (optional) */
-  flex-wrap: wrap; /* Allow wrapping on small screens */
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
   padding: 2rem;
 }
+
 .fi {
+  width: 38rem;
+  padding: 2rem;
   border: solid gold 3px;
   background-color: red;
-  padding: 2rem;
   color: gold;
-  width: 38rem;
 }
 
 #lkb {
-  border: solid 3px;
-  background-color: red;
   width: 15rem;
   padding-top: 1rem;
+  border: solid 3px;
+  background-color: red;
   font-size: 2rem;
 }
-/**/
-/*Contact page and form*/
+
+/* ============================================================
+   CONTACT PAGE / FORM
+   ============================================================ */
 
 form {
   margin-top: 50px;
 }
 
 .feedback-input {
-  /*Class in Form Contact Page*/
-  color: black;
-  /* color: white; /*Original*/
-  font-weight: 500;
-  font-size: 18px;
-  border-radius: 5px;
-  line-height: 22px;
-  background-color: transparent;
-  border: 2px solid #3586ff;
-  transition: all 0.3s;
-  padding: 13px;
-  margin-bottom: 15px;
   width: 100%;
   box-sizing: border-box;
+  padding: 13px;
+  margin-bottom: 15px;
+
+  color: black;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 22px;
+
+  background-color: transparent;
+  border: 2px solid #3586ff;
+  border-radius: 5px;
   outline: 0;
+
+  transition: all 0.3s;
 }
 
 .feedback-input:focus {
-  /*Class in Form Contact Page*/
   border: 2px solid #3586ff;
 }
 
@@ -125,127 +134,133 @@ textarea {
 }
 
 .contact {
-  width: 100%;
-  background: #3586ff;
-  border-radius: 5px;
-  border: 0;
-  cursor: pointer;
-  color: white;
-  font-size: 24px;
+  width: auto;
+  height: auto;
+
   padding-top: 10px;
   padding-bottom: 10px;
-  transition: all 0.3s;
-  margin-top: -4px;
+
+  color: white;
+  font-size: 24px;
   font-weight: 700;
+
+  background-color: aliceblue;
+  border: 0;
+  border-radius: 5px;
+
+  cursor: pointer;
+  transition: all 0.3s;
 }
+
 #contact {
   background: #3586ff;
 }
-.contact {
-  height: auto;
-  width: auto;
-  background-color: aliceblue;
-}
 
-/*Contact page and form End*/
+/* ============================================================
+   CALCULATOR PAGE
+   ============================================================ */
 
-/* Cal Page*/
 .cal1 {
   margin-bottom: 20px;
 }
 
-/* Container for side-by-side layout */
+/* ---------- Calculator Container ---------- */
+
 .container {
   display: table;
   width: 100%;
-  table-layout: fixed;
   margin: 0 auto;
-  border-spacing: 20px; /* 👈 Adds horizontal (and vertical) space between table-cells */
+
+  table-layout: fixed;
+  border-spacing: 20px;
 }
-/* Shared styles for both blocks */
+
+/* ---------- Calculator / Paper ---------- */
+
 .paper,
 .calculator-wraper {
   display: table-cell;
-  vertical-align: middle; /* Vertically center content inside each */
+
+  width: 50%;
   padding: 20px;
   box-sizing: border-box;
+
+  vertical-align: middle;
+
   border: 2px solid #007bff;
   border-radius: 8px;
 
-  background-color: gold; /* light blue-ish background */
-
-  width: 50%;
+  background-color: gold;
 }
 
-/* Paper specific (textarea block) */
+/* ---------- Paper ---------- */
+
 .paper textarea {
   width: 100%;
-  height: 100%;
   min-height: 200px;
-  resize: none;
+  height: 100%;
+
   padding: 10px;
-  font-size: 16px;
   box-sizing: border-box;
+
+  font-size: 16px;
+
+  resize: none;
 }
 
-/* Calculator specific (form block) */
+/* ---------- Calculator Blocks ---------- */
+
 .calc-block {
   margin-bottom: 15px;
 }
+
 .calc-block input,
 .calc-block select,
-.calc-block button {
+.calc-block button,
+.calc-blocks input,
+.calc-blocks select,
+.calc-blocks button {
   width: 100%;
   padding: 10px;
-  font-size: 16px;
   box-sizing: border-box;
+  font-size: 16px;
 }
-/*input wrapprt*/
+
+/* ---------- Calculator Blocks 2 ---------- */
+
+.calc-blocks {
+  margin-bottom: 15px;
+}
+
+/* ---------- Input Wrapper ---------- */
+
 .input-wrapper {
   position: relative;
-  width: 100%; /* full width of container */
+  width: 100%;
 }
 
 .input-wrapper input {
   width: 100%;
-  padding-right: 30px; /* space for % symbol */
+  padding-right: 30px;
   box-sizing: border-box;
   font-size: 14px;
 }
 
 .input-wrapper .unit {
   position: absolute;
-  right: 10px;
   top: 50%;
-  transform: translateY(-50%);
+  right: 10px;
+
   color: #555;
-  pointer-events: none; /* ignore clicks */
   font-size: 14px;
+
+  transform: translateY(-50%);
+
+  pointer-events: none;
 }
 
-/*end Mortgage Page*/
-/*Calculator*/
-.calc-blocks {
-  margin-bottom: 15px;
-}
-.calc-blocks input,
-.calc-blocks select,
-.calc-blocks button {
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  box-sizing: border-box;
-}
-/*
-input,
-select,
-button {
-  width: 100%;
-  padding: 5px;
-  font-size: 16px;
-  box-sizing: border-box;
-}
-*/
+/* ---------- General Buttons ---------- */
+
 button {
   background-color: #007bff;
   color: white;
@@ -257,202 +272,247 @@ button:hover {
   background-color: #0056b3;
 }
 
-/* Cal Page*/
+/* ============================================================
+   MORTGAGE PAGE
+   ============================================================ */
 
-/* Mortgage Page begin*/
-
-/* Parent container — wrap all your .mortgage-wrapper divs in this */
-.mortgage-container {
-  display: flex;
-  flex-wrap: wrap; /* allows wrapping on small screens */
-  justify-content: space-between;
-  align-items: stretch; /* make all children same height */
-  gap: 10px;
-}
-
-/* Each calculator box */
-.mortgage-wrapper {
-  flex: 1 1 30%; /* flexible width, about 3 per row */
-  padding: 10px;
-  box-sizing: border-box;
-  border: 2px solid #007bff;
-  border-radius: 8px;
-  background-color: gold;
-  min-width: 250px; /* ensures nice wrapping behavior */
-}
-
-/* Labels */
-.calc-block label {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-/* Mortgage Page End*/
-/* page beginning*/
 .mo1 {
   margin-bottom: 20px;
 }
-/*end */
 
-#lmg11 {
-  color: green;
+.mortgage-container {
+  display: flex;
+  flex-wrap: wrap;
+
+  justify-content: space-between;
+  align-items: stretch;
+
+  gap: 10px;
 }
-/*Tax Page*/
+
+.mortgage-wrapper {
+  flex: 1 1 30%;
+
+  min-width: 250px;
+  padding: 10px;
+  box-sizing: border-box;
+
+  border: 2px solid #007bff;
+  border-radius: 8px;
+
+  background-color: gold;
+}
+
+/* ---------- Mortgage Labels ---------- */
+
+.calc-block label {
+  display: block;
+  margin-bottom: 5px;
+
+  font-weight: bold;
+}
+
+/* ============================================================
+   TAX PAGE
+   ============================================================ */
+
 .apt {
   display: flex;
-  justify-content: center; /* Center cards as a group */
-  gap: 1rem; /* Space between cards (optional) */
-  flex-wrap: wrap; /* Allow wrapping on small screens */
-  /*padding: 2rem;*/
-  padding: 2px 2rem 1rem; /* top: 2rem, sides: 2rem, bottom: 1rem */
-  /* height: 50vh; /* Container height */
-  /*overflow-y: visible;*/
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 1rem;
+
+  padding: 2px 2rem 1rem;
 }
-.cvla {
-  font-size: 20px; /* Adjust text size */
 
-  /* font-weight: bold;*/ /* Make the text bold */
-  /* margin-top: 2px; */ /*  Adds space between the heading and the container px;*/
-
+.cvla,
+.cvlb {
+  font-size: 20px;
   text-align: left;
+}
+
+.cvla {
   margin-left: 80px;
 }
-.cvlb {
-  font-size: 20px; /* Adjust text size */
-  /* font-weight: bold; /* Make the text bold */
-  /* margin-top: 2px; /*  Adds space between the heading and the container px;*/
 
-  text-align: left;
+.cvlb {
   margin-left: 73px;
 }
 
-/*Tax page end*/
-/* Otherlink Page begin*/
+/* ============================================================
+   OTHER LINK PAGE
+   ============================================================ */
 
-.table-hover tbody tr:hover {
-  background-color: lightyellow !important; /* light green */
-  transition: background-color 0.3s ease;
-}
+.table-hover tbody tr:hover,
 .table-hover tbody tr:hover td {
   background-color: lightyellow !important;
-}
-/* otherlink Page End*/
-/* Anotherlink Page begin*/
-.hover tbody tr:hover {
-  background-color: lightcyan !important; /* light green */
   transition: background-color 0.3s ease;
 }
+
+/* ============================================================
+   ANOTHER LINK PAGE
+   ============================================================ */
+
+.hover tbody tr:hover,
 .hover tbody tr:hover td {
   background-color: lightcyan !important;
+  transition: background-color 0.3s ease;
 }
-/* Anotherlink Page End*/
-/*Log in form*/
+
 /* ============================================================
-   GLOBAL INPUT STYLING
+   LOGIN FORM
    ============================================================ */
 
-/* Ensure all inputs (username, password) have equal height and shape */
+/* ---------- Global Form Control ---------- */
+
 .form-control {
-  height: 48px; /* consistent height */
-  border-radius: 50px !important; /* smooth, pill-like edges */
-  border: 1px solid #000; /* dark border to match form theme */
-  box-shadow: none; /* removes Bootstrap inner shadow */
-}
-
-/* ============================================================
-   CUSTOM PASSWORD FIELD STYLING
-   ============================================================ */
-
-/* Wrapper that combines input + eye button into one rounded shape */
-.custom-input-group {
-  display: flex; /* keeps items on one line */
-  align-items: center; /* vertically centers elements */
-  border: 1px solid #000; /* outer border */
-  border-radius: 50px; /* pill edges */
-  overflow: hidden; /* prevents internal edge overlap */
-  background-color: #fff; /* clean background */
-}
-
-/* Password input inside the wrapper */
-.custom-input-group .form-control {
-  border: none !important; /* remove internal borders */
-  border-radius: 0; /* prevent double-rounded edges */
-  height: 48px; /* same height as username */
-  flex: 1; /* take up all available width */
-}
-
-/* Eye icon toggle button */
-.custom-input-group .toggle-btn {
-  background: #fff; /* matches input background */
-  border: none; /* no extra borders */
   height: 48px;
-  width: 48px; /* square for perfect icon centering */
+
+  border: 1px solid #000;
+  border-radius: 50px !important;
+
+  box-shadow: none;
+}
+
+/* ---------- Password Input Group ---------- */
+
+.custom-input-group {
+  display: flex;
+  align-items: center;
+
+  overflow: hidden;
+
+  background-color: #fff;
+  border: 1px solid #000;
+  border-radius: 50px;
+}
+
+.custom-input-group .form-control {
+  flex: 1;
+
+  height: 48px;
+
+  border: none !important;
+  border-radius: 0;
+}
+
+/* ---------- Password Toggle ---------- */
+
+.custom-input-group .toggle-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer; /* shows pointer cursor */
-  border-left: 1px solid #ccc; /* subtle divider between input and icon */
+
+  width: 48px;
+  height: 48px;
+
+  background: #fff;
+  border: none;
+  border-left: 1px solid #ccc;
+
+  cursor: pointer;
+
   transition: background-color 0.2s ease-in-out;
 }
-/* Make the Bootstrap icon see pw sharp and properly sized */
+
 .custom-input-group .toggle-btn i {
-  font-size: 1.25rem; /* Adjust size to match input height */
-  color: #555; /* Optional: set icon color */
+  color: #555;
+  font-size: 1.25rem;
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transform: translateZ(0); /* Helps with clarity on some screens */
+
+  transform: translateZ(0);
 }
-/* Hover/focus visual feedback for button */
+
 .custom-input-group .toggle-btn:hover {
   background-color: #f2f2f2;
 }
 
-/* ============================================================
-   CARD & BUTTON STYLING
-   ============================================================ */
+/* ---------- Login Card ---------- */
 
-/* Rounded card with light shadow */
 .card {
   border-radius: 20px;
 }
 
-/* Customize the login button */
+/* ---------- Login Button ---------- */
+
 .btn-success {
-  background-color: #198754; /* standard Bootstrap green */
-  border: none;
   height: 48px;
+
+  color: white;
   font-size: 1rem;
+
+  background-color: #198754;
+  border: none;
+
   transition: background-color 0.2s;
 }
 
-/* Button hover state */
 .btn-success:hover {
   background-color: #157347;
 }
 
-/*Login form end*/
+/* ============================================================
+   LINK PAGE CHECKBOX
+   ============================================================ */
 
-/*Link Page Check box*/
 #cbt {
   display: none;
-  color: green;
   margin-top: 10px;
+  color: green;
 }
-/*Add tracking visitor table*/
-/* visitor-stats.css */
+
+/* ============================================================
+   VISITOR STATISTICS
+   ============================================================ */
+
+.visitor-stats-container {
+  max-width: 900px;
+
+  margin: 30px auto;
+  padding: 15px;
+
+  background-color: #fafafa;
+
+  border: 1px solid #ddd;
+  border-radius: 6px;
+
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.visitor-stats-header {
+  margin-bottom: 10px;
+
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.visitor-stats-subheader {
+  margin-bottom: 20px;
+
+  color: #444;
+  font-size: 18px;
+}
+
+/* ---------- Visitor Table ---------- */
 
 .visitor-stats-table {
-  border-collapse: collapse;
   width: 100%;
   margin-top: 20px;
+
+  border-collapse: collapse;
+
   font-family: Arial, sans-serif;
 }
 
 .visitor-stats-table th,
 .visitor-stats-table td {
-  border: 1px solid #aaa;
   padding: 8px;
+
+  border: 1px solid #aaa;
+
   text-align: left;
 }
 
@@ -460,46 +520,29 @@ button:hover {
   background-color: #eee;
 }
 
-.visitor-stats-container {
-  max-width: 900px;
-  margin: 30px auto;
-  padding: 15px;
-  background-color: #fafafa;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
-}
+/* ============================================================
+   ACCOUNTING / APTI PAGE
+   ============================================================ */
 
-.visitor-stats-header {
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-
-.visitor-stats-subheader {
-  font-size: 18px;
-  margin-bottom: 20px;
-  color: #444;
-}
-
-/*End tracking visitor table*/
-
-/*Accounting page & apti page begin*/
 .sap {
   display: block;
-  padding: 10px;
-  box-sizing: border-box;
-  border: 1px solid black;
-  border-radius: 8px;
-  text-align: left;
-  text-indent: 5px;
-  margin: 2px auto;
 
   width: 100%;
-  max-width: 800px; /* max container width on large screens */
-  min-width: 280px; /* smaller min-width for mobile */
-
+  max-width: 800px;
+  min-width: 280px;
   max-height: 60vh;
+
+  margin: 2px auto;
+  padding: 10px;
+
+  box-sizing: border-box;
+
+  border: 1px solid black;
+  border-radius: 8px;
+
+  text-align: left;
+  text-indent: 5px;
+
   overflow-y: auto;
 }
 
@@ -507,181 +550,236 @@ button:hover {
   width: 100%;
   box-sizing: border-box;
 }
-/* Buttons inline with gap */
+
+/* ---------- Accounting Buttons ---------- */
+
 .sap > .d-flex {
   display: flex;
+
   gap: 10px;
   flex-wrap: wrap;
 }
 
 .sap > .d-flex > button {
   flex: 1 1 48%;
+
   min-width: 120px;
   height: 35px;
-  border-radius: 0; /* no rounding if you want */
+
+  border-radius: 0;
 }
 
-/* Responsive for very small screens */
-@media (max-width: 480px) {
-  .sap > .d-flex > button {
-    flex: 1 1 100%;
-    max-width: 100%;
-  }
-}
-/*Accounting page end*/
-/**/
-/*hana.ejs*/
-/* Centers and spaces the buttons neatly */
-/* Make buttons tighter and shorter in length */
+/* ============================================================
+   HANA PAGE
+   ============================================================ */
+
 .video-controls button {
-  width: auto; /* shrink to fit the icon size */
-  padding: 0.25rem 0.5rem; /* minimal padding inside the button */
-  font-size: 1.2rem; /* keep the emoji clear */
-  line-height: 1; /* removes extra vertical space */
-  border-radius: 6px; /* subtle rounded corners */
+  width: auto;
+
+  padding: 0.25rem 0.5rem;
+
+  font-size: 1.2rem;
+  line-height: 1;
+
+  border-radius: 6px;
+
   transition: background-color 0.2s ease;
 }
 
-/* Clean hover color, no bar effect */
 .video-controls button:hover {
-  background-color: mediumseagreen;
   color: #fff;
+  background-color: mediumseagreen;
 }
-/*hana.ejs end*/
-/*Invoice*/
-/* Container */
+
+/* ============================================================
+   INVOICE PAGE
+   ============================================================ */
 
 /* ---------- Invoice Container ---------- */
+
 .invoice-container {
-  background: none;
-  padding: 40px;
-  max-width: 800px;
+  max-width: 1000px;
+
   margin: 40px auto;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  font-family: "Segoe UI", Arial, sans-serif;
+  padding: 40px;
+
+  box-sizing: border-box;
+
   color: #333;
+  font-family: "Segoe UI", Arial, sans-serif;
+
+  background: none;
+
   border: 1.5px solid black;
+  border-radius: 8px;
+
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+
+  page-break-after: always;
 }
 
-/* ---------- Headings ---------- */
-.invoice-container h2 {
-  text-align: center;
+/* ---------- Invoice Headings ---------- */
 
-  /* changed from #007bff to green */
+.invoice-container h2 {
   margin-bottom: 30px;
-  letter-spacing: 0.5px;
+
   font-size: 26px;
+  letter-spacing: 0.5px;
+
+  text-align: center;
 }
 
 .invoice-container h3 {
-  /* changed from #007bff to green */
   margin-bottom: 12px;
-  border-bottom: 1px solid #eee;
   padding-bottom: 4px;
+
+  border-bottom: 1px solid #eee;
+
   font-size: 18px;
 }
 
-/* ---------- Form Layout ---------- */
+/* ---------- Invoice Form Layout ---------- */
+
 .invoice-container form > div {
   display: flex;
   flex-wrap: wrap;
-  gap: 15px;
-  margin-bottom: 20px;
   align-items: center;
+
+  gap: 15px;
+
+  margin-bottom: 20px;
 }
 
 .invoice-container label {
-  font-weight: 600;
   min-width: 120px;
+  font-weight: 600;
 }
 
-/* ---------- Input & Select ---------- */
+/* ---------- Invoice Inputs ---------- */
+
 .invoice-container input[type="text"],
 .invoice-container input[type="number"],
 .invoice-container input[type="date"],
 .invoice-container select {
   flex: 1;
+
   min-width: 180px;
+
   padding: 3px 5px;
-  align-items: center;
+
+  box-sizing: border-box;
+
+  background: #f8f8f8;
+
   border: 1px solid #ccc;
   border-radius: 4px;
-  background: #f8f8f8;
+
   font-size: 14px;
+
   transition: all 0.2s ease;
 }
 
 .invoice-container input:focus,
 .invoice-container select:focus {
-  border-color: #007bff;
   background: #fff;
+  border-color: #007bff;
   outline: none;
 }
 
-/* ---------- Item Rows ---------- */
+/* ---------- Invoice Items ---------- */
+
 .invoice-container #items {
   margin-top: 10px;
 }
 
-.invoice-container .item-row {
+.invoice-container .item-row,
+.item-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
   align-items: center;
+
+  gap: 8px;
+
+  margin-bottom: 10px;
 }
 
-.invoice-container .item-row input {
-  flex: 1;
-  min-width: 120px;
-}
+.invoice-container .item-row input,
+.invoice-container .item-row select,
 .item-row input,
 .item-row select {
   flex: 1;
-  min-width: 180px; /* match all */
+
+  min-width: 180px;
+
+  height: 38px;
+
+  padding: 3px 5px;
+
+  box-sizing: border-box;
+
+  font-size: 14px;
+  vertical-align: middle;
 }
-.invoice-container .item-row input,
-.invoice-container .item-row select,
-.invoice-container .state-local-group input,
-.invoice-container .state-local-group select {
-  height: 38px; /* uniform height */
-  align-items: center;
-  padding: 3px 5px; /* uniform padding */
-  box-sizing: border-box; /* include padding in height */
-  font-size: 14px; /* consistent font size */
-  vertical-align: middle; /* aligns inline-block elements */
+
+.item-row button {
+  height: 38px;
+  box-sizing: border-box;
+  font-size: 14px;
 }
-.item-row input,
-.item-row select,
-.state-local-group input,
-.state-local-group select {
-  height: 38px; /* uniform height */
-  align-items: center;
-  padding: 3px 5px; /* uniform padding */
-  box-sizing: border-box; /* include padding in height */
-  font-size: 14px; /* consistent font size */
+
+/* ---------- State / Local Group ---------- */
+
+.state-local-group {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 10px;
 }
+
+.state-local-group > select,
+.state-local-group > input {
+  flex: 1 1 45%;
+
+  min-width: 180px;
+  height: 38px;
+
+  padding: 8px 10px;
+
+  box-sizing: border-box;
+
+  font-size: 14px;
+}
+
 .state-local-group select,
 .state-local-group input {
   margin-bottom: 0 !important;
 }
-/* above bootstrap causing 👆 */
+
+/* ---------- Remove Button ---------- */
+
 .remove-wrap {
-  text-align: center;
   display: block;
+
   margin: 0 auto;
+
+  text-align: center;
 }
 
-/* ---------- Buttons ---------- */
+/* ---------- Invoice Buttons ---------- */
+
 .invoice-container button {
-  background-color: #007bff;
-  color: #fff;
-  border: none;
   padding: 8px 16px;
-  border-radius: 4px;
+
+  color: #fff;
   font-size: 14px;
+
+  background-color: #007bff;
+
+  border: none;
+  border-radius: 4px;
+
   cursor: pointer;
+
   transition: background-color 0.25s ease;
 }
 
@@ -694,48 +792,26 @@ button:hover {
   cursor: not-allowed;
 }
 
-/* Remove (🗑️) Button */
+/* ---------- Remove Invoice Button ---------- */
+
 .invoice-container .remove-btn {
-  background-color: #e74c3c;
   padding: 3px 5px;
+  background-color: #e74c3c;
 }
 
 .invoice-container .remove-btn:hover {
   background-color: #c0392b;
 }
 
-/* ---------- Add state ---------- */
-.item-row {
-  display: flex;
-  gap: 8px; /* space between inputs */
-  align-items: center; /* vertical center alignment */
-  flex-wrap: wrap; /* wrap to next line if needed */
-}
+/* ---------- Invoice Totals ---------- */
 
-.item-row input,
-.item-row select,
-.item-row button {
-  height: 38px; /* uniform height */
-  font-size: 14px;
-  box-sizing: border-box;
-}
-
-/* Optional: if you want to show custom arrow later, you can add it with background-image */
-
-.state-local-group select,
-.state-local-group input {
-  height: 38px;
-  font-size: 14px;
-}
-
-/* ---------- Add state---------- */
-
-/* ---------- Totals ---------- */
 .invoice-container .totals {
-  text-align: right;
-  border-top: 1px solid #eee;
   margin-top: 25px;
   padding-top: 10px;
+
+  border-top: 1px solid #eee;
+
+  text-align: right;
 }
 
 .invoice-container .totals p {
@@ -745,57 +821,1350 @@ button:hover {
 
 .invoice-container .totals h3 {
   margin-top: 10px;
-  color: #28a745; /* changed from #007bff to green */
+
+  color: #28a745;
   font-size: 18px;
 }
 
-/* ---------- Payment Info ---------- */
-.invoice-container .payment-info,
-.invoice-container h3 + div {
+/* ---------- Payment Information ---------- */
+
+.invoice-container .payment-info {
   display: flex;
   flex-wrap: wrap;
+
   gap: 15px;
+
   margin-top: 10px;
 }
 
 .invoice-container .payment-info input {
-  flex: 1 1 calc(25% - 15px); /* 4 inputs per row minus gap */
+  flex: 1 1 calc(25% - 15px);
+
   min-width: 150px;
+
   padding: 8px 10px;
+
+  background: #f8f8f8;
+
   border: 1px solid #ccc;
   border-radius: 4px;
-  background: #f8f8f8;
+
   font-size: 14px;
 }
 
 .invoice-container .payment-info input:focus {
-  border-color: #007bff;
   background: #fff;
+  border-color: #007bff;
+  outline: none;
+}
+
+/* ---------- Payment Section ---------- */
+
+.invoice-container h3 + div {
+  display: block;
+
+  margin-top: 10px;
+}
+
+.invoice-container h3 + div input {
+  display: block;
+
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+
+  box-sizing: border-box;
+
+  background: #f8f8f8;
+
+  border: 1px solid #ccc;
+  border-radius: 4px;
+
+  font-size: 14px;
+}
+
+.invoice-container h3 + div input:focus {
+  background: #fff;
+  border-color: #007bff;
   outline: none;
 }
 
 /* ---------- Submit Button ---------- */
+
 .invoice-container button[type="submit"] {
   display: block;
-  margin: 30px auto 0;
-  font-weight: 600;
+
   width: 160px;
+
+  margin: 30px auto 0;
+
+  font-weight: 600;
 }
 
-/* ---------- Responsive ---------- */
+/* ---------- Invoice Page Break ---------- */
+
+.invoice-container,
+.invoice-container .totals,
+.invoice-container .payment-info {
+  page-break-inside: avoid;
+}
+
+/* ============================================================
+   USER TABLE
+   ============================================================ */
+
+.user-table {
+  width: 100%;
+
+  border-collapse: collapse;
+  border: 2px solid #000;
+}
+
+.user-table th,
+.user-table td {
+  padding: 10px;
+
+  border: 1px solid #000 !important;
+}
+
+/* ============================================================
+   SOCIAL PAGE
+   ============================================================ */
+
+/* ---------- Social Section ---------- */
+
+.social-section {
+  width: 100%;
+  background: #f4f6f8;
+}
+
+.social-container {
+  width: min(100% - 30px, 900px);
+
+  margin: 0 auto;
+
+  box-sizing: border-box;
+}
+
+/* ---------- Page Heading ---------- */
+
+.social-page-heading {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.social-page-heading h2 {
+  margin: 0;
+
+  color: #172033;
+  font-size: clamp(1.25rem, 3vw, 1.8rem);
+  font-weight: 800;
+}
+
+.social-page-heading p {
+  margin: 8px 0 0;
+
+  color: #667085;
+}
+
+/* ============================================================
+   SOCIAL CREATE POST
+   ============================================================ */
+
+.social-create-card {
+  width: 100%;
+  margin-bottom: 24px;
+  padding: 20px;
+
+  box-sizing: border-box;
+
+  background: #fff;
+
+  border: 1px solid #d9dee7;
+  border-radius: 18px;
+
+  box-shadow: 0 4px 18px rgba(16, 24, 40, 0.06);
+}
+
+.social-create-post-form,
+.social-create-form {
+  width: 100%;
+}
+
+.social-create-header {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  margin-bottom: 16px;
+}
+
+.social-create-header strong {
+  display: block;
+
+  color: #172033;
+  font-size: 1rem;
+}
+
+.social-create-post-subtitle {
+  margin-top: 3px;
+
+  color: #667085;
+  font-size: 0.88rem;
+}
+
+/* ============================================================
+   SOCIAL AVATARS
+   ============================================================ */
+
+.social-avatar,
+.social-comment-avatar,
+.social-reply-avatar,
+.social-mini-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 auto;
+
+  color: #fff;
+  font-weight: 800;
+
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+
+  border-radius: 50%;
+}
+
+.social-avatar {
+  width: 48px;
+  height: 48px;
+  font-size: 1.1rem;
+}
+
+.social-comment-avatar {
+  width: 38px;
+  height: 38px;
+  font-size: 0.9rem;
+}
+
+.social-reply-avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 0.8rem;
+}
+
+.social-mini-avatar {
+  width: 34px;
+  height: 34px;
+  font-size: 0.8rem;
+}
+
+/* ============================================================
+   SOCIAL POST COMPOSER
+   ============================================================ */
+
+.social-post-create-composer {
+  display: block;
+
+  width: 100%;
+  min-height: 130px;
+
+  padding: 14px 16px;
+
+  box-sizing: border-box;
+
+  color: #172033;
+  font: inherit;
+  line-height: 1.55;
+
+  background: #f9fafb;
+
+  border: 1px solid #d0d5dd;
+  border-radius: 14px;
+
+  outline: none;
+
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+
+  caret-color: #2563eb;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.social-post-create-composer:focus {
+  background: #fff;
+  border-color: #2563eb;
+
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.social-post-create-composer:empty::before {
+  content: attr(data-placeholder);
+
+  color: #98a2b3;
+
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ============================================================
+   SOCIAL VISIBILITY
+   ============================================================ */
+
+.social-visibility-options {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+
+  gap: 10px 18px;
+
+  margin-top: 12px;
+  padding: 2px 0;
+}
+
+.social-visibility-options label {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  color: #475467;
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.social-visibility-options input[type="radio"] {
+  width: auto;
+  margin: 0;
+
+  accent-color: #2563eb;
+
+  cursor: pointer;
+}
+
+/* ============================================================
+   SOCIAL CREATE POST FOOTER
+   ============================================================ */
+
+.social-create-post-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  margin-top: 12px;
+}
+
+.social-character-count {
+  flex: 1 1 auto;
+
+  color: #667085;
+  font-size: 0.82rem;
+}
+
+.social-create-post-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 auto;
+
+  padding: 10px 20px;
+
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+
+  background: #2563eb;
+
+  border: 0;
+  border-radius: 10px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.social-create-post-button:hover {
+  background: #1d4ed8;
+
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.social-create-post-button:active {
+  transform: translateY(1px);
+}
+
+/* ============================================================
+   SOCIAL FEED
+   ============================================================ */
+
+.social-feed {
+  display: flex;
+  flex-direction: column;
+
+  gap: 20px;
+}
+
+/* ============================================================
+   SOCIAL POST CARD
+   ============================================================ */
+
+.social-post-card {
+  width: 100%;
+  padding: 20px;
+
+  box-sizing: border-box;
+
+  background: linear-gradient(135deg, var(--post-color, #fff), #fff 75%);
+
+  border: 1px solid #d9dee7;
+  border-radius: 18px;
+
+  box-shadow: 0 5px 20px rgba(16, 24, 40, 0.06);
+
+  overflow: visible;
+}
+
+/* ============================================================
+   SOCIAL POST HEADER
+   ============================================================ */
+
+.social-post-header {
+  display: flex;
+  align-items: center;
+}
+
+.social-user {
+  display: flex;
+  align-items: center;
+
+  flex: 1;
+  min-width: 0;
+
+  gap: 12px;
+}
+
+.social-user-info {
+  min-width: 0;
+}
+
+.social-user-name {
+  color: #172033;
+  font-weight: 750;
+
+  overflow-wrap: anywhere;
+}
+
+.social-date {
+  margin-top: 3px;
+
+  color: #667085;
+  font-size: 0.78rem;
+}
+
+/* ============================================================
+   SOCIAL OWNER ACTIONS
+   ============================================================ */
+
+.social-post-owner-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  width: 100%;
+
+  gap: 8px;
+
+  margin-top: 14px;
+  padding-top: 12px;
+
+  border-top: 1px solid rgba(16, 24, 40, 0.08);
+}
+
+.social-owner-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  min-height: 36px;
+
+  padding: 7px 13px;
+
+  color: #344054;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+
+  text-decoration: none;
+
+  background: #fff;
+
+  border: 1px solid #d0d5dd;
+  border-radius: 9px;
+
+  cursor: pointer;
+}
+
+.social-owner-button:hover {
+  background: #f8fafc;
+}
+
+.social-delete-button {
+  color: #b42318;
+  border-color: #f0c2bd;
+}
+
+.social-delete-button:hover {
+  background: #fff5f3;
+}
+
+/* ============================================================
+   SOCIAL EDIT POST
+   ============================================================ */
+
+.social-edit-details {
+  position: relative;
+}
+
+.social-edit-details summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.social-edit-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.social-edit-form {
+  width: min(100%, 650px);
+
+  margin-top: 10px;
+  padding: 14px;
+
+  box-sizing: border-box;
+
+  background: #fff;
+
+  border: 1px solid #d9dee7;
+  border-radius: 12px;
+
+  box-shadow: 0 5px 20px rgba(16, 24, 40, 0.08);
+}
+
+.social-edit-form label {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #344054;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.social-edit-form textarea {
+  display: block;
+
+  width: 100%;
+  min-height: 110px;
+
+  padding: 12px;
+
+  box-sizing: border-box;
+
+  color: #172033;
+  font: inherit;
+  line-height: 1.5;
+
+  background: #fff;
+
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+
+  outline: none;
+
+  resize: vertical;
+}
+
+.social-edit-form textarea:focus {
+  border-color: #2563eb;
+
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.social-edit-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin-top: 10px;
+
+  color: #667085;
+  font-size: 0.8rem;
+}
+
+.social-save-button {
+  padding: 8px 14px;
+
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+
+  background: #15803d;
+
+  border: 0;
+  border-radius: 9px;
+
+  cursor: pointer;
+}
+
+.social-save-button:hover {
+  background: #166534;
+}
+
+/* ============================================================
+   SOCIAL POST CONTENT
+   ============================================================ */
+
+.social-post-content {
+  margin-top: 18px;
+
+  color: #172033;
+  font-size: 1rem;
+  line-height: 1.7;
+
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ============================================================
+   SOCIAL POST MEDIA
+   ============================================================ */
+
+.social-post-media {
+  display: grid;
+
+  width: 100%;
+  margin: 12px 0;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+
+  box-sizing: border-box;
+}
+
+.social-post-media-item {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  border-radius: 10px;
+
+  overflow: hidden;
+}
+
+.social-post-image {
+  display: block;
+
+  width: 100%;
+
+  aspect-ratio: var(--social-average-image-ratio, auto);
+
+  object-fit: cover;
+
+  border-radius: 10px;
+}
+
+/* ---------- One Media Item ---------- */
+
+.social-post-media:has(.social-post-media-item:only-child) {
+  grid-template-columns: 1fr;
+  justify-items: center;
+}
+
+.social-post-media:has(.social-post-media-item:only-child)
+  .social-post-media-item {
+  width: 50%;
+}
+
+/* ---------- Media Text ---------- */
+
+.social-post-media-text {
+  display: block;
+
+  width: 100%;
+  margin-top: 6px;
+}
+
+/* ---------- PDF ---------- */
+
+.social-post-pdf {
+  padding: 12px;
+
+  background: #f3f4f6;
+  border-radius: 10px;
+}
+
+.social-post-pdf a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+/* ============================================================
+   SOCIAL REACTION SUMMARY
+   ============================================================ */
+
+.social-reaction-summary {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  margin-top: 16px;
+  padding-bottom: 10px;
+
+  color: #667085;
+  font-size: 0.82rem;
+
+  border-bottom: 1px solid rgba(16, 24, 40, 0.08);
+}
+
+.social-reaction-icons {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 1px;
+}
+
+.social-reaction-total {
+  color: #344054;
+  font-weight: 700;
+}
+
+.social-reaction-label {
+  color: #667085;
+}
+
+/* ============================================================
+   SOCIAL ACTION BAR
+   ============================================================ */
+
+.social-action-bar {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+
+  gap: 6px;
+
+  padding: 10px 0;
+
+  border-bottom: 1px solid rgba(16, 24, 40, 0.08);
+}
+
+.social-reaction-form {
+  margin: 0;
+  padding: 0;
+}
+
+.social-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  min-height: 38px;
+
+  padding: 7px 11px;
+
+  color: #475467;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 650;
+
+  text-decoration: none;
+  white-space: nowrap;
+
+  background: transparent;
+
+  border: 1px solid transparent;
+  border-radius: 9px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.social-action-button:hover {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: #d0d5dd;
+}
+
+.social-action-icon {
+  font-size: 1.05rem;
+}
+
+.social-action-button small {
+  color: #667085;
+  font-size: 0.75rem;
+}
+
+/* ============================================================
+   SOCIAL SELECTED REACTION
+   ============================================================ */
+
+.social-selected-reaction {
+  color: #1d4ed8 !important;
+
+  background: #eff6ff !important;
+
+  border-color: #bfdbfe !important;
+}
+
+/* ============================================================
+   SOCIAL MORE REACTIONS
+   ============================================================ */
+
+.social-more {
+  position: relative;
+}
+
+.social-more summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.social-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.social-reaction-popup {
+  position: absolute;
+  z-index: 30;
+
+  left: 0;
+  bottom: calc(100% + 8px);
+
+  display: grid;
+
+  width: 280px;
+  max-width: calc(100vw - 30px);
+
+  padding: 8px;
+
+  box-sizing: border-box;
+
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 5px;
+
+  background: #fff;
+
+  border: 1px solid #d9dee7;
+  border-radius: 12px;
+
+  box-shadow: 0 12px 30px rgba(16, 24, 40, 0.15);
+}
+
+.social-reaction-popup form {
+  margin: 0;
+}
+
+.social-popup-reaction {
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+
+  gap: 8px;
+
+  padding: 8px;
+
+  color: #344054;
+  font: inherit;
+  font-size: 0.82rem;
+
+  text-align: left;
+
+  background: transparent;
+
+  border: 0;
+  border-radius: 8px;
+
+  cursor: pointer;
+}
+
+.social-popup-reaction:hover {
+  background: #f2f4f7;
+}
+
+.social-popup-reaction span:first-child {
+  font-size: 1.1rem;
+}
+
+.social-popup-reaction small {
+  margin-left: auto;
+  color: #667085;
+}
+
+/* ============================================================
+   SOCIAL COMMENTS
+   ============================================================ */
+
+.social-comment-link {
+  margin-left: auto;
+}
+
+.social-comments {
+  margin-top: 16px;
+}
+
+.social-comment {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 10px;
+
+  margin-bottom: 14px;
+}
+
+.social-comment-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.social-comment-bubble,
+.social-reply-bubble {
+  display: inline-block;
+
+  max-width: 100%;
+  padding: 10px 13px;
+
+  box-sizing: border-box;
+
+  background: rgba(255, 255, 255, 0.82);
+
+  border: 1px solid rgba(16, 24, 40, 0.08);
+  border-radius: 13px;
+}
+
+.social-comment-user,
+.social-reply-user {
+  margin-bottom: 3px;
+
+  color: #344054;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.social-comment-text,
+.social-reply-text {
+  color: #172033;
+  font-size: 0.9rem;
+  line-height: 1.5;
+
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ============================================================
+   SOCIAL COMMENT / REPLY ACTIONS
+   ============================================================ */
+
+.social-comment-actions,
+.social-reply-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 2px;
+
+  margin-top: 4px;
+}
+
+.social-comment-actions form,
+.social-reply-actions form {
+  margin: 0;
+}
+
+.social-comment-actions button,
+.social-reply-actions button {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 3px;
+
+  min-height: 30px;
+
+  padding: 4px 7px;
+
+  color: #667085;
+  font: inherit;
+  font-size: 0.78rem;
+
+  background: transparent;
+
+  border: 1px solid transparent;
+  border-radius: 7px;
+
+  cursor: pointer;
+}
+
+.social-comment-actions button:hover,
+.social-reply-actions button:hover {
+  color: #344054;
+  background: #f2f4f7;
+}
+
+.social-comment-selected {
+  color: #1d4ed8 !important;
+
+  background: #eff6ff !important;
+
+  border-color: #bfdbfe !important;
+}
+
+.social-comment-actions small,
+.social-reply-actions small {
+  font-size: 0.7rem;
+}
+
+/* ============================================================
+   SOCIAL REPLIES
+   ============================================================ */
+
+.social-reply-button {
+  font-weight: 700 !important;
+}
+
+.social-replies {
+  margin-top: 9px;
+  margin-left: 18px;
+  padding-left: 12px;
+
+  border-left: 2px solid #e4e7ec;
+}
+
+.social-reply {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 8px;
+
+  margin-bottom: 10px;
+}
+
+.social-reply-body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ============================================================
+   SOCIAL REPLY FORM
+   ============================================================ */
+
+.social-reply-form {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  margin-top: 8px;
+}
+
+.social-reply-form input {
+  flex: 1;
+  min-width: 0;
+
+  height: 36px;
+  padding: 7px 11px;
+
+  box-sizing: border-box;
+
+  color: #172033;
+  font: inherit;
+
+  background: #fff;
+
+  border: 1px solid #d0d5dd;
+  border-radius: 9px;
+
+  outline: none;
+}
+
+.social-reply-form input:focus {
+  border-color: #2563eb;
+
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.social-reply-form button {
+  flex: 0 0 auto;
+
+  width: 36px;
+  height: 36px;
+
+  color: #fff;
+
+  background: #2563eb;
+
+  border: 0;
+  border-radius: 9px;
+
+  cursor: pointer;
+}
+
+/* ============================================================
+   SOCIAL NEW COMMENT
+   ============================================================ */
+
+.social-new-comment {
+  margin-top: 16px;
+}
+
+.social-comment-input {
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  padding: 7px;
+
+  background: #fff;
+
+  border: 1px solid #d0d5dd;
+  border-radius: 13px;
+}
+
+.social-comment-input input {
+  flex: 1;
+  min-width: 0;
+
+  padding: 8px 3px;
+
+  color: #172033;
+  font: inherit;
+
+  background: transparent;
+
+  border: 0;
+  outline: 0;
+}
+
+.social-comment-input button {
+  flex: 0 0 auto;
+
+  width: 36px;
+  height: 36px;
+
+  color: #fff;
+  font-size: 1rem;
+
+  background: #2563eb;
+
+  border: 0;
+  border-radius: 9px;
+
+  cursor: pointer;
+}
+
+.social-comment-input button:hover,
+.social-reply-form button:hover {
+  background: #1d4ed8;
+}
+
+/* ============================================================
+   SOCIAL PAGINATION
+   ============================================================ */
+
+.social-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 10px;
+
+  margin-top: 24px;
+  padding: 16px 0;
+}
+
+.social-page-numbers {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 5px;
+}
+
+.social-page-btn,
+.social-page-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 38px;
+  height: 38px;
+
+  padding: 0 11px;
+
+  box-sizing: border-box;
+
+  color: #344054;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+
+  text-decoration: none;
+
+  background: #fff;
+
+  border: 1px solid #d0d5dd;
+  border-radius: 9px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.social-page-btn:hover,
+.social-page-number:hover {
+  background: #f8fafc;
+  border-color: #98a2b3;
+}
+
+.social-page-number.active {
+  color: #fff;
+
+  background: #2563eb;
+  border-color: #2563eb;
+
+  cursor: default;
+}
+
+.social-page-number.active:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.social-page-btn.disabled {
+  color: #98a2b3;
+
+  background: #f2f4f7;
+  border-color: #e4e7ec;
+
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   SOCIAL SEARCH
+   ============================================================ */
+
+.social-search-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 10px;
+
+  margin-top: 20px;
+}
+
+/* ---------- Admin Date Filter ---------- */
+
+.social-admin-filter-date-range {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 20px;
+}
+
+.social-admin-filter-date {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+}
+
+.social-admin-filter-date label {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.social-admin-filter-date input {
+  width: 180px;
+  box-sizing: border-box;
+}
+
+/* ============================================================
+   RESPONSIVE DESIGN
+   ============================================================ */
+
+/* ============================================================
+   ACCOUNTING - SMALL SCREENS
+   ============================================================ */
+
+@media (max-width: 480px) {
+  .sap > .d-flex > button {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}
+
+/* ============================================================
+   INVOICE - RESPONSIVE
+   ============================================================ */
+
 @media (max-width: 900px) {
   .invoice-container form > div {
     flex-direction: column;
     align-items: flex-start;
   }
+
   .invoice-container label {
     width: 100%;
   }
 }
 
+@media (max-width: 768px) {
+  .state-local-group > select,
+  .state-local-group > input {
+    flex: 1 1 100%;
+    min-width: auto;
+  }
+}
+
 @media (max-width: 700px) {
   .invoice-container .payment-info input {
-    flex: 1 1 100%; /* stack vertically on small screens */
+    flex: 1 1 100%;
   }
 }
 
@@ -803,89 +2172,249 @@ button:hover {
   .invoice-container {
     padding: 20px;
   }
+
   .invoice-container .totals {
     text-align: left;
   }
+
   .invoice-container input,
   .invoice-container select {
     width: 100%;
   }
 }
 
-/* ---------- Print/PDF ---------- */
+/* ============================================================
+   INVOICE - PRINT / PDF
+   ============================================================ */
+
 @media print {
   .invoice-container {
-    box-shadow: none;
     padding: 20px;
+
     border-radius: 0;
+
+    box-shadow: none;
   }
+
   .invoice-container button {
     display: none;
   }
 }
-/* ---------- Print/PDF ---------- */
 
-/* ---------- Page break ---------- */
-.invoice-container,
-.invoice-container .totals,
-.invoice-container .payment-info {
-  page-break-inside: avoid;
-}
+/* ============================================================
+   SOCIAL PAGE - MOBILE
+   ============================================================ */
 
-.invoice-container {
-  page-break-after: always;
-}
-/* Target the div directly after Payment Info heading */
-.invoice-container h3 + div {
-  display: block; /* Make container block so inputs stack */
-  margin-top: 10px;
-}
+@media (max-width: 640px) {
+  .social-container {
+    width: min(100% - 16px, 900px);
+  }
 
-/* Make each input full width and add spacing */
-.invoice-container h3 + div input {
-  display: block; /* inputs take full line */
-  width: 100%; /* fill the container's width */
-  box-sizing: border-box; /* include padding/border in width */
-  margin-bottom: 12px; /* spacing between inputs */
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background: #f8f8f8;
-  font-size: 14px;
-}
+  .social-create-card,
+  .social-post-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
 
-/* On focus keep consistent style */
-.invoice-container h3 + div input:focus {
-  border-color: #007bff;
-  background: #fff;
-  outline: none;
-}
+  /* ---------- Composer ---------- */
 
-/**/
-.state-local-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px; /* space between items */
-}
+  .social-post-create-composer {
+    min-height: 120px;
 
-/* Each row for State and Local is split in two: dropdown and input side by side */
-.state-local-group > select,
-.state-local-group > input {
-  /* Roughly half width each, with some min-width for usability */
-  flex: 1 1 45%;
-  min-width: 180px;
-  padding: 8px 10px;
-  box-sizing: border-box;
-  font-size: 14px;
-}
-/* Responsive for small screens */
-@media (max-width: 768px) {
-  .state-local-group > select,
-  .state-local-group > input {
-    flex: 1 1 100%; /* full width stacked */
-    min-width: auto;
+    padding: 12px 13px;
+
+    font-size: 1rem;
+  }
+
+  /* ---------- Visibility ---------- */
+
+  .social-visibility-options {
+    flex-direction: column;
+
+    align-items: flex-start;
+    justify-content: flex-start;
+
+    width: 100%;
+
+    gap: 9px;
+  }
+
+  .social-visibility-options label {
+    width: 100%;
+    white-space: normal;
+  }
+
+  /* ---------- Create Footer ---------- */
+
+  .social-create-post-footer {
+    flex-direction: column;
+    align-items: stretch;
+
+    gap: 10px;
+  }
+
+  .social-character-count {
+    flex: none;
+  }
+
+  .social-create-post-button {
+    width: 100%;
+  }
+
+  /* ---------- Media ---------- */
+
+  .social-post-media {
+    grid-template-columns: 1fr;
+  }
+
+  .social-post-media:has(.social-post-media-item:only-child)
+    .social-post-media-item {
+    width: 100%;
+  }
+
+  /* ---------- Action Bar ---------- */
+
+  .social-action-bar {
+    flex-wrap: wrap;
+  }
+
+  .social-action-button {
+    padding: 7px 8px;
+
+    font-size: 0.8rem;
+  }
+
+  .social-comment-link {
+    margin-left: 0;
+  }
+
+  /* ---------- Reaction Popup ---------- */
+
+  .social-reaction-popup {
+    left: auto;
+    right: 0;
+
+    width: 260px;
+    max-width: calc(100vw - 30px);
+  }
+
+  /* ---------- Owner Buttons ---------- */
+
+  .social-owner-button {
+    flex: 1 1 auto;
+  }
+
+  /* ---------- Edit ---------- */
+
+  .social-edit-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .social-save-button {
+    width: 100%;
+  }
+
+  /* ---------- Comments ---------- */
+
+  .social-comment-actions,
+  .social-reply-actions {
+    gap: 1px;
+  }
+
+  /* ---------- Replies ---------- */
+
+  .social-replies {
+    margin-left: 8px;
+    padding-left: 9px;
+  }
+
+  /* ---------- Admin Date Filter ---------- */
+
+  .social-admin-filter-date-range {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .social-admin-filter-date {
+    width: auto;
+  }
+
+  .social-admin-filter-date input {
+    width: 180px;
+  }
+
+  /* ---------- Pagination ---------- */
+
+  .social-pagination {
+    gap: 6px;
+
+    margin-top: 18px;
+    padding: 12px 0;
+  }
+
+  .social-page-numbers {
+    gap: 4px;
+  }
+
+  .social-page-btn,
+  .social-page-number {
+    min-width: 34px;
+    height: 36px;
+
+    padding: 0 8px;
+
+    font-size: 0.8rem;
   }
 }
-/**/
-/**/
-/**/
+
+/* ============================================================
+   SOCIAL PAGE - VERY SMALL PHONES
+   ============================================================ */
+
+@media (max-width: 400px) {
+  .social-container {
+    width: calc(100% - 12px);
+  }
+
+  .social-create-card,
+  .social-post-card {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .social-create-header {
+    gap: 9px;
+  }
+
+  .social-avatar {
+    width: 42px;
+    height: 42px;
+
+    font-size: 1rem;
+  }
+
+  .social-post-create-composer {
+    min-height: 110px;
+  }
+
+  .social-action-bar {
+    gap: 3px;
+  }
+
+  .social-action-button {
+    min-height: 36px;
+
+    padding: 6px;
+
+    font-size: 0.76rem;
+  }
+
+  .social-reaction-popup {
+    width: 240px;
+  }
+}
+
+/* ============================================================
+   END OF STYLESHEET
+   ============================================================ */
