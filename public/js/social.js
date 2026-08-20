@@ -282,8 +282,8 @@ function socialAddPostAttachment(file) {
   socialPostAttachments.push({
     file: file,
     mediaText: "",
+    objectUrl: null,
   });
-
   socialRenderPostAttachments();
 
   return true;
@@ -416,15 +416,13 @@ function socialRenderPostAttachments() {
     if (attachment.file.type.startsWith("image/")) {
       const image = document.createElement("img");
 
-      const objectUrl = URL.createObjectURL(attachment.file);
+      if (!attachment.objectUrl) {
+        attachment.objectUrl = URL.createObjectURL(attachment.file);
+      }
 
-      image.src = objectUrl;
-
+      image.src = attachment.objectUrl;
       image.alt = attachment.file.name;
-
       image.className = "social-post-create-pasted-image";
-
-      image.dataset.objectUrl = objectUrl;
 
       wrapper.appendChild(image);
     }
@@ -497,10 +495,10 @@ function socialRenderPostAttachments() {
 
     removeButton.addEventListener("click", () => {
       // Release image object URL
-      const image = wrapper.querySelector("img[data-object-url]");
+      const attachment = socialPostAttachments[index];
 
-      if (image) {
-        URL.revokeObjectURL(image.dataset.objectUrl);
+      if (attachment?.objectUrl) {
+        URL.revokeObjectURL(attachment.objectUrl);
       }
 
       socialPostAttachments.splice(index, 1);
