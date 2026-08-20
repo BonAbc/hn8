@@ -2854,31 +2854,41 @@ app.post("/social/comment/delete", ensureAuthenticated, async (req, res) => {
 
 app.post("/social/comment/reply", ensureAuthenticated, async (req, res) => {
   try {
+    console.log("========================================");
+    console.log("SOCIAL REPLY REQUEST");
+    console.log("userId:", req.user?.id);
+    console.log("body:", req.body);
+    console.log("commentId:", req.body?.commentId);
+    console.log("parentReplyId:", req.body?.parentReplyId);
+    console.log("reply:", req.body?.reply);
+    console.log("========================================");
+
     const userId = req.user?.id;
 
-    const commentId = req.body.commentId;
+    const commentId = req.body?.commentId;
 
-    const parentReplyId = req.body.parentReplyId || null;
+    const parentReplyId = req.body?.parentReplyId || null;
 
-    const content = (req.body.reply || "").trim();
+    const content = String(req.body?.reply || "").trim();
 
     if (!userId) {
       return res.status(401).send("Please log in.");
     }
 
     if (!content) {
-      return res.redirect("/social/post");
+      console.error("REPLY REJECTED: empty content");
+      return res.status(400).send("Reply cannot be empty.");
     }
 
     if (content.length > 2000) {
       return res.status(400).send("Reply is too long.");
     }
 
-    if (parentReplyId) {
-      // ------------------------------------------------------
-      // Find parent reply + its post
-      // ------------------------------------------------------
+    // ======================================================
+    // REPLY TO ANOTHER REPLY
+    // ======================================================
 
+    if (parentReplyId) {
       const parentReplyResult = await db.query(
         `
         SELECT
@@ -2910,27 +2920,30 @@ app.post("/social/comment/reply", ensureAuthenticated, async (req, res) => {
           .send("Replies can only be added one level deep.");
       }
 
-      // ------------------------------------------------------
-      // Insert D
-      // ------------------------------------------------------
-
-      await db.query(
+      const insertResult = await db.query(
         `
         INSERT INTO social_replies
-          (
-            comment_id,
-            parent_reply_id,
-            user_id,
-            content
-          )
+        (
+          comment_id,
+          parent_reply_id,
+          user_id,
+          content
+        )
         VALUES
-          ($1, $2, $3, $4)
+        ($1, $2, $3, $4)
+        RETURNING id
         `,
         [parentReply.comment_id, parentReply.id, userId, content],
       );
 
+      console.log("REPLY CREATED:", insertResult.rows[0]);
+
       return res.redirect(`/social/post?postId=${parentReply.post_id}`);
     }
+
+    // ======================================================
+    // REPLY DIRECTLY TO COMMENT
+    // ======================================================
 
     if (!commentId) {
       return res.status(400).send("Comment ID is required.");
@@ -2951,29 +2964,35 @@ app.post("/social/comment/reply", ensureAuthenticated, async (req, res) => {
       return res.status(404).send("Comment not found.");
     }
 
-    await db.query(
+    const insertResult = await db.query(
       `
       INSERT INTO social_replies
-        (
-          comment_id,
-          parent_reply_id,
-          user_id,
-          content
-        )
+      (
+        comment_id,
+        parent_reply_id,
+        user_id,
+        content
+      )
       VALUES
-        ($1, NULL, $2, $3)
+      ($1, NULL, $2, $3)
+      RETURNING id
       `,
       [commentId, userId, content],
     );
 
+    console.log("REPLY CREATED:", insertResult.rows[0]);
+
     return res.redirect(`/social/post?postId=${commentResult.rows[0].post_id}`);
   } catch (err) {
-    console.error("Reply error:", err);
+    console.error("========================================");
+    console.error("REPLY ERROR");
+    console.error(err);
+    console.error("========================================");
 
-    res.status(500).send("Unable to add reply.");
+    return res.status(500).send("Unable to add reply.");
   }
 });
-
+//
 app.post("/social/reply/edit", ensureAuthenticated, async (req, res) => {
   try {
     const userId = req.user?.id;
