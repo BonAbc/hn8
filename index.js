@@ -762,60 +762,64 @@ app.get("/enable-2fa", (req, res) => {
 });
 //Add 2FA Page 👌👌👌👌👌👌
 //Add 2FA Page 👌👌👌👌👌👌
-app.post("/enable-2fa", async (req, res) => {
-  const userId = req.session.pendingSetupUser;
-  //👌👌👌👌👌👌 from Line 999 👌👌👌👌👌👌 pendingSetupUser 1068
-  // Get user information
-  const result = await db.query(
-    `
-    SELECT email
-    FROM my_user
-    WHERE id = $1
-    `,
-    [userId],
-  );
+app.post("/enable-2fa", async (req, res, next) => {
+  try {
+    console.log("🔥 ENABLE 2FA ROUTE HIT");
+    console.log("Session ID:", req.sessionID);
+    console.log("pendingSetupUser:", req.session.pendingSetupUser);
+    console.log("User:", req.user);
 
-  const email = result.rows[0].email;
+    const userId = req.session.pendingSetupUser;
 
-  // Generate secret 👌👌👌👌👌👌
-  const secret = authenticator.generateSecret();
-  // Line 117 👆👆👆👆👆
-  // Generate secret 👌👌👌👌👌👌 stored by database and Authenticator app the same secrete
-  // Save secret 👌👌👌👌👌👌
-  await db.query(
-    `
-    UPDATE my_user
-    SET two_factor_secret = $1
-    WHERE id = $2
-    `,
-    [secret, userId],
-  );
-  //App stored {
-  // "issuer": "HieuWebsite",
-  // "account": "user@example.com",
-  // "secret": "JBSWY3DPEHPK3PXP",
-  //"algorithm": "SHA1",
-  // "digits": 6,
-  // "period": 30
-  //}
-  // Create QR data 👌👌👌👌👌👌 from Line 862
-  const otpauth = authenticator.keyuri(email, "Dana Awesome", secret); // order is stricted
-  // HieuWebsite is not part of the calculation
-  //otpauth://totp/HieuWebsite:user@example.com?
-  //secret=JBSWY3DPEHPK3PXP
-  //&issuer=HieuWebsite
-  //&algorithm=SHA1
-  //&digits=6
-  //&period=30
-  // Create QR data 👌👌👌👌👌👌
-  // Create QR image 👌👌👌👌👌👌
-  // Render to setup-2fa.ejs > route verify-2fa-setup no app.get("/verify-2fa-setup") 👌👌👌👌👌👌
-  const qrCode = await QRCode.toDataURL(otpauth);
-  // Create QR image 👌👌👌👌👌👌
-  res.render("setup-2fa.ejs", {
-    defaultDate: getToday(),
-    qrCode,
-  });
+    if (!userId) {
+      console.log("❌ No pendingSetupUser in session");
+      return res.redirect("/login");
+    }
+
+    const result = await db.query(
+      `
+      SELECT email
+      FROM my_user
+      WHERE id = $1
+      `,
+      [userId],
+    );
+
+    if (result.rows.length === 0) {
+      console.log("❌ User not found:", userId);
+      return res.redirect("/login");
+    }
+
+    const email = result.rows[0].email;
+
+    // Generate secret
+    const secret = authenticator.generateSecret();
+
+    // Save secret
+    await db.query(
+      `
+      UPDATE my_user
+      SET two_factor_secret = $1
+      WHERE id = $2
+      `,
+      [secret, userId],
+    );
+
+    // Create QR data
+    const otpauth = authenticator.keyuri(email, "Dana Awesome", secret);
+
+    // Create QR image
+    const qrCode = await QRCode.toDataURL(otpauth);
+
+    // Render setup page
+    return res.render("setup-2fa.ejs", {
+      defaultDate: getToday(),
+      qrCode,
+    });
+  } catch (err) {
+    console.error("❌ ENABLE 2FA ERROR:", err);
+    return next(err);
+  }
 });
 //Add 2FA enable 👌👌👌👌👌👌
 //Add Add 2FA enable 👌👌👌👌👌👌
