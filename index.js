@@ -159,9 +159,10 @@ app.use(
 //The secret is used to sign and verify session cookies.The secret: A password for cookies so no one can fake them.
 //app.use(session):use session for all incoming request
 //cookie is a small piece of data your server tells the browser to store. : the backend
+app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(flash());
+
 app.use((req, res, next) => {
   res.locals.message = req.flash("error");
   next();
@@ -3865,7 +3866,7 @@ app.get("/social-admin-downloads", ensureAuthenticated, async (req, res) => {
     return res.status(500).send("Unable to load social downloads.");
   }
 });
-
+//
 app.get(
   "/social-admin-downloads/file/:mediaId",
   ensureAuthenticated,
