@@ -988,7 +988,12 @@ app.post("/reset-2fa", ensureAdmin, async (req, res) => {
 
   res.redirect("/login");
 });
-
+//
+//Admin add user 👆
+app.get("/add-user", ensureAdmin, (req, res) => {
+  console.log("ENTERED /add-user");
+  res.render("adduserbyadmin.ejs", { defaultDate: getToday() });
+});
 //
 app.post("/add-user", ensureAdmin, async (req, res) => {
   const email = req.body.email;
