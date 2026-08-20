@@ -381,12 +381,22 @@ app.get("/invoices", async (req, res) => {
 });
 
 // ----------------------------
-app.get("/login", (req, res) =>
+app.get("/login", (req, res) => {
+  const showLoginModal = req.session.showLoginModal || false;
+  const showAdminLoginModal = req.session.showAdminLoginModal || false;
+
+  req.session.showLoginModal = false;
+  req.session.showAdminLoginModal = false;
+
   res.render("signin.ejs", {
     defaultDate: getToday(),
     message: req.flash("error"),
-  }),
-);
+    showLoginModal,
+    showAdminLoginModal,
+    alert: null,
+  });
+});
+
 app.get("/signup", (req, res) =>
   res.render("register.ejs", {
     errors: {},
