@@ -684,3 +684,14 @@ document.addEventListener("click", (event) => {
 
   socialShowReply(commentId, parentReplyId);
 });
+//
+document.addEventListener("click", (event) => {
+  const button = event.target.closest(".social-reply-button");
+
+  if (!button) return;
+
+  const commentId = button.dataset.commentId;
+  const parentReplyId = button.dataset.parentReplyId || null;
+
+  socialShowReply(commentId, parentReplyId);
+});

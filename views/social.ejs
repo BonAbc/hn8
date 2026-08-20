@@ -1454,15 +1454,16 @@
 
           <!-- REPLY TO REPLY C -->
 
-          <button
-            type="button"
-            class="social-reply-button"
-            onclick="socialShowReply(<%= comment.id %>, <%= reply.id %>)"
-            title="Reply"
-            aria-label="Reply"
-          >
-            ↩ Reply
-          </button>
+        <button
+  type="button"
+  class="social-reply-button"
+  data-comment-id="<%= comment.id %>"
+  title="Reply"
+  aria-label="Reply"
+>
+  ↩ Reply
+</button>
+
 
         </div>
 
