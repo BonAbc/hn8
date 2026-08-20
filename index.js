@@ -402,56 +402,69 @@ app.get("/logout", (req, res, next) => {
     });
   });
 });
-
+//
 passport.use(
-  new Strategy(
-    {
-      usernameField: "email",
-      passwordField: "password",
-    },
-    async function verify(email, password, cb) {
-      try {
-        const result = await db.query(
-          `
-          SELECT *
-          FROM my_user
-          WHERE email = $1
-          `,
-          [email],
-        );
+  new Strategy(async function verify(username, password, cb) {
+    try {
+      console.log("🔐 PASSPORT STRATEGY START");
+      console.log("Username:", username);
 
-        if (result.rows.length === 0) {
-          return cb(null, false, {
-            message: "Invalid username or password.",
-          });
-        }
+      const result = await db.query("SELECT * FROM my_user WHERE email = $1", [
+        username,
+      ]);
 
-        const user = result.rows[0];
+      if (result.rows.length === 0) {
+        console.log("❌ USER NOT FOUND");
 
-        if (!user.is_active) {
-          return cb(null, false, {
-            message: "Your account is inactive. Please contact admin.",
-          });
-        }
-
-        const match = await bcrypt.compare(password, user.pw);
-
-        if (!match) {
-          return cb(null, false, {
-            message: "Invalid username or password.",
-          });
-        }
-
-        console.log("✅ PASSWORD VERIFIED:", user.id);
-
-        return cb(null, user);
-      } catch (err) {
-        console.error("❌ PASSPORT STRATEGY ERROR:", err);
-        return cb(err);
+        return cb(null, false, {
+          message: "Invalid username or password.",
+        });
       }
-    },
-  ),
+
+      const user = result.rows[0];
+
+      console.log("✅ USER FOUND:", user.id);
+      console.log("is_active:", user.is_active);
+
+      if (!user.is_active) {
+        console.log("❌ ACCOUNT INACTIVE");
+
+        return cb(null, false, {
+          message: "Your account is inactive. Please contact admin.",
+        });
+      }
+
+      if (!user.pw) {
+        console.log("❌ USER HAS NO PASSWORD HASH");
+
+        return cb(null, false, {
+          message: "Invalid username or password.",
+        });
+      }
+
+      const match = await bcrypt.compare(password, user.pw);
+
+      console.log("🔑 PASSWORD MATCH:", match);
+
+      if (!match) {
+        console.log("❌ WRONG PASSWORD");
+
+        return cb(null, false, {
+          message: "Invalid username or password.",
+        });
+      }
+
+      console.log("✅ PASSWORD CORRECT");
+      console.log("✅ RETURNING USER:", user.id);
+
+      return cb(null, user);
+    } catch (err) {
+      console.error("❌ PASSPORT STRATEGY ERROR:", err);
+      return cb(err);
+    }
+  }),
 );
+//
 passport.serializeUser((user, cb) => {
   cb(null, user.id);
 });
@@ -478,23 +491,28 @@ passport.deserializeUser(async (id, cb) => {
 });
 //
 app.post("/login", (req, res, next) => {
-  console.log("🔥 LOGIN POST HIT");
+  const requestId =
+    Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
 
-  console.log("Login email:", req.body.email);
+  console.log("");
+  console.log("========================================");
+  console.log("🔥 LOGIN POST HIT:", requestId);
+  console.log("Email:", req.body.email);
+  console.log("========================================");
 
-  passport.authenticate("local", async (err, user, info) => {
-    console.log("🔥 PASSPORT RESULT");
+  passport.authenticate("local", (err, user, info) => {
+    console.log("🔥 PASSPORT RESULT:", requestId);
     console.log("err:", err);
-    console.log("user:", user);
+    console.log("user:", user ? user.id : user);
     console.log("info:", info);
 
     if (err) {
-      console.error("❌ Passport error:", err);
+      console.error("❌ PASSPORT ERROR:", err);
       return next(err);
     }
 
     if (!user) {
-      console.log("❌ INVALID LOGIN");
+      console.log("❌ INVALID LOGIN:", requestId);
 
       req.flash("error", info?.message || "Invalid username or password.");
 
@@ -509,62 +527,469 @@ app.post("/login", (req, res, next) => {
     // ==========================================
 
     if (!user.two_factor_enabled) {
+      console.log("🚀 FIRST-TIME 2FA");
+
       req.session.pendingSetupUser = user.id;
-      req.session.isAdmin = adminEmails.includes(user.email);
-
-      // Make sure there is NO authenticated Passport
-      // login yet.
       req.session.pending2FAUser = null;
-
-      console.log("🚀 FIRST-TIME 2FA → /enable-2fa");
+      req.session.isAdmin = adminEmails.includes(user.email);
 
       console.log("pendingSetupUser:", req.session.pendingSetupUser);
 
       return req.session.save((sessionErr) => {
         if (sessionErr) {
           console.error("❌ SESSION SAVE ERROR:", sessionErr);
-
           return next(sessionErr);
         }
 
-        console.log("✅ FIRST-TIME 2FA SESSION SAVED");
+        console.log("✅ SESSION SAVED");
+        console.log("➡️ REDIRECTING TO /enable-2fa");
 
         return res.redirect("/enable-2fa");
       });
     }
 
     // ==========================================
-    // EXISTING USER — 2FA VERIFICATION
+    // EXISTING USER WITH 2FA
     // ==========================================
 
+    console.log("🔐 EXISTING USER WITH 2FA");
+
     req.session.pending2FAUser = user.id;
-    req.session.isAdmin = adminEmails.includes(user.email);
-
     req.session.pendingSetupUser = null;
-
-    console.log("🔐 EXISTING USER → /2fa/verify-2fa");
+    req.session.isAdmin = adminEmails.includes(user.email);
 
     return req.session.save((sessionErr) => {
       if (sessionErr) {
         console.error("❌ SESSION SAVE ERROR:", sessionErr);
-
         return next(sessionErr);
       }
+
+      console.log("✅ 2FA SESSION SAVED");
+      console.log("➡️ REDIRECTING TO /2fa/verify-2fa");
 
       return res.redirect("/2fa/verify-2fa");
     });
   })(req, res, next);
 });
-//
-app.get("/add-user", ensureAdmin, (req, res) => {
-  console.log("ENTERED /add-user");
+//Admin add user 👆
 
-  res.render("adduserbyadmin.ejs", {
+app.get("/enable-2fa", (req, res) => {
+  if (!req.session.pendingSetupUser) {
+    return res.redirect("/login");
+  }
+
+  return res.render("enable-2fa.ejs", {
     defaultDate: getToday(),
   });
 });
 
-//Admin add user 👆
+//Add 2FA Page 👌👌👌👌👌👌
+app.post("/enable-2fa", async (req, res, next) => {
+  try {
+    console.log("🔥 ENABLE 2FA POST HIT");
+    console.log("Session ID:", req.sessionID);
+    console.log("pendingSetupUser:", req.session.pendingSetupUser);
+
+    const userId = req.session.pendingSetupUser;
+
+    if (!userId) {
+      console.log("❌ NO pendingSetupUser");
+      return res.redirect("/login");
+    }
+
+    const result = await db.query(
+      `
+      SELECT id, email
+      FROM my_user
+      WHERE id = $1
+      `,
+      [userId],
+    );
+
+    if (result.rows.length === 0) {
+      console.log("❌ USER NOT FOUND:", userId);
+      return res.redirect("/login");
+    }
+
+    const email = result.rows[0].email;
+
+    console.log("✅ USER:", userId);
+    console.log("📧 EMAIL:", email);
+
+    // Generate unique TOTP secret
+    const secret = authenticator.generateSecret();
+
+    // Save secret
+    await db.query(
+      `
+      UPDATE my_user
+      SET two_factor_secret = $1
+      WHERE id = $2
+      `,
+      [secret, userId],
+    );
+
+    console.log("✅ 2FA SECRET SAVED");
+
+    // Generate OTP URI
+    const otpauth = authenticator.keyuri(email, "HieuCPA", secret);
+
+    console.log("✅ OTP AUTH URI CREATED");
+
+    // Generate QR
+    const qrCode = await QRCode.toDataURL(otpauth);
+
+    console.log("✅ QR CODE CREATED");
+
+    return res.render("setup-2fa.ejs", {
+      defaultDate: getToday(),
+      qrCode,
+    });
+  } catch (err) {
+    console.error("❌ ENABLE 2FA ERROR:", err);
+
+    return next(err);
+  }
+});
+//Add 2FA enable 👌👌👌👌👌👌
+//Add Add 2FA enable 👌👌👌👌👌👌
+//Add Add 2FA enable 👌👌👌👌👌👌
+//app.get("/verify-2fa-setup", (req, res) => {
+// res.render("setup-2fa", { qrCode: "", defaultDate: getToday() });
+//});
+//Add 2FA enable 👌👌👌👌👌👌
+//Add Add 2FA enable 👌👌👌👌👌👌
+
+//Add message table 👌👌👌👌👌👌
+//Add 2FA Page 👌👌👌👌👌👌
+//Add message table 👌👌👌👌👌👌
+app.post("/verify-2fa-setup", async (req, res, next) => {
+  try {
+    const userId = req.session.pendingSetupUser;
+    const code = String(req.body.code || "").trim();
+
+    console.log("🔥 VERIFY INITIAL 2FA");
+    console.log("User ID:", userId);
+    console.log("Code received:", code ? "YES" : "NO");
+
+    if (!userId) {
+      return res.redirect("/login");
+    }
+
+    if (!/^\d{6}$/.test(code)) {
+      return res.render("setup-2fa.ejs", {
+        qrCode: "",
+        message: "Please enter the 6-digit verification code.",
+        defaultDate: getToday(),
+      });
+    }
+
+    const result = await db.query(
+      `
+      SELECT *
+      FROM my_user
+      WHERE id = $1
+      `,
+      [userId],
+    );
+
+    const user = result.rows[0];
+
+    if (!user) {
+      return res.redirect("/login");
+    }
+
+    if (!user.two_factor_secret) {
+      return res.send("2FA secret is missing. Please restart 2FA setup.");
+    }
+
+    const isValid = authenticator.verify({
+      token: code,
+      secret: user.two_factor_secret,
+    });
+
+    if (!isValid) {
+      console.log("❌ INITIAL 2FA CODE INVALID");
+
+      return res.render("setup-2fa.ejs", {
+        qrCode: "",
+        message: "Wrong verification code.",
+        defaultDate: getToday(),
+      });
+    }
+
+    console.log("✅ INITIAL 2FA CODE VALID");
+
+    await db.query(
+      `
+      UPDATE my_user
+      SET
+        two_factor_enabled = true,
+        failed_2fa_attempts = 0,
+        two_fa_lock_until = NULL
+      WHERE id = $1
+      `,
+      [userId],
+    );
+
+    console.log("✅ 2FA ENABLED FOR USER:", userId);
+
+    // Now authenticate the user
+    req.logIn(user, (err) => {
+      if (err) {
+        console.error("❌ req.logIn ERROR:", err);
+        return next(err);
+      }
+
+      req.session.isAdmin = adminEmails.includes(user.email);
+
+      delete req.session.pendingSetupUser;
+      delete req.session.pending2FAUser;
+
+      return req.session.save((sessionErr) => {
+        if (sessionErr) {
+          console.error("❌ SESSION SAVE ERROR:", sessionErr);
+          return next(sessionErr);
+        }
+
+        console.log("✅ INITIAL 2FA COMPLETE");
+        console.log("✅ USER LOGGED IN:", user.id);
+
+        return res.redirect("/");
+      });
+    });
+  } catch (err) {
+    console.error("❌ VERIFY INITIAL 2FA ERROR:", err);
+    return next(err);
+  }
+});
+//Add 2FA Page 👌👌👌👌👌👌
+//Add 2FA Page 👌👌👌👌👌👌
+//Add 2FA Page 👌👌👌👌👌👌
+// Add 2FA Page 👌👌👌👌👌👌
+app.get("/2fa/verify-2fa", (req, res) => {
+  res.render("verify-2fa.ejs", {
+    defaultDate: getToday(),
+  });
+});
+
+// Add 2FA Verify 👌👌👌👌👌👌
+app.post("/2fa/verify-2fa", async (req, res, next) => {
+  const code = req.body.code;
+
+  const userId = req.session.pending2FAUser;
+
+  // Safety check: no pending 2FA session
+  if (!userId) {
+    return res.redirect("/login");
+  }
+
+  const result = await db.query(
+    `
+    SELECT *
+    FROM my_user
+    WHERE id = $1 
+    `,
+    [userId],
+  );
+
+  const user = result.rows[0];
+
+  // Safety check: user not found
+  if (!user) {
+    delete req.session.pending2FAUser;
+    return res.redirect("/login");
+  }
+
+  // =====================================
+  // CHECK 2FA LOCK
+  // =====================================
+
+  if (user.two_fa_lock_until && new Date(user.two_fa_lock_until) > new Date()) {
+    return res.render("verify-2fa.ejs", {
+      message: "Your account is locked. Please try again later.",
+      defaultDate: getToday(),
+    });
+  }
+  // =====================================
+  // LOCK EXPIRED -> RESET COUNTER
+  // =====================================
+
+  if (
+    user.two_fa_lock_until &&
+    new Date(user.two_fa_lock_until) <= new Date()
+  ) {
+    await db.query(
+      `
+    UPDATE my_user
+    SET
+      failed_2fa_attempts = 0,
+      two_fa_lock_until = NULL
+    WHERE id = $1
+    `,
+      [user.id],
+    );
+
+    user.failed_2fa_attempts = 0;
+    user.two_fa_lock_until = null;
+  }
+
+  // =====================================
+  // VERIFY AUTHENTICATOR CODE
+  // =====================================
+
+  const isValid = authenticator.verify({
+    token: code,
+    secret: user.two_factor_secret,
+  });
+  // use field: user.two_factor_secret,
+  // =====================================
+  // INVALID 2FA CODE
+  // =====================================
+
+  if (!isValid) {
+    const attempts = user.failed_2fa_attempts + 1;
+
+    // Third failed attempt = lock 1 hour
+    if (attempts >= 3) {
+      await db.query(
+        `
+        UPDATE my_user
+        SET
+          failed_2fa_attempts = $1,
+          two_fa_lock_until = NOW() + INTERVAL '1 minute'
+        WHERE id = $2
+        `,
+        [attempts, user.id],
+      );
+      // interval ' 1 second'
+      return res.render("verify-2fa.ejs", {
+        message:
+          "Too many failed verification attempts. Account locked for 1 hour.",
+        defaultDate: getToday(),
+      });
+    }
+
+    // First and second failures
+
+    await db.query(
+      `
+      UPDATE my_user
+      SET failed_2fa_attempts = $1
+      WHERE id = $2
+      `,
+      [attempts, user.id],
+    );
+
+    return res.render("verify-2fa.ejs", {
+      message: `Invalid verification code. ${2 - attempts} attempt(s) remaining. 2nd failure, your account will be locked for 1 hour`,
+      defaultDate: getToday(),
+    });
+  }
+
+  await db.query(
+    `
+    UPDATE my_user
+    SET
+      failed_2fa_attempts = 0,
+      two_fa_lock_until = NULL
+    WHERE id = $1
+    `,
+    [user.id],
+  );
+
+  if (req.session.pendingPasswordChange) {
+    const { userId, newPassword, expires } = req.session.pendingPasswordChange;
+
+    // Check expiration
+
+    if (Date.now() > expires) {
+      delete req.session.pendingPasswordChange;
+      delete req.session.pending2FAUser;
+
+      return res.send("Password change request expired");
+    }
+
+    // bcrypt AFTER successful 2FA
+
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    await db.query(
+      `
+      UPDATE my_user
+      SET 
+      pw = $1,
+      pw_change_approved = false
+      WHERE id = $2
+      `,
+      [hashedPassword, userId],
+    );
+    // when change > move here for 2 FA, set field to false not from route chapw
+    delete req.session.pendingPasswordChange;
+    delete req.session.pending2FAUser;
+
+    return res.render("chapw.ejs", {
+      message: "Password updated successfully!",
+      defaultDate: getToday(),
+    });
+  }
+
+  req.logIn(user, (err) => {
+    if (err) {
+      console.log("=== 2fa-verify-2fa ===");
+      console.log("Authenticated:", req.isAuthenticated());
+
+      console.log("Session ID:", req.sessionID);
+
+      console.log("User:", req.user);
+
+      return next(err);
+    }
+    // Recompute admin status
+    req.session.isAdmin = adminEmails.includes(user.email);
+    console.log("User:", req.user);
+    console.log("User Admin:", req.user.isAdmin);
+    console.log("Session Admin:", req.session.isAdmin);
+    // Remove temporary 2FA session
+
+    delete req.session.pending2FAUser;
+
+    if (req.session.isAdmin) {
+      return res.redirect("/");
+    } else {
+      return res.redirect("/");
+    }
+    //
+  });
+});
+app.get("/reset-2fa", ensureAdmin, async (req, res) => {
+  res.render("startover2fa.ejs", { defaultDate: getToday() });
+});
+//Add message table 👌👌👌👌👌👌 Use when a hack use selectively
+app.post("/reset-2fa", ensureAdmin, async (req, res) => {
+  // const userId = req.user.id;
+  //const userId = req.body.userId;
+  const email = req.body.email;
+
+  // Remove old secret 👌👌👌👌👌👌 from startover2fa.js👌👌👌👌👌👌
+  await db.query(
+    `
+    UPDATE my_user
+    SET 
+      two_factor_secret = NULL,
+      two_factor_enabled = false,
+      failed_2fa_attempts = 0,
+    two_fa_lock_until = NULL
+    WHERE email = $1  
+   
+    `,
+    [email],
+  );
+
+  res.redirect("/login");
+});
+
+//
 app.post("/add-user", ensureAdmin, async (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -834,370 +1259,7 @@ app.post("/web/traffic/test/delete-selected", ensureAdmin, async (req, res) => {
     res.status(500).send("Failed to delete selected visitors");
   }
 });
-app.get("/enable-2fa", (req, res) => {
-  res.render("enable-2fa.ejs", {
-    defaultDate: getToday(),
-  });
-});
-//Add 2FA Page 👌👌👌👌👌👌
-//Add 2FA Page 👌👌👌👌👌👌
-app.post("/enable-2fa", async (req, res, next) => {
-  try {
-    console.log("🔥 ENABLE 2FA ROUTE HIT");
-    console.log("Session ID:", req.sessionID);
-    console.log("pendingSetupUser:", req.session.pendingSetupUser);
-    console.log("User:", req.user);
 
-    const userId = req.session.pendingSetupUser;
-
-    if (!userId) {
-      console.log("❌ No pendingSetupUser in session");
-      return res.redirect("/login");
-    }
-
-    const result = await db.query(
-      `
-      SELECT email
-      FROM my_user
-      WHERE id = $1
-      `,
-      [userId],
-    );
-
-    if (result.rows.length === 0) {
-      console.log("❌ User not found:", userId);
-      return res.redirect("/login");
-    }
-
-    const email = result.rows[0].email;
-
-    // Generate secret
-    const secret = authenticator.generateSecret();
-
-    // Save secret
-    await db.query(
-      `
-      UPDATE my_user
-      SET two_factor_secret = $1
-      WHERE id = $2
-      `,
-      [secret, userId],
-    );
-
-    // Create QR data
-    const otpauth = authenticator.keyuri(email, "Dana Awesome", secret);
-
-    // Create QR image
-    const qrCode = await QRCode.toDataURL(otpauth);
-
-    // Render setup page
-    return res.render("setup-2fa.ejs", {
-      defaultDate: getToday(),
-      qrCode,
-    });
-  } catch (err) {
-    console.error("❌ ENABLE 2FA ERROR:", err);
-    return next(err);
-  }
-});
-//Add 2FA enable 👌👌👌👌👌👌
-//Add Add 2FA enable 👌👌👌👌👌👌
-//Add Add 2FA enable 👌👌👌👌👌👌
-app.get("/verify-2fa-setup", (req, res) => {
-  res.render("setup-2fa", { qrCode: "", defaultDate: getToday() });
-});
-//Add 2FA enable 👌👌👌👌👌👌
-//Add Add 2FA enable 👌👌👌👌👌👌
-
-//Add message table 👌👌👌👌👌👌
-//Add 2FA Page 👌👌👌👌👌👌
-//Add message table 👌👌👌👌👌👌
-app.post("/verify-2fa-setup", async (req, res) => {
-  const userId = req.session.pendingSetupUser;
-  // 👌👌👌👌👌👌 Refer to Line 973 👌👌👌👌👌👌 Line 1068 original
-  // Code typed by user from Google Authenticator
-  const code = req.body.code;
-  // received from app authenticator 👌👌👌👌👌👌
-  // Get secret from database
-  const result = await db.query(
-    `
-    SELECT * 
-    FROM my_user
-    WHERE id = $1
-    `,
-    [userId],
-  );
-
-  const user = result.rows[0];
-
-  // Verify code
-  const isValid = authenticator.verify({
-    token: code,
-    secret: user.two_factor_secret,
-  });
-  //js and authenticator does the same calculation 👌👌👌👌👌👌
-  //Secret:👌👌👌👌👌👌 unique for each user.
-  //JBSWY3DPEHPK3PXP 👌👌👌👌👌👌: app generate codes continously
-
-  //Current time:
-  //2026-07-10 10:15:20
-
-  //Calculation:
-  //HMAC(secret, time)
-
-  //Result:
-  //483921
-  //
-  if (!isValid) {
-    return res.send("Wrong code");
-  }
-
-  // Enable 2FA
-  await db.query(
-    `
-    UPDATE my_user
-    SET two_factor_enabled = true
-    WHERE id = $1
-    `,
-    [userId],
-  );
-  //👌👌👌👌App TOTP work offline: continously generate code from phone not server👌👌👌👌👌👌👌👌
-  // Get full user and create login session 👌👌👌👌👌👌 secret should be encrypted???
-  req.logIn(user, (err) => {
-    if (err) {
-      return res.send("Login error");
-    }
-
-    delete req.session.pendingSetupUser;
-
-    return res.redirect("/");
-  });
-});
-//Add 2FA Page 👌👌👌👌👌👌
-//Add 2FA Page 👌👌👌👌👌👌
-//Add 2FA Page 👌👌👌👌👌👌
-// Add 2FA Page 👌👌👌👌👌👌
-app.get("/2fa/verify-2fa", (req, res) => {
-  res.render("verify-2fa.ejs", {
-    defaultDate: getToday(),
-  });
-});
-
-// Add 2FA Verify 👌👌👌👌👌👌
-app.post("/2fa/verify-2fa", async (req, res, next) => {
-  const code = req.body.code;
-
-  const userId = req.session.pending2FAUser;
-
-  // Safety check: no pending 2FA session
-  if (!userId) {
-    return res.redirect("/login");
-  }
-
-  const result = await db.query(
-    `
-    SELECT *
-    FROM my_user
-    WHERE id = $1 
-    `,
-    [userId],
-  );
-
-  const user = result.rows[0];
-
-  // Safety check: user not found
-  if (!user) {
-    delete req.session.pending2FAUser;
-    return res.redirect("/login");
-  }
-
-  // =====================================
-  // CHECK 2FA LOCK
-  // =====================================
-
-  if (user.two_fa_lock_until && new Date(user.two_fa_lock_until) > new Date()) {
-    return res.render("verify-2fa.ejs", {
-      message: "Your account is locked. Please try again later.",
-      defaultDate: getToday(),
-    });
-  }
-  // =====================================
-  // LOCK EXPIRED -> RESET COUNTER
-  // =====================================
-
-  if (
-    user.two_fa_lock_until &&
-    new Date(user.two_fa_lock_until) <= new Date()
-  ) {
-    await db.query(
-      `
-    UPDATE my_user
-    SET
-      failed_2fa_attempts = 0,
-      two_fa_lock_until = NULL
-    WHERE id = $1
-    `,
-      [user.id],
-    );
-
-    user.failed_2fa_attempts = 0;
-    user.two_fa_lock_until = null;
-  }
-
-  // =====================================
-  // VERIFY AUTHENTICATOR CODE
-  // =====================================
-
-  const isValid = authenticator.verify({
-    token: code,
-    secret: user.two_factor_secret,
-  });
-  // use field: user.two_factor_secret,
-  // =====================================
-  // INVALID 2FA CODE
-  // =====================================
-
-  if (!isValid) {
-    const attempts = user.failed_2fa_attempts + 1;
-
-    // Third failed attempt = lock 1 hour
-    if (attempts >= 3) {
-      await db.query(
-        `
-        UPDATE my_user
-        SET
-          failed_2fa_attempts = $1,
-          two_fa_lock_until = NOW() + INTERVAL '1 minute'
-        WHERE id = $2
-        `,
-        [attempts, user.id],
-      );
-      // interval ' 1 second'
-      return res.render("verify-2fa.ejs", {
-        message:
-          "Too many failed verification attempts. Account locked for 1 hour.",
-        defaultDate: getToday(),
-      });
-    }
-
-    // First and second failures
-
-    await db.query(
-      `
-      UPDATE my_user
-      SET failed_2fa_attempts = $1
-      WHERE id = $2
-      `,
-      [attempts, user.id],
-    );
-
-    return res.render("verify-2fa.ejs", {
-      message: `Invalid verification code. ${2 - attempts} attempt(s) remaining. 2nd failure, your account will be locked for 1 hour`,
-      defaultDate: getToday(),
-    });
-  }
-
-  await db.query(
-    `
-    UPDATE my_user
-    SET
-      failed_2fa_attempts = 0,
-      two_fa_lock_until = NULL
-    WHERE id = $1
-    `,
-    [user.id],
-  );
-
-  if (req.session.pendingPasswordChange) {
-    const { userId, newPassword, expires } = req.session.pendingPasswordChange;
-
-    // Check expiration
-
-    if (Date.now() > expires) {
-      delete req.session.pendingPasswordChange;
-      delete req.session.pending2FAUser;
-
-      return res.send("Password change request expired");
-    }
-
-    // bcrypt AFTER successful 2FA
-
-    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-
-    await db.query(
-      `
-      UPDATE my_user
-      SET 
-      pw = $1,
-      pw_change_approved = false
-      WHERE id = $2
-      `,
-      [hashedPassword, userId],
-    );
-    // when change > move here for 2 FA, set field to false not from route chapw
-    delete req.session.pendingPasswordChange;
-    delete req.session.pending2FAUser;
-
-    return res.render("chapw.ejs", {
-      message: "Password updated successfully!",
-      defaultDate: getToday(),
-    });
-  }
-
-  req.logIn(user, (err) => {
-    if (err) {
-      console.log("=== 2fa-verify-2fa ===");
-      console.log("Authenticated:", req.isAuthenticated());
-
-      console.log("Session ID:", req.sessionID);
-
-      console.log("User:", req.user);
-
-      return next(err);
-    }
-    // Recompute admin status
-    req.session.isAdmin = adminEmails.includes(user.email);
-    console.log("User:", req.user);
-    console.log("User Admin:", req.user.isAdmin);
-    console.log("Session Admin:", req.session.isAdmin);
-    // Remove temporary 2FA session
-
-    delete req.session.pending2FAUser;
-
-    if (req.session.isAdmin) {
-      return res.redirect("/");
-    } else {
-      return res.redirect("/");
-    }
-    //
-  });
-});
-app.get("/reset-2fa", ensureAdmin, async (req, res) => {
-  res.render("startover2fa.ejs", { defaultDate: getToday() });
-});
-//Add message table 👌👌👌👌👌👌 Use when a hack use selectively
-app.post("/reset-2fa", ensureAdmin, async (req, res) => {
-  // const userId = req.user.id;
-  //const userId = req.body.userId;
-  const email = req.body.email;
-
-  // Remove old secret 👌👌👌👌👌👌 from startover2fa.js👌👌👌👌👌👌
-  await db.query(
-    `
-    UPDATE my_user
-    SET 
-      two_factor_secret = NULL,
-      two_factor_enabled = false,
-      failed_2fa_attempts = 0,
-    two_fa_lock_until = NULL
-    WHERE email = $1  
-   
-    `,
-    [email],
-  );
-
-  res.redirect("/login");
-});
 // Change password POST
 app.post("/chapw", async (req, res) => {
   const today = new Date().toISOString().split("T")[0];
