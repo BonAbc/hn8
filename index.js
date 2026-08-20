@@ -397,13 +397,6 @@ app.get("/login", (req, res) => {
   });
 });
 
-app.get("/signup", (req, res) =>
-  res.render("register.ejs", {
-    errors: {},
-    defaultDate: getToday(),
-    formData: {},
-  }),
-);
 app.get("/chapw", (req, res) =>
   res.render("chapw.ejs", { defaultDate: getToday(), message: null }),
 );
@@ -1210,7 +1203,7 @@ app.post("/chapw", async (req, res) => {
 });
 
 //add track
-app.set("trust proxy", true); // needed to capture real IP behind proxies
+
 app.get("/admin/password-approval", (req, res) => {
   if (!req.user || !adminEmails.includes(req.user.email)) {
     return res.status(403).send("Access denied");
