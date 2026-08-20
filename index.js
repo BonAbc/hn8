@@ -237,20 +237,7 @@ function ensureAuthenticated(req, res, next) {
   res.redirect("/login");
 }
 
-function ensureAdmin(req, res, next) {
-  if (
-    req.isAuthenticated &&
-    req.isAuthenticated() &&
-    adminEmails.includes(req.user.email)
-  ) {
-    return next();
-  }
-
-  return res.status(403).render("HN.ejs", {
-    message: "Thank you for visiting Hieu Nguyen Page.",
-    defaultDate: getToday(),
-  });
-}
+//function ensureAdmin(req, res, next) {
 
 app.get("/", (req, res) =>
   res.render("index.ejs", { defaultDate: getToday() }),
