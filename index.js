@@ -382,7 +382,7 @@ app.get("/invoices", async (req, res) => {
 
 // ----------------------------
 app.get("/login", (req, res) =>
-  res.render("login.ejs", {
+  res.render("signin.ejs", {
     defaultDate: getToday(),
     message: req.flash("error"),
   }),
