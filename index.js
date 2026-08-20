@@ -496,7 +496,7 @@ app.get("/add-user", ensureAdmin, (req, res) => {
   console.log("ENTERED /add-user");
 
   res.render("adduserbyadmin.ejs", {
-    defaultDate: today(),
+    defaultDate: getToday(),
   });
 });
 
@@ -606,7 +606,7 @@ app.get("/users/loveme", ensureAdmin, async (req, res) => {
       currentPage: page,
       totalPages,
       groupId,
-      defaultDate: today(),
+      defaultDate: getToday(),
       message: req.query.message,
     });
   } catch (err) {
@@ -669,7 +669,7 @@ app.get("/user/:id/edit", ensureAdmin, async (req, res) => {
     res.render("users-edit.ejs", {
       user: result.rows[0],
       groupId,
-      defaultDate: today(),
+      defaultDate: getToday(),
     });
   } catch (err) {
     console.error("Load edit user error:", err);
@@ -911,7 +911,7 @@ app.post("/verify-2fa-setup", async (req, res) => {
 // Add 2FA Page 👌👌👌👌👌👌
 app.get("/2fa/verify-2fa", (req, res) => {
   res.render("verify-2fa.ejs", {
-    defaultDate: today(),
+    defaultDate: getToday(),
   });
 });
 
@@ -950,7 +950,7 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
   if (user.two_fa_lock_until && new Date(user.two_fa_lock_until) > new Date()) {
     return res.render("verify-2fa.ejs", {
       message: "Your account is locked. Please try again later.",
-      defaultDate: today(),
+      defaultDate: getToday(),
     });
   }
   // =====================================
@@ -1008,7 +1008,7 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
       return res.render("verify-2fa.ejs", {
         message:
           "Too many failed verification attempts. Account locked for 1 hour.",
-        defaultDate: today(),
+        defaultDate: getToday(),
       });
     }
 
@@ -1025,7 +1025,7 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
 
     return res.render("verify-2fa.ejs", {
       message: `Invalid verification code. ${2 - attempts} attempt(s) remaining. 2nd failure, your account will be locked for 1 hour`,
-      defaultDate: today(),
+      defaultDate: getToday(),
     });
   }
 
@@ -1072,7 +1072,7 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
 
     return res.render("chapw.ejs", {
       message: "Password updated successfully!",
-      defaultDate: today(),
+      defaultDate: getToday(),
     });
   }
 
@@ -1105,7 +1105,7 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
   });
 });
 app.get("/reset-2fa", ensureAdmin, async (req, res) => {
-  res.render("startover2fa.ejs", { defaultDate: today() });
+  res.render("startover2fa.ejs", { defaultDate: getToday() });
 });
 //Add message table 👌👌👌👌👌👌 Use when a hack use selectively
 app.post("/reset-2fa", ensureAdmin, async (req, res) => {
@@ -1138,14 +1138,14 @@ app.post("/chapw", async (req, res) => {
   if (!email || !newPassword || !confirmPassword) {
     return res.render("chapw.ejs", {
       message: "All fields are required",
-      defaultDate: today,
+      defaultDate: getToday,
     });
   }
 
   if (newPassword !== confirmPassword) {
     return res.render("chapw.ejs", {
       message: "Passwords do not match",
-      defaultDate: today,
+      defaultDate: getToday,
     });
   }
 
@@ -1153,7 +1153,7 @@ app.post("/chapw", async (req, res) => {
     return res.render("chapw.ejs", {
       message:
         "Password must be at least 8 characters and include a number, special character, and a capital letter",
-      defaultDate: today,
+      defaultDate: getToday,
     });
   }
 
@@ -1165,7 +1165,7 @@ app.post("/chapw", async (req, res) => {
     if (userResult.rows.length === 0) {
       return res.render("chapw.ejs", {
         message: "Email not registered",
-        defaultDate: today,
+        defaultDate: getToday,
       });
     }
 
@@ -1186,7 +1186,7 @@ app.post("/chapw", async (req, res) => {
         return res.render("chapw.ejs", {
           message:
             "Password change requires administrator approval. Please contact your administrator.",
-          defaultDate: today,
+          defaultDate: getToday,
         });
       }
 
@@ -1204,7 +1204,7 @@ app.post("/chapw", async (req, res) => {
 
     return res.render("chapw.ejs", {
       message: "Something went wrong, try again later",
-      defaultDate: today,
+      defaultDate: getToday,
     });
   }
 });
@@ -1950,7 +1950,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       currentUserEmail: userEmail,
       isAdmin,
 
-      defaultDate: today(),
+      defaultDate: getToday(),
 
       page,
       totalPosts,
@@ -3502,7 +3502,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     }));
 
     res.render("social-search", {
-      defaultDate: today(),
+      defaultDate: getToday(),
 
       posts,
 
@@ -3677,7 +3677,7 @@ app.get("/social-admin-downloads", ensureAuthenticated, async (req, res) => {
     //
 
     return res.render("social-admin-downloads", {
-      defaultDate: today(),
+      defaultDate: getToday(),
       posts,
       isAdmin: true,
       canDownload: canDownloadSocialMedia(userEmail),
