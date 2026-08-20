@@ -195,6 +195,7 @@ const authLimiter = rateLimit({
   max: 30,
   message: "Too many login attempts. Try again later.",
 });
+
 app.use("/login", authLimiter);
 
 app.use(
@@ -416,6 +417,7 @@ passport.use(
 
       if (result.rows.length > 0) {
         const user = result.rows[0];
+
         // Check if account is active
         if (!user.is_active) {
           return cb(null, false, {
@@ -423,65 +425,53 @@ passport.use(
           });
         }
 
-        const storedHashedPassword = user.pw; //
+        const storedHashedPassword = user.pw;
 
         bcrypt.compare(password, storedHashedPassword, (err, match) => {
           if (err) return cb(err);
+
           if (match) {
             return cb(null, user);
-          } else {
-            return cb(null, false);
           }
+
+          return cb(null, false);
         });
-      } else {
-        return cb(null, false);
       }
+
+      return cb(null, false);
     } catch (err) {
       return cb(err);
     }
   }),
 );
 
-// Keep the same serialize/deserialize behaviour as your original
+// Keep the same serialize/deserialize behavior
 passport.serializeUser((user, cb) => {
   cb(null, user);
-  // save user 👌👌
 });
+
 passport.deserializeUser((user, cb) => {
   cb(null, user);
 });
 
-app.post("/login", authLimiter, (req, res, next) => {
-  // Use passport's authenticate method with a custom callback passport is above 👌👌👌👌👌👌 line 565 👌👌👌👌👌👌
-  // passport.authenticate : verify user "local" your server.
+app.post("/login", (req, res, next) => {
   passport.authenticate("local", (err, user, info) => {
     if (err) {
-      // If an error occurred during authentication, pass it to Express error handler
       return next(err);
-      // authenticate is a method 👌👌👌👌👌
     }
-    //👌👌👌👌👌 user from Line 999 original 👌👌👌👌👌
+
     if (!user) {
-      // Authentication failed (wrong username/password)
-      // Use failure message from passport or default one
       req.flash("error", info?.message || "Invalid username or password.");
-      //popup modal
-      //req.session.showLoginModal = true;
-      // req.session.loginMessage = "Invalid username or password.";
-      // Redirect back to login page
+
       return res.redirect("/login");
     }
 
-    // Add 2FA 👌👌👌👌👌👌
-    // 👇 ADD 2FA CHECK HERE
-
     // Require 2FA setup first
     if (!user.two_factor_enabled) {
-      req.session.pendingSetupUser = user.id; // that is why refer to line 706/640
+      req.session.pendingSetupUser = user.id;
       req.session.isAdmin = adminEmails.includes(user.email);
-      //👌👌👌👌👌👌 above is add pendingSetupUser 👌👌👌👌👌👌 go to line 568
+
       return res.redirect("/enable-2fa");
-      //👌👌👌👌👌👌 scan QR code: from Line 👌👌👌👌👌👌
     }
 
     // 2FA already enabled, ask for code
@@ -494,7 +484,10 @@ app.post("/login", authLimiter, (req, res, next) => {
 
 app.get("/add-user", ensureAdmin, (req, res) => {
   console.log("ENTERED /add-user");
-  res.render("adduserbyadmin.ejs", { defaultDate: today() });
+
+  res.render("adduserbyadmin.ejs", {
+    defaultDate: today(),
+  });
 });
 
 //Admin add user 👆
