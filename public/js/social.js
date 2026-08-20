@@ -319,20 +319,24 @@ if (socialPostFilesInput) {
 // PASTE IMAGE
 // ============================================================
 
+// ============================================================
+// PASTE IMAGE INTO SOCIAL POST
+// ============================================================
+
 if (socialPostCreateComposer) {
   socialPostCreateComposer.addEventListener("paste", (event) => {
-    const items = event.clipboardData?.items;
+    const clipboardItems = event.clipboardData?.items;
 
-    if (!items) {
+    if (!clipboardItems) {
       return;
     }
 
-    for (const item of items) {
-      if (!item.type.startsWith("image/")) {
+    let imageFound = false;
+
+    for (const item of clipboardItems) {
+      if (!item.type || !item.type.startsWith("image/")) {
         continue;
       }
-
-      event.preventDefault();
 
       const file = item.getAsFile();
 
@@ -340,8 +344,8 @@ if (socialPostCreateComposer) {
         continue;
       }
 
-      // Make a proper filename for
-      // the pasted image.
+      imageFound = true;
+
       const extension =
         file.type === "image/jpeg"
           ? "jpg"
@@ -353,17 +357,29 @@ if (socialPostCreateComposer) {
 
       const pastedFile = new File(
         [file],
-        `pasted-image-${Date.now()}-${socialPostAttachments.length}.${extension}`,
+        `pasted-image-${Date.now()}.${extension}`,
         {
           type: file.type,
         },
       );
 
+      console.log("PASTED IMAGE:", {
+        name: pastedFile.name,
+        type: pastedFile.type,
+        size: pastedFile.size,
+      });
+
       socialAddPostAttachment(pastedFile);
 
-      // Handle the first pasted
-      // image.
+      // Do not allow the browser to paste the image
+      // into the contenteditable area.
+      event.preventDefault();
+
       break;
+    }
+
+    if (imageFound) {
+      console.log("PASTE IMAGE CAPTURED");
     }
   });
 }

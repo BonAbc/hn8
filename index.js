@@ -65,7 +65,7 @@ app.use(express.static("public"));
 
 app.set("view engine", "ejs");
 //
-app.use("/uploads/social", express.static("/var/data/uploads/social"));
+app.use("/uploads", express.static("/uploads"));
 
 //
 
@@ -1495,6 +1495,7 @@ app.post("/complete-password-change", async (req, res) => {
     });
   }
 });
+//
 const colors = [
   "#e1ffe4",
   "#ffe4e1",
