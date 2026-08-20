@@ -1,0 +1,170 @@
+
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+
+  <!---->
+  <!---->
+  <h2 id="hm">Hoa Mai</h2>
+  <!--👇👆👆👇👆👇-->
+  <!---->
+  <!--👇👆👆👇👆👇--> 
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+    <div class="container-fluid">
+      <h2>Two-Factor Authentication</h2>
+
+      <form action="/2fa/verify-2fa" method="POST">
+        
+ 
+ <p>Enter the digit code:</p>
+    <input
+        type="text"   
+        name="code"
+        id="code"
+        maxlength="6"
+        autocomplete="one-time-code"
+        required>  
+
+        
+          <!--👇👆👆👇👆👇-->
+      <br> <br>
+    <button type="submit" class="btn btn-primary w-auto">Verify</button>
+
+      <!--👇👆👆👇👆👇-->
+      </form>
+      <br>
+<!--Add boostrap-->
+<% if (message) { %>
+
+<!-- Bootstrap Modal -->
+<div class="modal fade" id="securityModal" tabindex="-1" aria-labelledby="securityModalLabel" aria-hidden="true">
+
+  <div class="modal-dialog modal-dialog-centered">
+
+    <div class="modal-content">
+
+      <div class="modal-header bg-success text-white">
+
+        <h5 class="modal-title" id="securityModalLabel">
+          Notification: 2FA Required
+        </h5>
+
+        <button 
+          type="button" 
+          class="btn-close btn-close-white" 
+          data-bs-dismiss="modal"
+          aria-label="Close">
+        </button>
+
+      </div>
+
+
+      <div class="modal-body">
+
+        <%= message %>
+
+      </div>
+
+
+      <div class="modal-footer">
+
+        <button 
+          type="button" 
+          class="btn btn-success"
+          data-bs-dismiss="modal">
+          OK
+        </button>
+
+      </div>
+
+
+    </div>
+
+  </div>
+
+</div>
+
+<% } %>
+
+<!--Add boostrap-->
+    </div>
+  </section>
+  <!--👇👆👆👇👆👇-->
+  <section class="py-5 bg-light border border-black mt-4 mb-4"></section>
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+    <div class="container-fluid"></div>
+  </section>
+  <!---->
+  <!---->
+  <!---->
+  <!--👇👆👆👇👆👇-->
+  <!---->
+  <!--Refer to index.ejs how to include header and footer.ejs-->
+</main>
+ <!--👇👆👆👇👆👇-->
+<script>
+const codeInput = document.getElementById("code");
+
+
+// Close security modal when user starts entering a new code
+codeInput.addEventListener("input", () => {
+
+  const modalElement = document.getElementById("securityModal");
+
+  if (modalElement) {
+
+    const modalInstance = bootstrap.Modal.getInstance(modalElement);
+
+    if (modalInstance) {
+      modalInstance.hide();
+    }
+
+  }
+
+});
+
+
+// Prevent empty submit
+document.querySelector("form").addEventListener("submit", function (e) {
+
+  if (codeInput.value.trim() === "") {
+
+    e.preventDefault();
+
+    codeInput.focus();
+
+    codeInput.reportValidity();
+
+    return;
+
+  }
+
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  const modalElement = document.getElementById("securityModal");
+
+  if (modalElement) {
+
+    const modal = new bootstrap.Modal(modalElement);
+
+    modal.show();
+
+  }
+
+});
+</script>
+
+
+  <!--👇👆👆👇👆👇-->
+   <!--👇👆👆👇👆👇-->
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->

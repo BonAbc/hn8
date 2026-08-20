@@ -1,0 +1,823 @@
+app.get("/social/search", ensureAuthenticated, async (req, res) => {
+  try {
+    // ========================================================
+    // CURRENT USER
+    // ========================================================
+
+    const userId = req.user?.id || null;
+    const userEmail = req.user?.email || null;
+
+    console.log("SOCIAL SEARCH req.user =", req.user);
+
+    // ========================================================
+    // CURRENT USER GROUP
+    // ========================================================
+
+    let userGroupId = null;
+
+    if (userId) {
+      const groupResult = await db.query(
+        `
+        SELECT group_id
+        FROM my_user
+        WHERE id = $1
+        `,
+        [userId],
+      );
+
+      userGroupId = groupResult.rows[0]?.group_id ?? null;
+    }
+
+    console.log("SOCIAL SEARCH userGroupId =", userGroupId);
+
+    // ========================================================
+    // ADMIN CHECK
+    // ADMIN_EMAILS comes from .env
+    // ========================================================
+
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const isAdmin =
+      !!userEmail && adminEmails.includes(userEmail.toLowerCase());
+
+    console.log("SOCIAL SEARCH userEmail =", userEmail);
+    console.log("SOCIAL SEARCH isAdmin =", isAdmin);
+
+    // ========================================================
+    // SEARCH INPUT
+    // ========================================================
+
+    const q = (req.query.q || "").trim();
+    const user = (req.query.user || "").trim();
+
+    // ========================================================
+    // FILTER INPUT
+    // ========================================================
+    //
+    // visibility = ADMIN ONLY
+    //
+    // dateFrom / dateTo = ALL USERS
+    //
+    // Normal users can search by date, but their existing
+    // visibility security remains enforced below.
+    // ========================================================
+
+    let visibility = "";
+
+    let dateFrom = (req.query.dateFrom || "").trim();
+    let dateTo = (req.query.dateTo || "").trim();
+
+    // ========================================================
+    // ADMIN VISIBILITY FILTER
+    // ========================================================
+
+    if (isAdmin) {
+      visibility = (req.query.visibility || "").trim();
+
+      // ------------------------------------------------------
+      // ONLY THESE VISIBILITY VALUES ARE ALLOWED
+      // ------------------------------------------------------
+
+      const allowedVisibility = ["everyone", "admin_only", "group_only"];
+
+      if (!allowedVisibility.includes(visibility)) {
+        visibility = "";
+      }
+    }
+
+    // ========================================================
+    // DATE VALIDATION
+    // AVAILABLE TO ALL USERS
+    //
+    // Expected:
+    // YYYY-MM-DD
+    // ========================================================
+
+    const validDate = (value) => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return false;
+      }
+
+      const [year, month, day] = value.split("-").map(Number);
+
+      const date = new Date(Date.UTC(year, month - 1, day));
+
+      return (
+        date.getUTCFullYear() === year &&
+        date.getUTCMonth() === month - 1 &&
+        date.getUTCDate() === day
+      );
+    };
+
+    // --------------------------------------------------------
+    // VALIDATE DATE FROM
+    // --------------------------------------------------------
+
+    if (dateFrom && !validDate(dateFrom)) {
+      dateFrom = "";
+    }
+
+    // --------------------------------------------------------
+    // VALIDATE DATE TO
+    // --------------------------------------------------------
+
+    if (dateTo && !validDate(dateTo)) {
+      dateTo = "";
+    }
+
+    // --------------------------------------------------------
+    // INVALID DATE RANGE
+    // --------------------------------------------------------
+
+    if (dateFrom && dateTo && dateFrom > dateTo) {
+      dateFrom = "";
+      dateTo = "";
+    }
+
+    console.log("SOCIAL SEARCH filters =", {
+      visibility,
+      dateFrom,
+      dateTo,
+    });
+
+    // ========================================================
+    // PAGINATION
+    // ========================================================
+
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    // ========================================================
+    // BUILD WHERE CONDITIONS
+    // ========================================================
+
+    const conditions = [];
+    const values = [];
+
+    // ========================================================
+    // VISIBILITY SECURITY
+    // ========================================================
+    //
+    // ADMIN:
+    //   Can see everything.
+    //
+    // NORMAL USER:
+    //
+    //   everyone:
+    //      everyone can see
+    //
+    //   admin_only:
+    //      owner can see
+    //
+    //   group_only:
+    //      same group can see
+    //      owner can see
+    //
+    // Date filters do NOT bypass this security.
+    // ========================================================
+
+    if (isAdmin) {
+      // ------------------------------------------------------
+      // ADMIN
+      // ------------------------------------------------------
+      //
+      // Admin has access to all visibility types.
+      //
+      // If an admin selected a visibility filter, that filter
+      // is added below.
+      // ------------------------------------------------------
+    } else {
+      // ------------------------------------------------------
+      // CURRENT USER ID
+      // ------------------------------------------------------
+
+      const userIdParam = values.length + 1;
+
+      values.push(userId);
+
+      // ------------------------------------------------------
+      // CURRENT USER GROUP
+      // ------------------------------------------------------
+
+      const groupIdParam = values.length + 1;
+
+      values.push(userGroupId);
+
+      // ------------------------------------------------------
+      // NORMAL USER VISIBILITY SECURITY
+      // ------------------------------------------------------
+
+      conditions.push(`
+        (
+          -- Everyone
+          p.visibility = 'everyone'
+
+          -- Owner can see own post
+          OR p.user_id = $${userIdParam}
+
+          -- Same group can see group posts
+          OR (
+            p.visibility = 'group_only'
+            AND $${groupIdParam}::INTEGER IS NOT NULL
+            AND u.group_id = $${groupIdParam}::INTEGER
+          )
+        )
+      `);
+    }
+
+    // ========================================================
+    // ADMIN VISIBILITY FILTER
+    // ========================================================
+    //
+    // Only admins can use:
+    //
+    // everyone
+    // admin_only
+    // group_only
+    // ========================================================
+
+    if (isAdmin && visibility) {
+      values.push(visibility);
+
+      conditions.push(`p.visibility = $${values.length}`);
+    }
+
+    // ========================================================
+    // DATE FROM FILTER
+    // AVAILABLE TO ALL USERS
+    // ========================================================
+    //
+    // Example:
+    //
+    // dateFrom = 2026-08-01
+    //
+    // Includes:
+    //
+    // 2026-08-01 00:00:00
+    // and everything after it.
+    // ========================================================
+
+    if (dateFrom) {
+      values.push(dateFrom);
+
+      conditions.push(`p.created_at >= $${values.length}::DATE`);
+    }
+
+    // ========================================================
+    // DATE TO FILTER
+    // AVAILABLE TO ALL USERS
+    // ========================================================
+    //
+    // Example:
+    //
+    // dateTo = 2026-08-16
+    //
+    // We use:
+    //
+    // < 2026-08-17
+    //
+    // so the entire August 16 is included.
+    // ========================================================
+
+    if (dateTo) {
+      values.push(dateTo);
+
+      conditions.push(
+        `p.created_at < ($${values.length}::DATE + INTERVAL '1 day')`,
+      );
+    }
+
+    // ========================================================
+    // CONTENT SEARCH
+    // ========================================================
+
+    if (q) {
+      values.push(`%${q}%`);
+
+      conditions.push(`p.content ILIKE $${values.length}`);
+    }
+
+    // ========================================================
+    // USER / EMAIL SEARCH
+    // ========================================================
+
+    if (user) {
+      values.push(`%${user}%`);
+
+      conditions.push(`u.email ILIKE $${values.length}`);
+    }
+
+    // ========================================================
+    // WHERE CLAUSE
+    // ========================================================
+
+    const whereClause = conditions.length
+      ? `WHERE ${conditions.join(" AND ")}`
+      : "";
+
+    console.log("SOCIAL SEARCH whereClause =", whereClause);
+
+    console.log("SOCIAL SEARCH values =", values);
+
+    // ========================================================
+    // TOTAL SEARCH RESULTS
+    // ========================================================
+
+    const totalResult = await db.query(
+      `
+      SELECT
+        COUNT(*)::INTEGER AS total
+
+      FROM social_posts p
+
+      JOIN my_user u
+        ON u.id = p.user_id
+
+      ${whereClause}
+      `,
+      values,
+    );
+
+    const totalPosts = Number(totalResult.rows[0]?.total) || 0;
+
+    // ========================================================
+    // ADMIN BREAKDOWN
+    // ========================================================
+
+    let everyonePosts = 0;
+    let userAdminPosts = 0;
+    let groupPosts = 0;
+
+    if (isAdmin) {
+      const breakdownResult = await db.query(
+        `
+        SELECT
+
+          COUNT(*) FILTER (
+            WHERE p.visibility = 'everyone'
+          )::INTEGER AS everyone_posts,
+
+          COUNT(*) FILTER (
+            WHERE p.visibility = 'admin_only'
+          )::INTEGER AS user_admin_posts,
+
+          COUNT(*) FILTER (
+            WHERE p.visibility = 'group_only'
+          )::INTEGER AS group_posts
+
+        FROM social_posts p
+
+        JOIN my_user u
+          ON u.id = p.user_id
+
+        ${whereClause}
+        `,
+        values,
+      );
+
+      everyonePosts = Number(breakdownResult.rows[0]?.everyone_posts) || 0;
+
+      userAdminPosts = Number(breakdownResult.rows[0]?.user_admin_posts) || 0;
+
+      groupPosts = Number(breakdownResult.rows[0]?.group_posts) || 0;
+    }
+
+    // ========================================================
+    // TOTAL PAGES
+    // ========================================================
+
+    const totalPages = Math.max(Math.ceil(totalPosts / limit), 1);
+
+    // ========================================================
+    // INVALID PAGE
+    // ========================================================
+
+    if (page > totalPages && totalPosts > 0) {
+      const params = new URLSearchParams();
+
+      // ------------------------------------------------------
+      // SEARCH
+      // ------------------------------------------------------
+
+      if (q) {
+        params.set("q", q);
+      }
+
+      if (user) {
+        params.set("user", user);
+      }
+
+      // ------------------------------------------------------
+      // DATE FILTER
+      // AVAILABLE TO ALL USERS
+      // ------------------------------------------------------
+
+      if (dateFrom) {
+        params.set("dateFrom", dateFrom);
+      }
+
+      if (dateTo) {
+        params.set("dateTo", dateTo);
+      }
+
+      // ------------------------------------------------------
+      // ADMIN VISIBILITY FILTER
+      // ------------------------------------------------------
+
+      if (isAdmin && visibility) {
+        params.set("visibility", visibility);
+      }
+
+      params.set("page", totalPages);
+
+      return res.redirect(`/social/search?${params.toString()}`);
+    }
+
+    // ========================================================
+    // SEARCH RESULTS
+    // ========================================================
+
+    const limitParam = values.length + 1;
+    const offsetParam = values.length + 2;
+
+    const searchResult = await db.query(
+      `
+      SELECT
+        p.id,
+        p.user_id,
+        p.content,
+        p.color,
+        p.visibility,
+        p.created_at,
+        p.updated_at,
+        u.email
+
+      FROM social_posts p
+
+      JOIN my_user u
+        ON u.id = p.user_id
+
+      ${whereClause}
+
+      ORDER BY
+        p.created_at DESC,
+        p.id DESC
+
+      LIMIT $${limitParam}
+      OFFSET $${offsetParam}
+      `,
+      [...values, limit, offset],
+    );
+
+    // ========================================================
+    // BUILD POSTS
+    // ========================================================
+
+    const posts = searchResult.rows.map((row) => ({
+      id: row.id,
+
+      userId: row.user_id,
+
+      email: row.email,
+
+      content: row.content,
+
+      color: row.color,
+
+      visibility: row.visibility,
+
+      createdAt: row.created_at,
+
+      updatedAt: row.updated_at,
+    }));
+
+    // ========================================================
+    // RENDER
+    // ========================================================
+
+    res.render("social-search", {
+      defaultDate: today(),
+
+      posts,
+
+      currentUserId: userId,
+
+      currentUserEmail: userEmail,
+
+      isAdmin,
+
+      // Search
+      q,
+      user,
+
+      // Filters
+      visibility,
+      dateFrom,
+      dateTo,
+
+      // Pagination
+      page,
+
+      totalPosts,
+
+      everyonePosts,
+
+      userAdminPosts,
+
+      groupPosts,
+
+      totalPages,
+    });
+  } catch (err) {
+    console.error("Social search error:", err);
+
+    res.status(500).send("Unable to search social posts.");
+  }
+});
+// download social post
+// ============================================================
+// SOCIAL ADMIN DOWNLOADS — LIST ALL POSTS WITH MEDIA userEmail from Line 5135 below
+// ============================================================
+function canDownloadSocialMedia(userEmail) {
+  const downloadAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+
+  return downloadAdminEmails.includes(
+    String(userEmail || "")
+      .trim()
+      .toLowerCase(),
+  );
+}
+// ==========================many email in special admin email > split; map: remove before and after email, filter boolean: remove empty email ===
+// SOCIAL ADMIN DOWNLOADS — PAGINATED
+// ============================================================
+
+app.get("/social-admin-downloads", ensureAuthenticated, async (req, res) => {
+  try {
+    // --------------------------------------------------------
+    // ADMIN CHECK
+    // --------------------------------------------------------
+
+    const userEmail = req.user?.email || "";
+
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const isAdmin = adminEmails.includes(userEmail.toLowerCase());
+
+    if (!isAdmin) {
+      return res.status(403).send("Admin access required.");
+    }
+
+    // --------------------------------------------------------
+    // PAGINATION
+    // --------------------------------------------------------
+
+    const perPage = 2;
+
+    let page = Number.parseInt(req.query.page, 10);
+
+    if (!Number.isInteger(page) || page < 1) {
+      page = 1;
+    }
+
+    // --------------------------------------------------------
+    // TOTAL POSTS WITH MEDIA
+    // --------------------------------------------------------
+
+    const countResult = await db.query(`
+        SELECT COUNT(DISTINCT p.id) AS total
+        FROM social_posts p
+        JOIN social_post_media m
+          ON m.post_id = p.id
+      `);
+
+    const totalPosts = Number(countResult.rows[0].total);
+
+    const totalPages = Math.max(1, Math.ceil(totalPosts / perPage));
+
+    // Prevent page 999 when only 5 pages exist
+    if (page > totalPages) {
+      page = totalPages;
+    }
+
+    const offset = (page - 1) * perPage;
+
+    // --------------------------------------------------------
+    // GET ONLY POSTS FOR THIS PAGE
+    // --------------------------------------------------------
+
+    const result = await db.query(
+      `
+        SELECT
+          p.id AS post_id,
+          p.content,
+          p.created_at,
+          p.user_id,
+
+          u.email,
+
+          m.id AS media_id,
+          m.file_name,
+          m.file_url,
+          m.mime_type,
+          m.file_size,
+          m.created_at AS media_created_at
+
+        FROM social_posts p
+
+        JOIN my_user u
+          ON u.id = p.user_id
+
+        JOIN social_post_media m
+          ON m.post_id = p.id
+
+        WHERE p.id IN (
+          SELECT p2.id
+          FROM social_posts p2
+          JOIN social_post_media m2
+            ON m2.post_id = p2.id
+          GROUP BY p2.id, p2.created_at
+          ORDER BY p2.created_at DESC, p2.id DESC
+          LIMIT $1
+          OFFSET $2
+        )
+
+        ORDER BY
+          p.created_at DESC,
+          p.id DESC,
+          m.created_at ASC,
+          m.id ASC
+        `,
+      [perPage, offset],
+    );
+
+    // --------------------------------------------------------
+    // GROUP MEDIA BY POST
+    // --------------------------------------------------------
+
+    const posts = [];
+
+    for (const row of result.rows) {
+      let post = posts.find((item) => String(item.id) === String(row.post_id));
+
+      if (!post) {
+        post = {
+          id: row.post_id,
+          content: row.content,
+          createdAt: row.created_at,
+          userId: row.user_id,
+          email: row.email,
+          media: [],
+        };
+
+        posts.push(post);
+      }
+
+      post.media.push({
+        id: row.media_id,
+        fileName: row.file_name,
+        fileUrl: row.file_url,
+        mimeType: row.mime_type,
+        fileSize: row.file_size,
+        createdAt: row.media_created_at,
+      });
+    }
+
+    // --------------------------------------------------------
+    // RENDER
+    //
+    console.log("DOWNLOAD PAGINATION:", {
+      page,
+      perPage,
+      totalPosts,
+      totalPages,
+    });
+    //
+
+    return res.render("social-admin-downloads", {
+      defaultDate: today(),
+      posts,
+      isAdmin: true,
+      canDownload: canDownloadSocialMedia(userEmail),
+      page,
+      perPage,
+      totalPosts,
+      totalPages,
+    });
+  } catch (err) {
+    console.error("Social admin downloads error:", err);
+
+    return res.status(500).send("Unable to load social downloads.");
+  }
+});
+// ============================================================
+// SOCIAL ADMIN DOWNLOAD — ACTUAL FILE
+// ============================================================
+
+app.get(
+  "/social-admin-downloads/file/:mediaId",
+  ensureAuthenticated,
+  async (req, res) => {
+    try {
+      // --------------------------------------------------------
+      // ADMIN CHECK
+      // --------------------------------------------------------
+
+      const userEmail = req.user?.email || "";
+
+      const adminEmails = (process.env.ADMIN_EMAILS || "")
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+
+      const isAdmin = adminEmails.includes(userEmail.toLowerCase());
+
+      if (!isAdmin) {
+        return res.status(403).send("Admin access required.");
+      }
+      // restricted admin below is a function from Line 5094
+      if (!canDownloadSocialMedia(userEmail)) {
+        return res
+          .status(403)
+          .send("You are not authorized to download social media files.");
+      }
+      // ---------------------------message above sent-----------------------------
+      // MEDIA ID
+      // --------------------------------------------------------
+
+      const mediaId = Number(req.params.mediaId);
+
+      if (!Number.isInteger(mediaId) || mediaId <= 0) {
+        return res.status(400).send("Invalid media ID.");
+      }
+
+      // --------------------------------------------------------
+      // GET MEDIA
+      // --------------------------------------------------------
+
+      const result = await db.query(
+        `
+        SELECT
+          id,
+          file_url,
+          file_name,
+          mime_type
+        FROM social_post_media
+        WHERE id = $1
+        `,
+        [mediaId],
+      );
+
+      if (!result.rows.length) {
+        return res.status(404).send("Media file not found.");
+      }
+
+      const media = result.rows[0];
+
+      // --------------------------------------------------------
+      // SAFE FILE NAME
+      // --------------------------------------------------------
+
+      const filename = path.basename(media.file_url);
+
+      const filePath = path.join(
+        process.cwd(),
+        "public",
+        "uploads",
+        "social",
+        filename,
+      );
+
+      // --------------------------------------------------------
+      // FILE EXISTS?
+      // --------------------------------------------------------
+
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).send("File no longer exists.");
+      }
+
+      // --------------------------------------------------------
+      // DOWNLOAD
+      // --------------------------------------------------------
+
+      return res.download(filePath, media.file_name || filename);
+    } catch (err) {
+      console.error("Social admin file download error:", err);
+
+      return res.status(500).send("Unable to download social media file.");
+    }
+  },
+);
+// ============================================================
+// END SOCIAL FEED BACKEND
+// ============================================================

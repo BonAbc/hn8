@@ -1,0 +1,2058 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+
+  <!---->
+  <!---->
+  <h2 id="hm">Hoa Mai</h2>
+  <!--👇👆👆👇👆👇-->
+  <!---->
+  <!--👇👆👆👇👆👇-->
+
+<!-- ============================================================
+     SOCIAL FEED
+============================================================= -->
+<div style="background:#fff3cd;padding:10px;">
+  currentUserId: <%= currentUserId %>
+</div>
+
+<section class="py-5 bg-light border border-black mt-4 mb-4">
+
+  <div class="container">
+
+    <!-- ========================================================
+         CREATE POST 
+    ========================================================= -->
+
+    <div class="social-create-post">
+
+      <div class="social-post-header">
+
+  <div class="social-user">
+
+    <div class="social-avatar">
+      U
+    </div>
+
+    <div class="social-user-info">
+
+      <div class="social-user-name">
+        <strong>Create a post</strong>
+      </div>
+
+      <div class="social-create-post-subtitle">
+          Choose who can see your post
+      </div>
+
+    </div>
+
+  </div>
+
+  
+ 
+</div>
+
+      <form
+  action="/social/post/create"
+  method="POST"
+  enctype="multipart/form-data"
+  class="social-create-post-form"
+  id="socialCreatePostForm"
+>
+ 
+  <div
+    id="socialPostCreateComposer"
+    class="social-post-create-composer"
+    contenteditable="true"
+    data-placeholder="What's on your mind?"
+  ></div>
+
+  <input
+    type="hidden"
+    name="content"
+    id="socialPostCreateContent"
+  >
+<br>
+  <!-- IMAGE -->
+  <!-- FILES -->
+<div class="social-file-upload">
+
+  <label for="socialPostFiles">
+    📎 Add images or PDF
+  </label>
+ 
+  <input
+    type="file"
+    id="socialPostFiles"
+    name="files"
+    accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
+    multiple
+  >
+
+  <div id="socialPostFilesPreview"></div>
+
+</div>
+
+  <!-- VISIBILITY -->
+  <div class="social-visibility-options">
+
+    <label>
+      <input
+        type="radio"
+        name="visibility"
+        value="everyone"
+       checked
+      >
+      <span>👨‍👩‍👧‍👧👩‍👩‍👧‍👦All Loggedin Users👨‍👩‍👧‍👧👩‍👩‍👧‍👦</span>
+    </label>
+
+    <label>
+      <input
+        type="radio"
+        name="visibility"
+        value="admin_only"
+        
+      >
+      <span>🔒 Only me + HN CPA 🔒</span>
+    </label>
+
+    <label>
+      <input
+        type="radio"
+        name="visibility"
+        value="group_only"
+      >
+      <span>👥 My Group 👥 </span> 
+    </label>
+ 
+  </div>
+
+  <div class="social-create-post-footer">
+
+    <span class="social-character-count">
+      You can write up to 5000 characters
+    </span>
+
+    <button
+      type="submit"
+      class="social-create-post-button"
+    >
+      ➤ Post
+    </button>
+
+  </div>
+
+</form>
+ 
+<a
+  href="/social/search"
+  class="social-search-link"
+>
+  🔍 Search Posts
+</a>
+
+<p>Click search post then interact</p>
+ 
+<hr>
+    <!-- ========================================================
+         POSTS 
+    ========================================================= -->
+
+    <% posts.forEach((post, index) => { %>
+
+      <article
+        id="post-<%= post.id %>"
+        class="social-post"
+        style="--social-post-color: <%= post.color || '#ffffff' %>;"
+      >
+
+        <!-- ====================================================
+             POST HEADER
+        ===================================================== -->
+
+        <div class="social-post-header">
+
+          <div class="social-user">
+
+            <div class="social-avatar">
+              <%= (post.email || "U").charAt(0).toUpperCase() %>
+            </div>
+
+            <div class="social-user-info">
+
+              <div class="social-user-name">
+                <%= post.email %>
+              </div>
+
+              <div class="social-date">
+
+  <%= post.createdAt 
+    ? new Date(post.createdAt).toLocaleString() 
+    : "" 
+  %> 
+
+  <% if (post.visibility === "admin_only") { %>
+    · 🔒 Only me + Admin
+  <% } %>
+
+  <% if ( 
+    post.updatedAt && 
+    post.createdAt && 
+    new Date(post.updatedAt).getTime() !==  
+    new Date(post.createdAt).getTime() 
+  ) { %>
+
+    · edited
+
+  <% } %>
+
+</div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+ 
+       
+
+       <!-- ====================================================
+     POST OWNER / ADMIN CONTROLS
+===================================================== -->
+
+<% if (
+  currentUserId &&
+  String(currentUserId) === String(post.userId)
+) { %>
+
+  <!-- ==================================================
+       POST OWNER
+       Can EDIT + DELETE
+  =================================================== -->
+
+  <div class="social-owner-actions">
+
+    <!-- EDIT — OWNER ONLY -->
+    <details class="social-edit-control">
+
+      <summary
+        class="social-menu-button"
+        title="Edit post"
+        aria-label="Edit post"
+      >
+        ✏️ <span>Edit</span>
+      </summary>
+
+      <form
+        action="/social/post/edit"
+        method="POST"
+        class="social-inline-edit-form"
+      >
+
+        <input
+          type="hidden"
+          name="id"
+          value="<%= post.id %>"
+        >
+
+        <textarea
+          name="content"
+          maxlength="5000"
+          required
+        ><%= post.content %></textarea>
+
+        <div class="social-inline-edit-buttons">
+
+          <button
+            type="submit"
+            class="social-save-button"
+          >
+            ✓ Save
+          </button>
+
+          <button
+            type="button"
+            class="social-cancel-button"
+            onclick="this.closest('details').removeAttribute('open')"
+          >
+            Cancel
+          </button>
+
+        </div>
+
+      </form>
+
+    </details>
+
+
+    <!-- DELETE — OWNER -->
+    <form
+      action="/social/post/delete"
+      method="POST"
+      onsubmit="return confirm('Delete this post?');"
+    >
+
+      <input
+        type="hidden"
+        name="id"
+        value="<%= post.id %>"
+      >
+
+      <button
+        type="submit"
+        class="social-menu-button social-delete"
+        title="Delete post"
+        aria-label="Delete post"
+      >
+        🗑️ <span>Delete</span>
+      </button>
+
+    </form>
+
+  </div>
+
+
+<% } else if (isAdmin) { %>
+
+  <!-- ==================================================
+       ADMIN
+       Can DELETE ANY POST
+       Cannot EDIT other user's post
+  =================================================== -->
+
+  <div class="social-owner-actions">
+
+    <form
+      action="/social/post/delete"
+      method="POST"
+      onsubmit="return confirm('Admin: delete this post?');"
+    >
+
+      <input
+        type="hidden"
+        name="id"
+        value="<%= post.id %>"
+      >
+
+      <button
+        type="submit"
+        class="social-menu-button social-delete"
+        title="Delete post"
+        aria-label="Delete post"
+      >
+        🗑️ <span>Delete</span>
+      </button>
+
+    </form>
+
+  </div>
+
+<% } %>
+
+<!-- ====================================================
+     POST MEDIA
+===================================================== -->
+
+<% if (post.media && post.media.length > 0) { %>
+
+  <div class="social-post-media">
+
+    <% post.media.forEach((file) => { %>
+
+      <div class="social-post-media-item">
+
+        <% if (
+          file.mimeType &&
+          file.mimeType.startsWith("image/")
+        ) { %>
+
+          <img
+            src="<%= file.fileUrl %>"
+            alt="<%= file.fileName || 'Post image' %>"
+            class="social-post-image"
+            loading="lazy"
+          >
+
+        <% } else if (
+          file.mimeType === "application/pdf"
+        ) { %>
+
+          <a
+            href="<%= file.fileUrl %>"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            📄 <%= file.fileName %>
+          </a>
+
+        <% } %>
+
+
+        <!-- TEXT FOR THIS SPECIFIC FILE -->
+
+        <% if (file.mediaText) { %>
+
+          <div class="social-post-media-text">
+            <%= file.mediaText %>
+          </div>
+
+        <% } %>
+
+      </div>
+
+    <% }) %>
+
+  </div>
+
+<% } %>
+
+
+<!-- ====================================================
+     POST CONTENT
+===================================================== -->
+
+<div class="social-post-content">
+  <%= post.content %>
+</div>
+        <!-- ====================================================
+             REACTION DATA
+        ===================================================== -->
+
+        <%
+          const r = post.reactions || {};
+
+          const totalReactions =
+            (r.like || 0) +
+            (r.dislike || 0) +
+            (r.heart || 0) +
+            (r.horse || 0) +
+            (r.rose || 0) +
+            (r.fly || 0) +
+            (r.call || 0) +
+            (r.website || 0) +
+            (r.email || 0) +
+            (r.smile || 0) +
+            (r.victory || 0);
+        %>
+
+
+        <!-- ====================================================
+             REACTION SUMMARY
+        ===================================================== -->
+
+        <% if (totalReactions > 0) { %>
+
+          <div class="social-reaction-summary">
+
+            <span class="social-reaction-icons">
+
+              <% if (r.like) { %>👍<% } %>
+              <% if (r.dislike) { %>👎<% } %>
+              <% if (r.heart) { %>❤️<% } %>
+              <% if (r.rose) { %>🌹<% } %>
+              <% if (r.horse) { %>🐴<% } %>
+              <% if (r.fly) { %>✈️<% } %>
+              <% if (r.call) { %>📞<% } %>
+              <% if (r.website) { %>🌐<% } %>
+              <% if (r.email) { %>📧<% } %>
+              <% if (r.smile) { %>😊<% } %>
+              <% if (r.victory) { %>✌️<% } %>
+
+            </span>
+
+            <span class="social-reaction-total">
+              <%= totalReactions %>
+            </span>
+
+          </div>
+
+        <% } %>
+
+
+        <!-- ====================================================
+             POST ACTION BAR
+        ===================================================== -->
+
+        <div class="social-action-bar">
+
+
+          <!-- LIKE -->
+
+          <form
+            action="/social/reaction"
+            method="POST"
+            class="social-reaction-form"
+          >
+
+            <input
+              type="hidden"
+              name="targetType"
+              value="post"
+            >
+
+            <input
+              type="hidden"
+              name="targetId"
+              value="<%= post.id %>"
+            >
+
+            <input
+              type="hidden"
+              name="reactionType"
+              value="like"
+            >
+
+            <button
+              type="submit"
+              class="social-action-button
+                <%= r.myReaction === 'like'
+                  ? 'social-selected-like'
+                  : '' %>"
+              title="Like"
+              aria-label="Like"
+            >
+              👍
+              <span>Like</span>
+
+              <% if (r.like) { %>
+                <small><%= r.like %></small>
+              <% } %>
+
+            </button>
+
+          </form>
+
+
+          <!-- DISLIKE -->
+
+          <form
+            action="/social/reaction"
+            method="POST"
+            class="social-reaction-form"
+          >
+
+            <input
+              type="hidden"
+              name="targetType"
+              value="post"
+            >
+
+            <input
+              type="hidden"
+              name="targetId"
+              value="<%= post.id %>"
+            >
+
+            <input
+              type="hidden"
+              name="reactionType"
+              value="dislike"
+            >
+
+            <button
+              type="submit"
+              class="social-action-button
+                <%= r.myReaction === 'dislike'
+                  ? 'social-selected-dislike'
+                  : '' %>"
+              title="Dislike"
+              aria-label="Dislike"
+            >
+              👎
+              <span>Dislike</span>
+
+              <% if (r.dislike) { %>
+                <small><%= r.dislike %></small>
+              <% } %>
+
+            </button>
+
+          </form>
+
+
+          <!-- HEART -->
+
+          <form
+            action="/social/reaction"
+            method="POST"
+            class="social-reaction-form"
+          >
+
+            <input
+              type="hidden"
+              name="targetType"
+              value="post"
+            >
+
+            <input
+              type="hidden"
+              name="targetId"
+              value="<%= post.id %>"
+            >
+
+            <input
+              type="hidden"
+              name="reactionType"
+              value="heart"
+            >
+
+            <button
+              type="submit"
+              class="social-action-button
+                <%= r.myReaction === 'heart'
+                  ? 'social-selected-heart'
+                  : '' %>"
+              title="Heart"
+              aria-label="Heart"
+            >
+              ❤️
+              <span>Heart</span>
+
+              <% if (r.heart) { %>
+                <small><%= r.heart %></small>
+              <% } %>
+
+            </button>
+
+          </form>
+
+
+          <!-- MORE REACTIONS -->
+
+          <details class="social-more">
+
+            <summary
+              class="social-action-button"
+              title="More reactions"
+            >
+              😊 <span>More</span>
+            </summary>
+
+            <div class="social-reaction-popup">
+
+              <%
+                const reactionList = [
+                  ["rose", "🌹", "Rose"],
+                  ["horse", "🐴", "Horse"],
+                  ["fly", "✈️", "Fly"],
+                  ["call", "📞", "Call"],
+                  ["website", "🌐", "Website"],
+                  ["email", "📧", "Email"],
+                  ["smile", "😊", "Smile"],
+                  ["victory", "✌️", "Victory"]
+                ];
+              %>
+
+              <% reactionList.forEach(([type, emoji, name]) => { %>
+
+                <form
+                  action="/social/reaction"
+                  method="POST"
+                >
+
+                  <input
+                    type="hidden"
+                    name="targetType"
+                    value="post"
+                  >
+
+                  <input
+                    type="hidden"
+                    name="targetId"
+                    value="<%= post.id %>"
+                  >
+
+                  <input
+                    type="hidden"
+                    name="reactionType"
+                    value="<%= type %>"
+                  >
+
+                  <button
+                    type="submit"
+                    class="social-popup-reaction
+                      <%= r.myReaction === type
+                        ? 'social-selected-reaction'
+                        : '' %>"
+                    title="<%= name %>"
+                    aria-label="<%= name %>"
+                  >
+                    <span><%= emoji %></span>
+
+                    <% if (r[type]) { %>
+                      <small><%= r[type] %></small>
+                    <% } %>
+
+                  </button>
+
+                </form>
+
+              <% }) %>
+
+            </div>
+
+          </details>
+
+
+          <!-- COMMENT -->
+
+          <button
+            type="button"
+            class="social-action-button"
+            onclick="socialFocusComment(<%= post.id %>)"
+            title="Comment"
+            aria-label="Comment"
+          >
+            💬 <span>Comment</span>
+          </button>
+<!-- ====================================================
+     SHARE
+===================================================== -->
+
+<button
+  type="button"
+  class="social-action-button social-share-button"
+  data-post-id="<%= post.id %>"
+  title="Share post"
+  aria-label="Share post"
+>
+  🔗
+  <span>Share</span>
+</button>
+        </div>
+
+
+
+
+
+        <!-- ====================================================
+             COMMENTS
+        ===================================================== -->
+
+        <div class="social-comments">
+
+          <% (post.comments || []).forEach(comment => { %>
+
+            <div class="social-comment">
+
+              <div class="social-comment-avatar">
+                <%= (comment.email || "U").charAt(0).toUpperCase() %>
+              </div>
+
+
+              <div class="social-comment-body">
+
+
+                <!-- =================================================
+                     COMMENT BUBBLE
+                ================================================== -->
+
+                <div class="social-comment-bubble">
+
+                  <div class="social-comment-user">
+                    <%= comment.email %>
+                  </div>
+
+                  <div class="social-comment-text">
+                    <%= comment.content %>
+                  </div>
+
+                  <% if (
+                    comment.updatedAt &&
+                    comment.createdAt &&
+                    new Date(comment.updatedAt).getTime() !==
+                    new Date(comment.createdAt).getTime()
+                  ) { %>
+
+                    <small class="social-edited-label">
+                      edited
+                    </small>
+
+                  <% } %>
+
+                </div>
+
+
+                <!-- =================================================
+                     COMMENT OWNER CONTROLS
+                ================================================== -->
+
+                <% if (
+                  currentUserId &&
+                  String(currentUserId) === String(comment.userId)
+                ) { %>
+
+                  <div class="social-comment-owner-actions">
+
+                    <details class="social-edit-control">
+
+                      <summary
+                        class="social-menu-button"
+                        title="Edit comment"
+                        aria-label="Edit comment"
+                      >
+                        ✏️ <span>Edit</span>
+                      </summary>
+
+                      <form
+                        action="/social/comment/edit"
+                        method="POST"
+                        class="social-inline-edit-form"
+                      >
+
+                        <input
+                          type="hidden"
+                          name="id"
+                          value="<%= comment.id %>"
+                        >
+
+                        <textarea
+                          name="content"
+                          maxlength="2000"
+                          required
+                        ><%= comment.content %></textarea>
+
+                        <div class="social-inline-edit-buttons">
+
+                          <button
+                            type="submit"
+                            class="social-save-button"
+                          >
+                            ✓ Save
+                          </button>
+
+                          <button
+                            type="button"
+                            class="social-cancel-button"
+                            onclick="this.closest('details').removeAttribute('open')"
+                          >
+                            Cancel
+                          </button>
+
+                        </div>
+
+                      </form>
+
+                    </details>
+
+
+                    <form
+                      action="/social/comment/delete"
+                      method="POST"
+                      onsubmit="return confirm('Delete this comment?');"
+                    >
+
+                      <input
+                        type="hidden"
+                        name="id"
+                        value="<%= comment.id %>"
+                      >
+
+                      <button
+                        type="submit"
+                        class="social-menu-button social-delete"
+                        title="Delete comment"
+                        aria-label="Delete comment"
+                      >
+                        🗑️ <span>Delete</span>
+                      </button>
+
+                    </form>
+
+                  </div>
+
+                <% } %>
+
+
+                <!-- =================================================
+                     COMMENT REACTIONS
+                ================================================== -->
+
+                <%
+                  const cr = comment.reactions || {};
+                %>
+
+                <div class="social-comment-actions">
+
+
+                  <!-- LIKE -->
+
+                  <form
+                    action="/social/reaction"
+                    method="POST"
+                  >
+
+                    <input type="hidden" name="targetType" value="comment">
+                    <input type="hidden" name="targetId" value="<%= comment.id %>">
+                    <input type="hidden" name="reactionType" value="like">
+
+                    <button
+                      type="submit"
+                      class="<%= cr.myReaction === 'like'
+                        ? 'social-comment-selected'
+                        : '' %>"
+                      title="Like"
+                      aria-label="Like"
+                    >
+                      👍
+                      <% if (cr.like) { %>
+                        <small><%= cr.like %></small>
+                      <% } %>
+                    </button>
+
+                  </form>
+
+
+                  <!-- DISLIKE -->
+
+                  <form
+                    action="/social/reaction"
+                    method="POST"
+                  >
+
+                    <input type="hidden" name="targetType" value="comment">
+                    <input type="hidden" name="targetId" value="<%= comment.id %>">
+                    <input type="hidden" name="reactionType" value="dislike">
+
+                    <button
+                      type="submit"
+                      class="<%= cr.myReaction === 'dislike'
+                        ? 'social-comment-selected'
+                        : '' %>"
+                      title="Dislike"
+                      aria-label="Dislike"
+                    >
+                      👎
+                      <% if (cr.dislike) { %>
+                        <small><%= cr.dislike %></small>
+                      <% } %>
+                    </button>
+
+                  </form>
+
+
+                  <!-- HEART -->
+
+                  <form
+                    action="/social/reaction"
+                    method="POST"
+                  >
+
+                    <input type="hidden" name="targetType" value="comment">
+                    <input type="hidden" name="targetId" value="<%= comment.id %>">
+                    <input type="hidden" name="reactionType" value="heart">
+
+                    <button
+                      type="submit"
+                      class="<%= cr.myReaction === 'heart'
+                        ? 'social-comment-selected'
+                        : '' %>"
+                      title="Heart"
+                      aria-label="Heart"
+                    >
+                      ❤️
+                      <% if (cr.heart) { %>
+                        <small><%= cr.heart %></small>
+                      <% } %>
+                    </button>
+
+                  </form>
+
+
+                  <!-- ROSE -->
+
+                  <form
+                    action="/social/reaction"
+                    method="POST"
+                  >
+
+                    <input type="hidden" name="targetType" value="comment">
+                    <input type="hidden" name="targetId" value="<%= comment.id %>">
+                    <input type="hidden" name="reactionType" value="rose">
+
+                    <button
+                      type="submit"
+                      class="<%= cr.myReaction === 'rose'
+                        ? 'social-comment-selected'
+                        : '' %>"
+                      title="Rose"
+                      aria-label="Rose"
+                    >
+                      🌹
+                      <% if (cr.rose) { %>
+                        <small><%= cr.rose %></small>
+                      <% } %>
+                    </button>
+
+                  </form>
+
+
+                  <!-- SMILE -->
+
+                  <form
+                    action="/social/reaction"
+                    method="POST"
+                  >
+
+                    <input type="hidden" name="targetType" value="comment">
+                    <input type="hidden" name="targetId" value="<%= comment.id %>">
+                    <input type="hidden" name="reactionType" value="smile">
+
+                    <button
+                      type="submit"
+                      class="<%= cr.myReaction === 'smile'
+                        ? 'social-comment-selected'
+                        : '' %>"
+                      title="Smile"
+                      aria-label="Smile"
+                    >
+                      😊
+                      <% if (cr.smile) { %>
+                        <small><%= cr.smile %></small>
+                      <% } %>
+                    </button>
+
+                  </form>
+
+
+                  <!-- REPLY -->
+
+                  <button
+                    type="button"
+                    class="social-reply-button"
+                    onclick="socialShowReply(<%= comment.id %>)"
+                    title="Reply"
+                    aria-label="Reply"
+                  >
+                    ↩ Reply
+                  </button>
+
+                </div>
+
+
+                <!-- =================================================
+                     REPLY FORM
+                ================================================== -->
+
+                <form
+                  id="social-reply-<%= comment.id %>"
+                  action="/social/comment/reply"
+                  method="POST"
+                  class="social-reply-form"
+                  style="display:none;"
+                >
+
+                  <input
+                    type="hidden"
+                    name="commentId"
+                    value="<%= comment.id %>"
+                  >
+                   <input
+    type="hidden"
+    name="parentReplyId"
+    value=""
+  >
+
+                  <input
+                    type="text"
+                    name="reply"
+                    placeholder="Write a reply..."
+                    maxlength="2000"
+                    required
+                    autocomplete="off"
+                  >
+
+                  <button
+                    type="submit"
+                    title="Send reply"
+                    aria-label="Send reply"
+                  >
+                    ➤
+                  </button>
+
+                </form>
+
+
+                <!-- =================================================
+                     REPLIES
+                ================================================== -->
+<!-- =================================================
+     REPLIES
+================================================== -->
+
+<div class="social-replies">
+
+  <% (comment.replies || []).forEach(reply => { %>
+
+    <!-- =============================================
+         TOP-LEVEL REPLY C
+    ============================================== -->
+
+    <div class="social-reply">
+
+      <div class="social-reply-avatar">
+        <%= (reply.email || "U").charAt(0).toUpperCase() %>
+      </div>
+
+      <div class="social-reply-body">
+
+        <!-- REPLY C BUBBLE -->
+
+        <div class="social-reply-bubble">
+
+          <div class="social-reply-user">
+            <%= reply.email %>
+          </div>
+
+          <div class="social-reply-text">
+            <%= reply.content %>
+          </div>
+
+          <% if (
+            reply.updatedAt &&
+            reply.createdAt &&
+            new Date(reply.updatedAt).getTime() !==
+            new Date(reply.createdAt).getTime()
+          ) { %>
+
+            <small class="social-edited-label">
+              edited
+            </small>
+
+          <% } %>
+
+        </div>
+
+
+        <!-- =========================================
+             REPLY C OWNER CONTROLS
+        ========================================== -->
+
+        <% if (
+          currentUserId &&
+          String(currentUserId) === String(reply.userId)
+        ) { %>
+
+          <div class="social-reply-owner-actions">
+
+            <details class="social-edit-control">
+
+              <summary
+                class="social-menu-button"
+                title="Edit reply"
+                aria-label="Edit reply"
+              >
+                ✏️ <span>Edit</span>
+              </summary>
+
+              <form
+                action="/social/reply/edit"
+                method="POST"
+                class="social-inline-edit-form"
+              >
+
+                <input
+                  type="hidden"
+                  name="id"
+                  value="<%= reply.id %>"
+                >
+
+                <textarea
+                  name="content"
+                  maxlength="2000"
+                  required
+                ><%= reply.content %></textarea>
+
+                <div class="social-inline-edit-buttons">
+
+                  <button
+                    type="submit"
+                    class="social-save-button"
+                  >
+                    ✓ Save
+                  </button>
+
+                  <button
+                    type="button"
+                    class="social-cancel-button"
+                    onclick="this.closest('details').removeAttribute('open')"
+                  >
+                    Cancel
+                  </button>
+
+                </div>
+
+              </form>
+
+            </details>
+
+
+            <form
+              action="/social/reply/delete"
+              method="POST"
+              onsubmit="return confirm('Delete this reply?');"
+            >
+
+              <input
+                type="hidden"
+                name="id"
+                value="<%= reply.id %>"
+              >
+
+              <button
+                type="submit"
+                class="social-menu-button social-delete"
+                title="Delete reply"
+                aria-label="Delete reply"
+              >
+                🗑️ <span>Delete</span>
+              </button>
+
+            </form>
+
+          </div>
+
+        <% } %>
+
+
+        <!-- =========================================
+             REPLY C REACTIONS
+        ========================================== -->
+
+        <% const rr = reply.reactions || {}; %>
+
+        <div class="social-reply-actions">
+
+
+          <!-- LIKE -->
+
+          <form
+            action="/social/reaction"
+            method="POST"
+          >
+
+            <input
+              type="hidden"
+              name="targetType"
+              value="reply"
+            >
+
+            <input
+              type="hidden"
+              name="targetId"
+              value="<%= reply.id %>"
+            >
+
+            <input
+              type="hidden"
+              name="reactionType"
+              value="like"
+            >
+
+            <button
+              type="submit"
+              class="<%= rr.myReaction === 'like'
+                ? 'social-comment-selected'
+                : '' %>"
+              title="Like"
+              aria-label="Like"
+            >
+              👍
+
+              <% if (rr.like) { %>
+                <small><%= rr.like %></small>
+              <% } %>
+
+            </button>
+
+          </form>
+
+
+          <!-- DISLIKE -->
+
+          <form
+            action="/social/reaction"
+            method="POST"
+          >
+
+            <input
+              type="hidden"
+              name="targetType"
+              value="reply"
+            >
+
+            <input
+              type="hidden"
+              name="targetId"
+              value="<%= reply.id %>"
+            >
+
+            <input
+              type="hidden"
+              name="reactionType"
+              value="dislike"
+            >
+
+            <button
+              type="submit"
+              class="<%= rr.myReaction === 'dislike'
+                ? 'social-comment-selected'
+                : '' %>"
+              title="Dislike"
+              aria-label="Dislike"
+            >
+              👎
+
+              <% if (rr.dislike) { %>
+                <small><%= rr.dislike %></small>
+              <% } %>
+
+            </button>
+
+          </form>
+
+
+          <!-- HEART -->
+
+          <form
+            action="/social/reaction"
+            method="POST"
+          >
+
+            <input
+              type="hidden"
+              name="targetType"
+              value="reply"
+            >
+
+            <input
+              type="hidden"
+              name="targetId"
+              value="<%= reply.id %>"
+            >
+
+            <input
+              type="hidden"
+              name="reactionType"
+              value="heart"
+            >
+
+            <button
+              type="submit"
+              class="<%= rr.myReaction === 'heart'
+                ? 'social-comment-selected'
+                : '' %>"
+              title="Heart"
+              aria-label="Heart"
+            >
+              ❤️
+
+              <% if (rr.heart) { %>
+                <small><%= rr.heart %></small>
+              <% } %>
+
+            </button>
+
+          </form>
+
+
+          <!-- ROSE -->
+
+          <form
+            action="/social/reaction"
+            method="POST"
+          >
+
+            <input
+              type="hidden"
+              name="targetType"
+              value="reply"
+            >
+
+            <input
+              type="hidden"
+              name="targetId"
+              value="<%= reply.id %>"
+            >
+
+            <input
+              type="hidden"
+              name="reactionType"
+              value="rose"
+            >
+
+            <button
+              type="submit"
+              class="<%= rr.myReaction === 'rose'
+                ? 'social-comment-selected'
+                : '' %>"
+              title="Rose"
+              aria-label="Rose"
+            >
+              🌹
+
+              <% if (rr.rose) { %>
+                <small><%= rr.rose %></small>
+              <% } %>
+
+            </button>
+
+          </form>
+
+
+          <!-- SMILE -->
+
+          <form
+            action="/social/reaction"
+            method="POST"
+          >
+
+            <input
+              type="hidden"
+              name="targetType"
+              value="reply"
+            >
+
+            <input
+              type="hidden"
+              name="targetId"
+              value="<%= reply.id %>"
+            >
+
+            <input
+              type="hidden"
+              name="reactionType"
+              value="smile"
+            >
+
+            <button
+              type="submit"
+              class="<%= rr.myReaction === 'smile'
+                ? 'social-comment-selected'
+                : '' %>"
+              title="Smile"
+              aria-label="Smile"
+            >
+              😊
+
+              <% if (rr.smile) { %>
+                <small><%= rr.smile %></small>
+              <% } %>
+
+            </button>
+
+          </form>
+
+
+          <!-- REPLY TO REPLY C -->
+
+          <button
+            type="button"
+            class="social-reply-button"
+            onclick="socialShowReply(<%= comment.id %>, <%= reply.id %>)"
+            title="Reply"
+            aria-label="Reply"
+          >
+            ↩ Reply
+          </button>
+
+        </div>
+
+
+        <!-- =========================================
+             REPLY D FORM
+             Hidden until Reply is clicked
+        ========================================== -->
+
+        <form
+          id="social-reply-to-<%= reply.id %>"
+          action="/social/comment/reply"
+          method="POST"
+          class="social-reply-form social-nested-reply-form"
+          style="display:none;"
+        >
+
+          <input
+            type="hidden"
+            name="commentId"
+            value="<%= comment.id %>"
+          >
+
+          <input
+            type="hidden"
+            name="parentReplyId"
+            value="<%= reply.id %>"
+          >
+
+          <input
+            type="text"
+            name="reply"
+            placeholder="Write a reply..."
+            maxlength="2000"
+            required
+            autocomplete="off"
+          >
+
+          <button
+            type="submit"
+            title="Send reply"
+            aria-label="Send reply"
+          >
+            ➤
+          </button>
+
+        </form>
+
+
+        <!-- =========================================
+             NESTED REPLIES - REPLY D
+        ========================================== -->
+
+        <% if (reply.replies && reply.replies.length) { %>
+
+          <div class="social-replies social-nested-replies">
+
+            <% reply.replies.forEach(nestedReply => { %>
+
+              <div class="social-reply social-nested-reply">
+
+                <div class="social-reply-avatar">
+                  <%= (nestedReply.email || "U").charAt(0).toUpperCase() %>
+                </div>
+
+
+                <div class="social-reply-body">
+
+                  <!-- REPLY D BUBBLE -->
+
+                  <div class="social-reply-bubble">
+
+                    <div class="social-reply-user">
+                      <%= nestedReply.email %>
+                    </div>
+
+                    <div class="social-reply-text">
+                      <%= nestedReply.content %>
+                    </div>
+
+                    <% if (
+                      nestedReply.updatedAt &&
+                      nestedReply.createdAt &&
+                      new Date(nestedReply.updatedAt).getTime() !==
+                      new Date(nestedReply.createdAt).getTime()
+                    ) { %>
+
+                      <small class="social-edited-label">
+                        edited
+                      </small>
+
+                    <% } %>
+
+                  </div>
+
+
+                  <!-- =================================
+                       REPLY D OWNER CONTROLS
+                  ================================== -->
+
+                  <% if (
+                    currentUserId &&
+                    String(currentUserId) === String(nestedReply.userId)
+                  ) { %>
+
+                    <div class="social-reply-owner-actions">
+
+                      <details class="social-edit-control">
+
+                        <summary
+                          class="social-menu-button"
+                          title="Edit reply"
+                          aria-label="Edit reply"
+                        >
+                          ✏️ <span>Edit</span>
+                        </summary>
+
+                        <form
+                          action="/social/reply/edit"
+                          method="POST"
+                          class="social-inline-edit-form"
+                        >
+
+                          <input
+                            type="hidden"
+                            name="id"
+                            value="<%= nestedReply.id %>"
+                          >
+
+                          <textarea
+                            name="content"
+                            maxlength="2000"
+                            required
+                          ><%= nestedReply.content %></textarea>
+
+                          <div class="social-inline-edit-buttons">
+
+                            <button
+                              type="submit"
+                              class="social-save-button"
+                            >
+                              ✓ Save
+                            </button>
+
+                            <button
+                              type="button"
+                              class="social-cancel-button"
+                              onclick="this.closest('details').removeAttribute('open')"
+                            >
+                              Cancel
+                            </button>
+
+                          </div>
+
+                        </form>
+ 
+                      </details>
+
+
+                      <form
+                        action="/social/reply/delete"
+                        method="POST"
+                        onsubmit="return confirm('Delete this reply?');"
+                      >
+
+                        <input
+                          type="hidden"
+                          name="id"
+                          value="<%= nestedReply.id %>"
+                        >
+
+                        <button
+                          type="submit"
+                          class="social-menu-button social-delete"
+                          title="Delete reply"
+                          aria-label="Delete reply"
+                        >
+                          🗑️ <span>Delete</span>
+                        </button>
+
+                      </form>
+
+                    </div>
+
+                  <% } %>
+
+
+                  <!-- =================================
+                       REPLY D REACTIONS
+                  ================================== -->
+
+                  <% const nr = nestedReply.reactions || {}; %>
+
+                  <div class="social-reply-actions">
+
+                    <!-- LIKE -->
+
+                    <form
+                      action="/social/reaction"
+                      method="POST"
+                    >
+
+                      <input
+                        type="hidden"
+                        name="targetType"
+                        value="reply"
+                      >
+
+                      <input
+                        type="hidden"
+                        name="targetId"
+                        value="<%= nestedReply.id %>"
+                      >
+
+                      <input
+                        type="hidden"
+                        name="reactionType"
+                        value="like"
+                      >
+
+                      <button
+                        type="submit"
+                        class="<%= nr.myReaction === 'like'
+                          ? 'social-comment-selected'
+                          : '' %>"
+                        title="Like"
+                        aria-label="Like"
+                      >
+                        👍
+
+                        <% if (nr.like) { %>
+                          <small><%= nr.like %></small>
+                        <% } %>
+
+                      </button>
+
+                    </form>
+
+
+                    <!-- DISLIKE -->
+
+                    <form
+                      action="/social/reaction"
+                      method="POST"
+                    >
+
+                      <input
+                        type="hidden"
+                        name="targetType"
+                        value="reply"
+                      >
+
+                      <input
+                        type="hidden"
+                        name="targetId"
+                        value="<%= nestedReply.id %>"
+                      >
+
+                      <input
+                        type="hidden"
+                        name="reactionType"
+                        value="dislike"
+                      >
+
+                      <button
+                        type="submit"
+                        class="<%= nr.myReaction === 'dislike'
+                          ? 'social-comment-selected'
+                          : '' %>"
+                        title="Dislike"
+                        aria-label="Dislike"
+                      >
+                        👎
+
+                        <% if (nr.dislike) { %>
+                          <small><%= nr.dislike %></small>
+                        <% } %>
+
+                      </button>
+
+                    </form>
+
+
+                    <!-- HEART -->
+
+                    <form
+                      action="/social/reaction"
+                      method="POST"
+                    >
+
+                      <input
+                        type="hidden"
+                        name="targetType"
+                        value="reply"
+                      >
+
+                      <input
+                        type="hidden"
+                        name="targetId"
+                        value="<%= nestedReply.id %>"
+                      >
+
+                      <input
+                        type="hidden"
+                        name="reactionType"
+                        value="heart"
+                      >
+
+                      <button
+                        type="submit"
+                        class="<%= nr.myReaction === 'heart'
+                          ? 'social-comment-selected'
+                          : '' %>"
+                        title="Heart"
+                        aria-label="Heart"
+                      >
+                        ❤️
+
+                        <% if (nr.heart) { %>
+                          <small><%= nr.heart %></small>
+                        <% } %>
+
+                      </button>
+
+                    </form>
+
+
+                    <!-- ROSE -->
+
+                    <form
+                      action="/social/reaction"
+                      method="POST"
+                    >
+
+                      <input
+                        type="hidden"
+                        name="targetType"
+                        value="reply"
+                      >
+
+                      <input
+                        type="hidden"
+                        name="targetId"
+                        value="<%= nestedReply.id %>"
+                      >
+
+                      <input
+                        type="hidden"
+                        name="reactionType"
+                        value="rose"
+                      >
+
+                      <button
+                        type="submit"
+                        class="<%= nr.myReaction === 'rose'
+                          ? 'social-comment-selected'
+                          : '' %>"
+                        title="Rose"
+                        aria-label="Rose"
+                      >
+                        🌹
+
+                        <% if (nr.rose) { %>
+                          <small><%= nr.rose %></small>
+                        <% } %>
+
+                      </button>
+
+                    </form>
+
+
+                    <!-- SMILE -->
+
+                    <form
+                      action="/social/reaction"
+                      method="POST"
+                    >
+
+                      <input
+                        type="hidden"
+                        name="targetType"
+                        value="reply"
+                      >
+
+                      <input
+                        type="hidden"
+                        name="targetId"
+                        value="<%= nestedReply.id %>"
+                      >
+
+                      <input
+                        type="hidden"
+                        name="reactionType"
+                        value="smile"
+                      >
+
+                      <button
+                        type="submit"
+                        class="<%= nr.myReaction === 'smile'
+                          ? 'social-comment-selected'
+                          : '' %>"
+                        title="Smile"
+                        aria-label="Smile"
+                      >
+                        😊
+
+                        <% if (nr.smile) { %>
+                          <small><%= nr.smile %></small>
+                        <% } %>
+
+                      </button>
+
+                    </form>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            <% }) %>
+
+          </div>
+
+        <% } %>
+
+      </div>
+
+    </div>
+
+  <% }) %>
+
+</div>
+
+              </div>
+
+            </div>
+
+          <% }) %>
+
+
+          <!-- ==================================================
+               NEW COMMENT
+          =================================================== -->
+
+          <form
+            id="social-comment-<%= post.id %>"
+            action="/social/post/comment"
+            method="POST"
+            class="social-new-comment"
+          >
+
+            <input
+              type="hidden"
+              name="postId"
+              value="<%= post.id %>"
+            >
+
+            <div class="social-comment-input">
+
+              <div class="social-mini-avatar">
+                U
+              </div>
+
+              <input
+                type="text"
+                name="comment"
+                placeholder="Write a comment..."
+                maxlength="2000"
+                required
+                autocomplete="off"
+              >
+
+              <button
+                type="submit"
+                title="Post comment"
+                aria-label="Post comment"
+              >
+                ➤
+              </button>
+
+            </div>
+
+          </form>
+
+        </div>
+
+      </article>
+
+    <% }) %>
+
+  </div>
+
+</section>
+
+
+  <!-- ============================================================
+     SOCIAL POST PAGINATION
+     ============================================================ -->
+<section class="py-5 bg-light border border-black mt-4 mb-4">
+<% if (totalPages > 1) { %>
+  <nav class="social-pagination" aria-label="Social post pagination">
+
+    <% if (page > 1) { %>
+      <a
+        href="/social/post?page=<%= page - 1 %>"
+        class="social-page-btn"
+      >
+        ← Previous
+      </a>
+    <% } else { %>
+      <span class="social-page-btn disabled">
+        ← Previous
+      </span>
+    <% } %>
+
+
+    <div class="social-page-numbers">
+
+      <% for (let i = 1; i <= totalPages; i++) { %>
+
+        <% if (i === page) { %>
+
+          <span class="social-page-number active">
+            <%= i %>
+          </span>
+
+        <% } else { %>
+
+          <a
+            href="/social/post?page=<%= i %>"
+            class="social-page-number"
+          >
+            <%= i %>
+          </a>
+
+        <% } %>
+
+      <% } %>
+
+    </div>
+
+
+    <% if (page < totalPages) { %>
+
+      <a
+        href="/social/post?page=<%= page + 1 %>"
+        class="social-page-btn"
+      >
+        Next →
+      </a>
+
+    <% } else { %>
+
+      <span class="social-page-btn disabled">
+        Next →
+      </span>
+
+    <% } %>
+
+  </nav>
+<% } %>
+
+</section>
+                        
+
+ 
+
+
+
+  <!--👇👆👆👇👆👇-->
+  <!--👇👆👆👇👆👇-->
+  
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+    <div class="container-fluid"></div>
+  </section>
+  <!---->
+  <!---->
+  <!---->
+  <!--👇👆👆👇👆👇-->
+  <!---->
+  <!--Refer to index.ejs how to include header and footer.ejs-->
+</main>
+
+
+<script src="/js/social.js"></script>
+
+ 
+
+  <!---->
+  <!--👇👆👆👇👆👇-->
+  <!---->
+
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->  

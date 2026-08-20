@@ -1,0 +1,54 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+
+  <!---->
+  <!---->
+  <h2 id="hm">Hoa Mai</h2>
+  <!--👇👆👆👇👆👇-->
+  <!---->
+  <!--👇👆👆👇👆👇-->
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+    <div class="container-fluid">
+      <h2>Enable Two-Factor Authentication</h2>
+
+      <p>Scan this QR code with Google Authenticator:</p>
+
+      <img src="<%= qrCode %>" />
+
+      <p>Then enter the 6-digit code:</p>
+
+      <form action="/verify-2fa-setup" method="POST">
+        <input
+          type="text"
+          name="code"
+          placeholder="012345"
+          maxlength="6"
+          required
+        />
+        <br />
+        <br />
+        <button type="submit" class="btn btn-primary w-auto">Verify</button>
+      </form>
+    </div>
+  </section>
+  <!--👇👆👆👇👆👇-->
+  <section class="py-5 bg-light border border-black mt-4 mb-4"></section>
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+    <div class="container-fluid"></div>
+  </section>
+  <!---->
+  <!---->
+  <!---->
+  <!--👇👆👆👇👆👇-->
+  <!---->
+  <!--Refer to index.ejs how to include header and footer.ejs-->
+</main>
+
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->

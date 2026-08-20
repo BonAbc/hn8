@@ -1,0 +1,659 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+
+  <!----> 
+  <!---->
+  <h2 id="hm">Hoa Mai</h2>
+  <!--👇👆👆👇👆👇-->
+  <!---->
+
+<section class="social-search-page"> 
+ 
+  <div class="social-search-container"> 
+ 
+    <!-- ====================================================== 
+         HEADER 
+    ======================================================= --> 
+  <section class="py-5 bg-light border border-black mt-4 mb-4"> 
+    <div class="container-fluid"> 
+  
+    <div class="social-search-header"> 
+ 
+      <div> 
+        <h2>Search Posts</h2> 
+ 
+        <p> 
+          Search posts by content or user. 
+        </p> 
+      </div> 
+ 
+      <a 
+        href="/social/post" 
+        class="social-search-back" 
+      > 
+        ← Back to Feed 
+      </a> 
+ 
+    </div> 
+ 
+ 
+    <!-- ====================================================== 
+         SEARCH FORM 
+    ======================================================= --> 
+ 
+    <div class="social-search-card"> 
+ 
+      <form 
+        method="GET" 
+        action="/social/search" 
+        class="social-search-form" 
+      > 
+ 
+        <div class="social-search-field"> 
+ 
+          <label for="social-search-q"> 
+            Search posts 
+          </label> 
+ 
+          <input 
+            id="social-search-q" 
+            type="search" 
+            name="q" 
+            value="<%= q %>" 
+            placeholder="Search post content..." 
+            autocomplete="off" 
+          > 
+ 
+        </div> 
+<br> 
+ 
+        <div class="social-search-field"> 
+ 
+          <label for="social-search-user"> 
+            User email ..... 
+          </label> 
+ 
+          <input 
+            id="social-search-user" 
+            type="search" 
+            name="user" 
+            value="<%= user %>" 
+            placeholder="Search by user email..." 
+            autocomplete="off" 
+          > 
+ 
+        </div> 
+
+
+        <!-- ======================================================
+             DATE RANGE
+             AVAILABLE TO ALL USERS
+        ======================================================= -->
+
+        <div class="social-admin-filter-group"> 
+ 
+          <label class="social-admin-filter-main-label"> 
+            Date Posted 
+          </label> 
+ 
+          <div class="social-admin-filter-date-range"> 
+ 
+            <div class="social-admin-filter-date"> 
+ 
+              <label for="social-search-date-from"> 
+                From 
+              </label> 
+ 
+              <input 
+                id="social-search-date-from" 
+                type="date" 
+                name="dateFrom" 
+                value="<%= dateFrom || '' %>" 
+              > 
+ 
+            </div> 
+ 
+ 
+            <div class="social-admin-filter-date"> 
+ 
+              <label for="social-search-date-to"> 
+                To 
+              </label> 
+ 
+              <input 
+                id="social-search-date-to" 
+                type="date" 
+                name="dateTo" 
+                value="<%= dateTo || '' %>" 
+              > 
+ 
+            </div> 
+ 
+          </div> 
+ 
+        </div>
+
+
+        <div class="social-search-actions"> 
+ 
+          <button 
+            type="submit" 
+            class="social-search-button" 
+          > 
+            🔍 Search 
+          </button> 
+ 
+          <a 
+            href="/social/search" 
+            class="social-search-clear" 
+          > 
+            Clear 
+          </a> 
+  
+        </div> 
+ 
+      </form> 
+  
+    </div> 
+</div> 
+ </section> 
+
+
+    <!-- ====================================================== 
+         RESULTS INFO 
+    ======================================================= --> 
+
+ <section class="py-5 bg-light border border-black mt-4 mb-4"> 
+    <div class="container-fluid"> 
+  
+    <div class="social-search-results-header"> 
+ 
+  <% if (totalPosts > 0) { %> 
+ 
+    <strong> 
+      <%= totalPosts %> 
+      <%= totalPosts === 1 ? "post" : "posts" %> 
+      found 
+    </strong> 
+ 
+  <% } else { %> 
+ 
+    <strong> 
+      No posts found 
+    </strong> 
+ 
+  <% } %> 
+ 
+ 
+  <% if (isAdmin && totalPosts > 0) { %> 
+ 
+  <div class="social-search-admin-breakdown"> 
+ 
+    <span class="social-search-everyone"> 
+      🌐 Everyone: 
+      <strong><%= everyonePosts %></strong> 
+    </span> 
+ 
+    <span class="social-search-admin-only"> 
+      🔒 User + Admin only: 
+      <strong><%= userAdminPosts %></strong> 
+    </span> 
+
+    <span class="social-search-group-only"> 
+      👥 Group + Admin: 
+      <strong><%= groupPosts %></strong> 
+    </span> 
+ 
+  </div> 
+ 
+<% } %>  
+ 
+</div> 
+ 
+  
+    <!-- ====================================================== 
+         RESULTS 
+    ======================================================= --> 
+ 
+    <div class="social-search-results"> 
+ 
+      <% if (posts.length) { %> 
+ 
+        <% posts.forEach(post => { %> 
+ 
+          <article 
+            class="social-search-result-card" 
+            style="--post-color: <%= post.color || '#ffffff' %>;" 
+          > 
+ 
+            <div class="social-search-result-header"> 
+ 
+              <div class="social-mini-avatar"> 
+                U 
+              </div> 
+
+             <div class="social-search-result-user"> 
+ 
+  <strong> 
+    <%= post.email %> 
+  </strong> 
+ 
+  <span> 
+    <%= new Date(post.createdAt).toLocaleString() %> 
+  </span> 
+  
+ <% if (post.visibility === "admin_only") { %> 
+ 
+  <span class="social-visibility-label"> 
+    🔒 Admin Only 
+  </span> 
+ 
+<% } else if (post.visibility === "group_only") { %> 
+ 
+  <span class="social-visibility-label"> 
+    👥 Group + Admin 
+  </span> 
+ 
+<% } else { %> 
+ 
+  <span class="social-visibility-label"> 
+    🌎 Everyone 
+  </span> 
+ 
+<% } %> 
+ 
+  
+</div> 
+ 
+            </div> 
+ 
+ 
+            <div class="social-search-result-content"> 
+              <%= post.content %> 
+            </div> 
+ 
+ 
+            <div class="social-search-result-footer"> 
+ 
+              <a 
+                href="/social/post?postId=<%= post.id %>" 
+                class="social-search-view" 
+              > 
+                View Post → 
+              </a> 
+ 
+            </div> 
+ 
+          </article> 
+ 
+        <% }) %> 
+ 
+      <% } else { %> 
+ 
+        <div class="social-search-empty"> 
+ 
+          <div class="social-search-empty-icon"> 
+            🔍 
+          </div> 
+ 
+          <h3>No posts found</h3> 
+ 
+          <p> 
+            Try a different keyword, user email, or date range. 
+          </p> 
+ 
+        </div> 
+ 
+      <% } %> 
+ 
+    </div> 
+ </div> 
+ </section> 
+
+
+  <!-- ====================================================== 
+     PAGINATION 
+======================================================= --> 
+<section class="py-5 bg-light border border-black mt-4 mb-4">
+    <div class="container-fluid">
+<% if (totalPages > 1) { %> 
+
+  <nav 
+    class="social-search-pagination" 
+    aria-label="Search results pagination" 
+  > 
+
+    <% 
+      const paginationParams = (pageNumber) => {
+        const params = new URLSearchParams();
+
+        if (q) {
+          params.set("q", q);
+        }
+
+        if (user) {
+          params.set("user", user);
+        }
+
+        if (dateFrom) {
+          params.set("dateFrom", dateFrom);
+        }
+
+        if (dateTo) {
+          params.set("dateTo", dateTo);
+        }
+
+        params.set("page", pageNumber);
+
+        return params.toString();
+      };
+    %>
+
+
+    <!-- PREVIOUS -->
+
+    <% if (page > 1) { %>
+
+      <a 
+        href="/social/search?<%= paginationParams(page - 1) %>" 
+        class="social-search-page-button social-search-page-prev"
+      >
+        ← Previous
+      </a>
+
+    <% } else { %>
+
+      <span 
+        class="social-search-page-button social-search-page-prev disabled"
+      >
+        ← Previous
+      </span>
+
+    <% } %>
+
+
+    <!-- NUMBERED PAGES -->
+
+    <div class="social-search-page-numbers">
+
+      <% for (
+        let pageNumber = 1;
+        pageNumber <= totalPages;
+        pageNumber++
+      ) { %>
+
+        <a
+          href="/social/search?<%= paginationParams(pageNumber) %>"
+          class="social-search-page-button social-search-page-number <%= pageNumber === page ? 'active' : '' %>"
+          aria-label="Page <%= pageNumber %>"
+          <%= pageNumber === page ? 'aria-current="page"' : '' %>
+        >
+          <%= pageNumber %>
+        </a>
+
+      <% } %>
+
+    </div>
+
+
+    <!-- NEXT -->
+
+    <% if (page < totalPages) { %>
+
+      <a 
+        href="/social/search?<%= paginationParams(page + 1) %>" 
+        class="social-search-page-button social-search-page-next"
+      >
+        Next →
+      </a>
+
+    <% } else { %>
+
+      <span 
+        class="social-search-page-button social-search-page-next disabled"
+      >
+        Next →
+      </span>
+
+    <% } %>
+
+  </nav>  
+
+<% } %>
+  
+  </div> 
+ 
+</section> 
+
+
+<!-- ====================================================== 
+     ADMIN POST FILTER 
+======================================================= --> 
+  
+ <section class="py-5 bg-light border border-black mt-4 mb-4"> 
+<% if (isAdmin) { %> 
+ 
+<section class="social-admin-filter-section"> 
+ 
+  <div class="container-fluid"> 
+ 
+    <div class="social-admin-filter-header"> 
+ 
+      <h2>Filter Posts</h2> 
+ 
+      <p> 
+        Filter posts by visibility and date posted. 
+      </p> 
+ 
+    </div> 
+ 
+ 
+    <form 
+      method="GET" 
+      action="/social/search" 
+      class="social-admin-filter-form" 
+    > 
+ 
+      <!-- ================================================== 
+           VISIBILITY 
+      =================================================== --> 
+ 
+      <div class="social-admin-filter-group"> 
+ 
+        <label class="social-admin-filter-main-label"> 
+          Filter by visibility 
+        </label> 
+ 
+        <div class="social-admin-filter-radio-options"> 
+ 
+          <label class="social-admin-filter-radio"> 
+ 
+            <input 
+              type="radio" 
+              name="visibility" 
+              value="everyone" 
+              <%= visibility === "everyone" ? "checked" : "" %> 
+            > 
+ 
+            <span> 
+              🌎 Everyone 
+            </span> 
+ 
+          </label> 
+ 
+ 
+          <label class="social-admin-filter-radio"> 
+ 
+            <input 
+              type="radio" 
+              name="visibility" 
+              value="admin_only" 
+              <%= visibility === "admin_only" ? "checked" : "" %> 
+            > 
+ 
+            <span> 
+              🔒 Only me + Admin 
+            </span> 
+ 
+          </label> 
+ 
+ 
+          <label class="social-admin-filter-radio"> 
+ 
+            <input 
+              type="radio" 
+              name="visibility" 
+              value="group_only" 
+              <%= visibility === "group_only" ? "checked" : "" %> 
+            > 
+ 
+            <span> 
+              👥 My Group + Admin 
+            </span> 
+ 
+          </label> 
+ 
+        </div> 
+ 
+      </div> 
+ 
+ 
+      <!-- ================================================== 
+           DATE RANGE 
+      =================================================== --> 
+ 
+      <div class="social-admin-filter-group"> 
+ 
+        <label class="social-admin-filter-main-label"> 
+          Date Posted 
+        </label> 
+ 
+        <div class="social-admin-filter-date-range"> 
+ 
+          <div class="social-admin-filter-date"> 
+ 
+            <label for="social-admin-date-from"> 
+              From 
+            </label> 
+ 
+            <input 
+              id="social-admin-date-from" 
+              type="date" 
+              name="dateFrom" 
+              value="<%= dateFrom || '' %>" 
+            > 
+ 
+          </div> 
+ 
+ 
+          <div class="social-admin-filter-date"> 
+ 
+            <label for="social-admin-date-to"> 
+              To 
+            </label> 
+ 
+            <input 
+              id="social-admin-date-to" 
+              type="date" 
+              name="dateTo" 
+              value="<%= dateTo || '' %>" 
+            > 
+ 
+          </div> 
+ 
+        </div> 
+ 
+      </div> 
+ 
+ 
+      <!-- ================================================== 
+           BUTTONS 
+      =================================================== --> 
+ 
+      <div class="social-admin-filter-actions"> 
+ 
+        <button 
+          type="submit" 
+          class="social-admin-filter-button" 
+        > 
+          🔎 Filter 
+        </button> 
+ 
+        <a 
+          href="/social/search" 
+          class="social-admin-filter-clear" 
+        > 
+          Clear Filters 
+        </a> 
+ 
+      </div>  
+ 
+    </form> 
+ 
+  </div> 
+ 
+</section> 
+  
+ 
+<% } %> 
+ 
+</section>
+
+
+  <!--👇👆👆👇👆👇-->
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+    <div class="container-fluid">
+      
+    </div>
+  </section>
+  <!--👇👆👆👇👆👇-->
+  <section class="py-5 bg-light border border-black mt-4 mb-4"></section>
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+    <div class="container-fluid">
+      <!--👇👆👆👇👆👇-->
+      <button type="submit" class="btn btn-primary w-auto">Good Format</button>
+      <!--👇👆👆👇👆👇-->
+    </div>
+  </section>
+  <!---->
+  <!---->
+  <!---->
+  <!--👇👆👆👇👆👇-->
+  <!--👇👆👆👇👆👇-->
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+    <!-- Main login form container -->
+    <div class="container mt-5">
+      <div class="row justify-content-center">
+        <div class="col-sm-6 col-md-5 col-lg-4">
+          <div class="card border rounded shadow-sm">
+            <div
+              class="card-body d-flex flex-column justify-content-center"
+              style="min-height: 360px"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!--👇👆👆👇👆👇-->
+  <!--👇👆👆👇👆👇-->
+  <!---->
+  <!--Refer to index.ejs how to include header and footer.ejs-->
+</main>
+
+<!--👇👆👆👇👆👇-->
+<!-- Link external JS -->
+<script src=""></script>
+<script src="/js/login.js"></script>
+<!-- Link external JS end -->
+<!--👇👆👆👇👆👇-->
+ 
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->
+ 
