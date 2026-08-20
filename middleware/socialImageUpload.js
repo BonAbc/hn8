@@ -2,11 +2,25 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-const uploadDir = path.join(process.cwd(), "public", "uploads", "social");
-// save
+// ======================================================
+// UPLOAD DIRECTORY
+// ======================================================
+//
+// Render Persistent Disk should be mounted at:
+// /var/data
+//
+// Files will be saved here:
+// /var/data/uploads/social
+//
+const uploadDir = "/uploads/social";
+
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
+
+// ======================================================
+// MULTER STORAGE
+// ======================================================
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -23,6 +37,10 @@ const storage = multer.diskStorage({
     cb(null, filename);
   },
 });
+
+// ======================================================
+// MULTER UPLOAD
+// ======================================================
 
 const socialFileUpload = multer({
   storage,
@@ -52,5 +70,4 @@ const socialFileUpload = multer({
 });
 
 export default socialFileUpload;
-
-// for social.ejs
+//
