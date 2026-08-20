@@ -1052,6 +1052,7 @@ app.post("/add-user", ensureAdmin, async (req, res) => {
     res.status(500).send("Error creating user");
   }
 });
+//
 app.get("/users/loveme", ensureAdmin, async (req, res) => {
   try {
     const page = parseInt(req.query.page, 10) || 1;
@@ -1061,6 +1062,17 @@ app.get("/users/loveme", ensureAdmin, async (req, res) => {
     const groupId = req.query.group_id;
 
     console.log("GROUP FILTER:", groupId);
+
+    // ======================================================
+    // DYNAMIC GROUP IDS
+    // ======================================================
+
+    const groupsResult = await db.query(`
+      SELECT DISTINCT group_id
+      FROM my_user
+      WHERE group_id IS NOT NULL
+      ORDER BY group_id
+    `);
 
     let result;
     let countResult;
@@ -1097,10 +1109,15 @@ app.get("/users/loveme", ensureAdmin, async (req, res) => {
     }
 
     const totalUsers = parseInt(countResult.rows[0].count, 10);
+
     const totalPages = Math.ceil(totalUsers / limit);
 
     res.render("users.ejs", {
       users: result.rows,
+
+      // PASS GROUPS TO EJS
+      groups: groupsResult.rows,
+
       currentPage: page,
       totalPages,
       groupId,
@@ -1112,6 +1129,7 @@ app.get("/users/loveme", ensureAdmin, async (req, res) => {
     res.status(500).send("Error loading users");
   }
 });
+//
 app.delete("/user/:id", ensureAdmin, async (req, res) => {
   const userId = req.params.id;
   const groupId = req.query.group_id;

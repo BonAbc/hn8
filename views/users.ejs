@@ -20,7 +20,7 @@
     <div class="container-fluid">
         <h2>User Management</h2>
   <!-- Group ID Filter -->
-    <form method="GET" action="/users/loveme" class="d-flex align-items-center gap-2">
+   <form method="GET" action="/users/loveme" class="d-flex align-items-center gap-2">
 
   <label for="group_id" class="fw-bold">
     Filter by Group ID:
@@ -33,25 +33,16 @@
   >
     <option value="">All Groups</option>
 
-    <option value="1" <%= String(groupId) === "1" ? "selected" : "" %>>
-      Group 1
-    </option>
+    <% groups.forEach(group => { %>
 
-    <option value="2" <%= String(groupId) === "2" ? "selected" : "" %>>
-      Group 2
-    </option>
+      <option
+        value="<%= group.group_id %>"
+        <%= String(groupId) === String(group.group_id) ? "selected" : "" %>
+      >
+        Group <%= group.group_id %>
+      </option>
 
-    <option value="3" <%= String(groupId) === "3" ? "selected" : "" %>>
-      Group 3
-    </option>
-
-    <option value="4" <%= String(groupId) === "4" ? "selected" : "" %>>
-      Group 4
-    </option>
-
-    <option value="5" <%= String(groupId) === "5" ? "selected" : "" %>>
-      Group 5
-    </option>
+    <% }) %>
   </select>
 
   <button type="submit" class="btn btn-primary">
@@ -59,7 +50,6 @@
   </button>
 
 </form>
-
     <br>
 <!-- Desktop Table -->
 <div class="d-none d-md-block table-responsive">
@@ -113,7 +103,7 @@
             Edit
           </a>
         </td>
-
+ 
         <!-- Action column -->
         <td>
 
@@ -304,7 +294,9 @@
     </div>
   </section>
   <!--👇👆👆👇👆👇-->
-  <section class="py-5 bg-light border border-black mt-4 mb-4"></section>
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+    <a href="/social-admin-downloads"> Download</a>
+  </section>
   <section class="py-5 bg-light border border-black mt-4 mb-4"> 
   <div class="container-fluid"> 
 
