@@ -1035,9 +1035,9 @@ app.post("/add-user", ensureAdmin, async (req, res) => {
       try {
         await db.query(
           `INSERT INTO my_user
-           (email, pw, two_factor_enabled, group_id)
+           (email, pw, is_active, two_factor_enabled, group_id)
            VALUES ($1, $2, $3, $4)`,
-          [email, hash, false, group_id],
+          [email, hash, true, false, group_id],
         );
 
         // Admin stays logged in
