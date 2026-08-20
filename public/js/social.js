@@ -26,7 +26,7 @@ function socialFocusComment(postId) {
 function socialShowReply(commentId, parentReplyId = null) {
   let form;
 
-  // Reply directly to COMMENT
+  // Reply to COMMENT
   if (!parentReplyId) {
     form = document.getElementById("social-reply-" + commentId);
   }
@@ -37,12 +37,15 @@ function socialShowReply(commentId, parentReplyId = null) {
   }
 
   if (!form) {
+    console.log("FORM NOT FOUND", {
+      commentId,
+      parentReplyId,
+    });
+
     return;
   }
 
-  const isHidden = form.style.display === "none" || !form.style.display;
-
-  if (isHidden) {
+  if (form.style.display === "none" || !form.style.display) {
     form.style.display = "flex";
 
     const input = form.querySelector("input[name='reply']");
