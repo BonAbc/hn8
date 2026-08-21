@@ -2414,7 +2414,15 @@ button:hover {
     width: 240px;
   }
 }
-
+.social-public-post .social-post-reactions {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: 12px;
+  text-align: left;
+}
 /* ============================================================
    END OF STYLESHEET
    ============================================================ */

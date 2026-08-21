@@ -3970,6 +3970,7 @@ app.post(
 );
 
 //publish a few specific post ids : show need ejs here
+
 app.get("/social/exchange", async (req, res) => {
   try {
     const result = await db.query(`
@@ -3996,7 +3997,70 @@ app.get("/social/exchange", async (req, res) => {
         p.id DESC
     `);
 
+    // ========================================================
+    // POST REACTIONS
+    // EXISTING REACTIONS — POST LEVEL ONLY
+    // ========================================================
+
+    const reactionsResult = await db.query(`
+      SELECT
+        target_id,
+        reaction_type,
+        COUNT(*)::INTEGER AS count
+
+      FROM social_reactions
+
+      WHERE
+        target_type = 'post'
+
+      GROUP BY
+        target_id,
+        reaction_type
+    `);
+
+    // ========================================================
+    // REACTION COUNTS LOOKUP
+    // ========================================================
+
+    const reactionCounts = {};
+
+    for (const row of reactionsResult.rows) {
+      const key = String(row.target_id);
+
+      if (!reactionCounts[key]) {
+        reactionCounts[key] = {};
+      }
+
+      reactionCounts[key][row.reaction_type] = Number(row.count);
+    }
+
+    // ========================================================
+    // POST REACTION HELPER
+    // SAME REACTIONS AS /social/post
+    // ========================================================
+
+    function getPostReactions(postId) {
+      const key = String(postId);
+
+      return {
+        like: reactionCounts[key]?.like || 0,
+        dislike: reactionCounts[key]?.dislike || 0,
+        heart: reactionCounts[key]?.heart || 0,
+        horse: reactionCounts[key]?.horse || 0,
+        rose: reactionCounts[key]?.rose || 0,
+        fly: reactionCounts[key]?.fly || 0,
+        call: reactionCounts[key]?.call || 0,
+        website: reactionCounts[key]?.website || 0,
+        email: reactionCounts[key]?.email || 0,
+        smile: reactionCounts[key]?.smile || 0,
+        victory: reactionCounts[key]?.victory || 0,
+      };
+    }
+
+    // ========================================================
     // MEDIA
+    // ========================================================
+
     const mediaResult = await db.query(`
       SELECT
         id,
@@ -4007,13 +4071,18 @@ app.get("/social/exchange", async (req, res) => {
         file_size,
         media_text,
         created_at
+
       FROM social_post_media
+
       ORDER BY
         created_at ASC,
         id ASC
     `);
 
+    // ========================================================
     // MEDIA LOOKUP
+    // ========================================================
+
     const mediaByPost = {};
 
     for (const row of mediaResult.rows) {
@@ -4033,7 +4102,10 @@ app.get("/social/exchange", async (req, res) => {
       });
     }
 
+    // ========================================================
     // POSTS
+    // ========================================================
+
     const posts = result.rows.map((row) => ({
       id: row.id,
       userId: row.user_id,
@@ -4043,7 +4115,11 @@ app.get("/social/exchange", async (req, res) => {
       visibility: row.visibility,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+
       media: mediaByPost[row.id] || [],
+
+      // ALL EXISTING POST-LEVEL REACTIONS
+      reactions: getPostReactions(row.id),
     }));
 
     return res.render("social-exchange", {
@@ -4055,7 +4131,6 @@ app.get("/social/exchange", async (req, res) => {
     return res.status(500).send("Unable to load public posts.");
   }
 });
-
 //social make public
 
 function canDownloadSocialMedia(userEmail) {
