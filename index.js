@@ -3403,7 +3403,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       // ONLY THESE VISIBILITY VALUES ARE ALLOWED
       // ------------------------------------------------------
 
-      const allowedVisibility = ["everyone", "admin_only", "group_only"];
+      const allowedVisibility = ["loggedin users", "admin_only", "group_only"];
 
       if (!allowedVisibility.includes(visibility)) {
         visibility = "";
@@ -3721,19 +3721,42 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
 });
 //
 // publish a few specific post ids
-
 app.post(
   "/social/post/make-public/:postId",
   ensureAuthenticated,
   async (req, res) => {
     try {
-      const postId = Number(req.params.postId);
+      const userEmail = req.user?.email || null;
 
-      console.log("MAKE PUBLIC:", postId);
+      // =========================================
+      // ADMIN CHECK
+      // =========================================
+
+      const adminEmails = (process.env.ADMIN_EMAILS || "")
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+
+      const isAdmin =
+        !!userEmail && adminEmails.includes(userEmail.toLowerCase());
+
+      if (!isAdmin) {
+        return res.status(403).send("Admin access required.");
+      }
+
+      // =========================================
+      // VALIDATE POST ID
+      // =========================================
+
+      const postId = parseInt(req.params.postId, 10);
 
       if (!Number.isInteger(postId)) {
         return res.status(400).send("Invalid post ID.");
       }
+
+      // =========================================
+      // PUBLISH POST
+      // =========================================
 
       const result = await db.query(
         `
@@ -3745,31 +3768,21 @@ app.post(
         [postId],
       );
 
-      console.log("PUBLIC UPDATE:", result.rows);
-
-      if (result.rowCount === 0) {
+      if (!result.rowCount) {
         return res.status(404).send("Post not found.");
       }
 
-      // Confirm immediately
-      const check = await db.query(
-        `
-        SELECT id, public_enabled
-        FROM social_posts
-        WHERE id = $1
-        `,
-        [postId],
-      );
-
-      console.log("PUBLIC CHECK:", check.rows);
+      console.log("POST MADE PUBLIC:", postId);
 
       return res.redirect("/social/search");
     } catch (err) {
       console.error("MAKE PUBLIC ERROR:", err);
+
       return res.status(500).send("Unable to make post public.");
     }
   },
 );
+
 // Unpublic
 app.post(
   "/social/post/make-unpublic/:postId",
