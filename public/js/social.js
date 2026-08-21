@@ -572,7 +572,7 @@ if (socialPostCreateForm) {
       'input[name="visibility"]:checked',
     );
 
-    formData.append("visibility", visibility?.value || "everyone");
+    formData.append("visibility", visibility?.value || "loggedin users");
 
     // ------------------------------------------------------
     // FILES + INDIVIDUAL MEDIA TEXT

@@ -1,0 +1,188 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+ <form>
+  <label for="date">Date:</label>
+  <input
+    type="date"
+    id="date"
+    name="date"
+    value="<%= defaultDate %>"
+  />
+</form>
+
+<h2 id="hm">Professional Exchange</h2>
+
+ 
+
+  <section class="social-public-page py-5 bg-light">
+
+  <div class="container social-public-container">
+
+    <% if (posts && posts.length) { %>
+
+      <% posts.forEach((post) => { %>
+
+        <article
+          id="post-<%= post.id %>"
+          class="social-post social-public-post"
+          style="--social-post-color: <%= post.color || '#ffffff' %>;"
+        >
+
+          <!-- ====================================================
+               POST HEADER
+          ===================================================== -->
+
+          <div class="social-post-header">
+
+            <div class="social-user">
+
+              <div class="social-avatar">
+                <%= (post.email || "U").charAt(0).toUpperCase() %>
+              </div>
+
+              <div class="social-user-info">
+
+                <div class="social-user-name">
+                  <%= post.email || "User" %>
+                </div>
+
+                <div class="social-date">
+
+                  <%= post.createdAt
+                    ? new Date(post.createdAt).toLocaleString()
+                    : ""
+                  %>
+
+                  <% if (post.visibility === "admin_only") { %>
+                    · 🔒 Only me + Admin
+                  <% } %>
+
+                  <% if (
+                    post.updatedAt &&
+                    post.createdAt &&
+                    new Date(post.updatedAt).getTime() !==
+                    new Date(post.createdAt).getTime()
+                  ) { %>
+                    · edited
+                  <% } %>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- ====================================================
+               POST CONTENT
+          ===================================================== -->
+
+          <% if (post.content) { %>
+
+            <div class="social-post-content">
+              <%= post.content %>
+            </div>
+
+          <% } %>
+
+
+          <!-- ====================================================
+               POST MEDIA
+          ===================================================== -->
+
+          <% if (post.media && post.media.length > 0) { %>
+
+            <div class="social-post-media">
+
+              <% post.media.forEach((file) => { %>
+
+                <div class="social-post-media-item">
+
+                  <!-- ==========================================
+                       IMAGE
+                  =========================================== -->
+
+                  <% if (
+                    file.mimeType &&
+                    file.mimeType.startsWith("image/")
+                  ) { %>
+
+                    <img
+                      src="<%= file.fileUrl %>"
+                      alt="<%= file.fileName || 'Post image' %>"
+                      class="social-post-image"
+                      loading="lazy"
+                    >
+
+                  <!-- ==========================================
+                       PDF
+                  =========================================== -->
+
+                  <% } else if (
+                    file.mimeType === "application/pdf"
+                  ) { %>
+
+                    <a
+                      href="<%= file.fileUrl %>"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="social-public-pdf"
+                    >
+                      📄
+                      <%= file.fileName || "View PDF" %>
+                    </a>
+
+                  <% } %>
+
+
+                  <!-- ==========================================
+                       TEXT FOR THIS SPECIFIC MEDIA ITEM
+                  =========================================== -->
+
+                  <% if (file.mediaText) { %>
+
+                    <div class="social-post-media-text">
+                      <%= file.mediaText %>
+                    </div>
+
+                  <% } %>
+
+                </div>
+
+              <% }) %>
+
+            </div>
+
+          <% } %>
+
+        </article>
+
+      <% }) %>
+
+    <% } else { %>
+
+      <p class="social-public-empty">
+        No public posts.
+      </p>
+
+    <% } %>
+
+  </div>
+
+</section>
+
+   
+  <!---->
+ 
+
+  <!--Refer to index.ejs how to include header and footer.ejs-->
+</main>
+<script src="/js/socialpublic.js"></script>
+
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->
+ 

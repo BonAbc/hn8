@@ -10,7 +10,7 @@
 
   <!----> 
   <!---->
-  <h2 id="hm">Hoa Mai</h2>
+  <h2 id="hm">Secure Professional Exchange</h2>
   <!--👇👆👆👇👆👇-->
   <!---->
 
@@ -197,7 +197,7 @@
   <div class="social-search-admin-breakdown"> 
  
     <span class="social-search-everyone"> 
-      🌐 Everyone: 
+      👨‍👩‍👧‍👧👩‍👩‍👧‍👦 Logged-In Users: 
       <strong><%= everyonePosts %></strong> 
     </span> 
  
@@ -264,7 +264,7 @@
 <% } else { %> 
  
   <span class="social-visibility-label"> 
-    🌎 Everyone 
+   👨‍👩‍👧‍👧👩‍👩‍👧‍👦  Loggedin Users 👨‍👩‍👧‍👧👩‍👩‍👧‍👦
   </span> 
  
 <% } %> 
@@ -273,6 +273,53 @@
 </div> 
  
             </div> 
+            
+       <!-- =========================================================
+     ADMIN PUBLIC CONTROL
+========================================================= -->
+
+<div class="social-public-admin-control">
+
+  <% if (post.publicEnabled) { %>
+
+    <span class="social-public-status">
+      🌎 Public
+    </span>
+
+    <form
+      action="/social/post/make-unpublic/<%= post.id %>"
+      method="POST"
+      style="display:inline;"
+    >
+      <button
+        type="submit"
+        class="social-make-public-btn"
+      >
+        🔒 Unpublish
+      </button>
+    </form>
+
+  <% } else { %>
+
+    <form
+      action="/social/post/make-public/<%= post.id %>"
+      method="POST"
+      style="display:inline;"
+    >
+      <button
+        type="submit"
+        class="social-make-public-btn"
+      >
+        🌎 Make Public
+      </button>
+    </form>
+
+  <% } %>
+
+</div>
+
+         
+ <!---->
  
  
             <div class="social-search-result-content"> 
@@ -478,12 +525,12 @@
             <input 
               type="radio" 
               name="visibility" 
-              value="everyone" 
-              <%= visibility === "everyone" ? "checked" : "" %> 
+              value="loggedin users" 
+              <%= visibility === "loggedin users" ? "checked" : "" %> 
             > 
  
             <span> 
-              🌎 Everyone 
+              👨‍👩‍👧‍👧👩‍👩‍👧‍👦 Loggedin Users 👨‍👩‍👧‍👧👩‍👩‍👧‍👦
             </span> 
  
           </label> 
@@ -607,7 +654,7 @@
  
 </section>
 
-
+ 
   <!--👇👆👆👇👆👇-->
   <section class="py-5 bg-light border border-black mt-4 mb-4">
     <div class="container-fluid">
@@ -652,8 +699,7 @@
 
 <!--👇👆👆👇👆👇-->
 <!-- Link external JS -->
-<script src=""></script>
-<script src="/js/login.js"></script>
+
 <!-- Link external JS end -->
 <!--👇👆👆👇👆👇-->
  

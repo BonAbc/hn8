@@ -1586,6 +1586,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
 
       userGroupId = groupResult.rows[0]?.group_id ?? null;
     }
+
     // userId is Line 2729
     // above get group_id from current✌ user id table my_user: How to get value from Different fields on the records. ✌
     console.log("SOCIAL userGroupId:", userGroupId);
@@ -1601,6 +1602,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
 
     const isAdmin =
       !!userEmail && adminEmails.includes(userEmail.toLowerCase());
+
     // !!: covert to true/false if userEmail also adminEmail > true
     console.log("SOCIAL isAdmin:", isAdmin);
 
@@ -1622,6 +1624,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
 
     if (!postId) {
       let totalPostsResult;
+
       // ::integer count(*): count all rows/record > convert to integer
       if (isAdmin) {
         totalPostsResult = await db.query(`
@@ -1638,10 +1641,9 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
             ON u.id = p.user_id
 
           WHERE
-            p.visibility = 'everyone'
+            p.visibility = 'loggedin users'
 
             OR p.user_id = $1
-
 
             OR (
               p.visibility = 'group_only'
@@ -1696,7 +1698,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
           p.id = $1
 
           AND (
-            p.visibility = 'everyone'
+            p.visibility = 'loggedin users'
 
             OR p.user_id = $2
 
@@ -1713,6 +1715,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         `,
         [postId, userId, isAdmin, userGroupId],
       );
+
       // postId: table social_post_media: line 2811 refer to Line
       console.log("SINGLE POST RESULT:", postsResult.rows);
 
@@ -1720,9 +1723,11 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         return res.status(404).send("Post not found.");
       }
     }
+
     // Line 2881: technique: find if current user group ID equal to post user group ID: another technique.compare VALUE of the same FIELD ✌
     // ======== Line 2683: Current userid =user group id.Next: join Line 2797:user_id of post > find id of post user > Line 2813: group_id of post user; ======
     //Line 2819: userGroupId is current user > compared: Line 2813: groupid of post user to current user.✌
+
     // ADMIN FEED
     // ========================================================
     else if (isAdmin) {
@@ -1778,7 +1783,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
           ON u.id = p.user_id
 
         WHERE
-          p.visibility = 'everyone'
+          p.visibility = 'loggedin users'
 
           OR p.user_id = $1
 
@@ -1811,7 +1816,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         file_name,
         mime_type,
         file_size,
-         media_text,
+        media_text,
         created_at
 
       FROM social_post_media
@@ -2204,11 +2209,11 @@ app.post(
       // VISIBILITY
       // ======================================================
 
-      const allowedVisibility = ["everyone", "admin_only", "group_only"];
+      const allowedVisibility = ["loggedin users", "admin_only", "group_only"];
 
       const visibility = allowedVisibility.includes(req.body.visibility)
         ? req.body.visibility
-        : "everyone";
+        : "loggedin users";
 
       // ======================================================
       // RANDOM COLOR
@@ -3485,7 +3490,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       conditions.push(`
         (
           -- Everyone
-          p.visibility = 'everyone'
+          p.visibility = 'loggedin users'
 
           -- Owner can see own post
           OR p.user_id = $${userIdParam}
@@ -3567,7 +3572,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
         SELECT
 
           COUNT(*) FILTER (
-            WHERE p.visibility = 'everyone'
+            WHERE p.visibility = 'loggedin users'
           )::INTEGER AS everyone_posts,
 
           COUNT(*) FILTER (
@@ -3714,6 +3719,209 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     res.status(500).send("Unable to search social posts.");
   }
 });
+//
+// publish a few specific post ids
+
+app.post(
+  "/social/post/make-public/:postId",
+  ensureAuthenticated,
+  async (req, res) => {
+    try {
+      const postId = Number(req.params.postId);
+
+      console.log("MAKE PUBLIC:", postId);
+
+      if (!Number.isInteger(postId)) {
+        return res.status(400).send("Invalid post ID.");
+      }
+
+      const result = await db.query(
+        `
+        UPDATE social_posts
+        SET public_enabled = TRUE
+        WHERE id = $1
+        RETURNING id, public_enabled
+        `,
+        [postId],
+      );
+
+      console.log("PUBLIC UPDATE:", result.rows);
+
+      if (result.rowCount === 0) {
+        return res.status(404).send("Post not found.");
+      }
+
+      // Confirm immediately
+      const check = await db.query(
+        `
+        SELECT id, public_enabled
+        FROM social_posts
+        WHERE id = $1
+        `,
+        [postId],
+      );
+
+      console.log("PUBLIC CHECK:", check.rows);
+
+      return res.redirect("/social/search");
+    } catch (err) {
+      console.error("MAKE PUBLIC ERROR:", err);
+      return res.status(500).send("Unable to make post public.");
+    }
+  },
+);
+// Unpublic
+app.post(
+  "/social/post/make-unpublic/:postId",
+  ensureAuthenticated,
+  async (req, res) => {
+    try {
+      const userEmail = req.user?.email || null;
+
+      const postId = parseInt(req.params.postId, 10);
+
+      // =========================================
+      // ADMIN CHECK
+      // =========================================
+
+      const adminEmails = (process.env.ADMIN_EMAILS || "")
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+
+      const isAdmin =
+        !!userEmail && adminEmails.includes(userEmail.toLowerCase());
+
+      if (!isAdmin) {
+        return res.status(403).send("Admin access required.");
+      }
+
+      // =========================================
+      // VALIDATE POST ID
+      // =========================================
+
+      if (!Number.isInteger(postId)) {
+        return res.status(400).send("Invalid post ID.");
+      }
+
+      // =========================================
+      // MAKE POST PRIVATE FROM PUBLIC PAGE
+      // =========================================
+
+      const result = await db.query(
+        `
+        UPDATE social_posts
+        SET public_enabled = FALSE
+        WHERE id = $1
+        RETURNING id
+        `,
+        [postId],
+      );
+
+      if (!result.rowCount) {
+        return res.status(404).send("Post not found.");
+      }
+
+      console.log("POST REMOVED FROM PUBLIC:", postId);
+
+      // Return to search page
+      return res.redirect("/social/search");
+    } catch (err) {
+      console.error("MAKE UNPUBLIC ERROR:", err);
+
+      return res.status(500).send("Unable to remove post from public page.");
+    }
+  },
+);
+
+//publish a few specific post ids : show need ejs here
+app.get("/social/exchange", async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        p.id,
+        p.user_id,
+        p.content,
+        p.color,
+        p.visibility,
+        p.created_at,
+        p.updated_at,
+        u.email
+
+      FROM social_posts p
+
+      JOIN my_user u
+        ON u.id = p.user_id
+
+      WHERE
+        p.public_enabled = TRUE
+
+      ORDER BY
+        p.created_at DESC,
+        p.id DESC
+    `);
+
+    // MEDIA
+    const mediaResult = await db.query(`
+      SELECT
+        id,
+        post_id,
+        file_url,
+        file_name,
+        mime_type,
+        file_size,
+        media_text,
+        created_at
+      FROM social_post_media
+      ORDER BY
+        created_at ASC,
+        id ASC
+    `);
+
+    // MEDIA LOOKUP
+    const mediaByPost = {};
+
+    for (const row of mediaResult.rows) {
+      if (!mediaByPost[row.post_id]) {
+        mediaByPost[row.post_id] = [];
+      }
+
+      mediaByPost[row.post_id].push({
+        id: row.id,
+        postId: row.post_id,
+        fileUrl: row.file_url,
+        fileName: row.file_name,
+        mimeType: row.mime_type,
+        fileSize: row.file_size,
+        mediaText: row.media_text,
+        createdAt: row.created_at,
+      });
+    }
+
+    // POSTS
+    const posts = result.rows.map((row) => ({
+      id: row.id,
+      userId: row.user_id,
+      email: row.email,
+      content: row.content,
+      color: row.color,
+      visibility: row.visibility,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      media: mediaByPost[row.id] || [],
+    }));
+
+    return res.render("social-exchange", {
+      defaultDate: getToday(),
+      posts,
+    });
+  } catch (err) {
+    console.error("PUBLIC POSTS ERROR:", err);
+    return res.status(500).send("Unable to load public posts.");
+  }
+});
+
+//social make public
 
 function canDownloadSocialMedia(userEmail) {
   const downloadAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
