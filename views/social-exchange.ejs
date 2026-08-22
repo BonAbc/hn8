@@ -51,22 +51,29 @@
 
                 <div class="social-date">
 
-                  <%= post.createdAt || "" %>
+  <%= post.createdAt || "" %>
 
-                  <% if (post.visibility === "admin_only") { %>
-                    · 🔒 Only me + Admin
-                  <% } %>
+  <% if (post.visibility === "loggedin users") { %>
+    · 👨‍👩‍👧‍👧👩‍👩‍👧‍👦 All Loggedin Users
+  <% } %>
 
-                  <% if (
-                    post.updatedAt &&
-                    post.createdAt &&
-                    post.updatedAt !== post.createdAt
-                  ) { %>
-                    · edited
-                  <% } %>
+  <% if (post.visibility === "admin_only") { %>
+    · 🔒 Only me + HN CPA 🔒
+  <% } %>
 
-                </div>
+  <% if (post.visibility === "group_only") { %>
+    · 👥 My Group 👥
+  <% } %>
 
+  <% if (
+    post.updatedAt &&
+    post.createdAt &&
+    post.updatedAt !== post.createdAt
+  ) { %>
+    · edited
+  <% } %>
+
+</div>
               </div>
 
             </div>
