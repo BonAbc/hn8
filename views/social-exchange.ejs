@@ -23,7 +23,7 @@
 
     <% if (posts && posts.length) { %>
 
-      <% posts.forEach((post) => { %>
+      <% posts.forEach((post, index) => { %>
 
         <article
           id="post-<%= post.id %>"
@@ -51,21 +51,21 @@
 
                 <div class="social-date">
 
-  <%= post.createdAt || "" %>
+                  <%= post.createdAt || "" %>
 
-  <% if (post.visibility === "admin_only") { %>
-    · 🔒 Only me + Admin
-  <% } %>
+                  <% if (post.visibility === "admin_only") { %>
+                    · 🔒 Only me + Admin
+                  <% } %>
 
-  <% if (
-    post.updatedAt &&
-    post.createdAt &&
-    post.updatedAt !== post.createdAt
-  ) { %>
-    · edited
-  <% } %>
+                  <% if (
+                    post.updatedAt &&
+                    post.createdAt &&
+                    post.updatedAt !== post.createdAt
+                  ) { %>
+                    · edited
+                  <% } %>
 
-</div>
+                </div>
 
               </div>
 
@@ -153,110 +153,82 @@
               <% }) %>
 
             </div>
- 
-            
+
           <% } %>
 
-            <% if (post.reactions) { %>
+
+          <!-- ====================================================
+               POST REACTIONS
+          ===================================================== -->
+
+          <% if (post.reactions) { %>
 
             <div class="social-post-reactions">
 
               <% if (post.reactions.like > 0) { %>
-
                 <span>
                   👍 <strong><%= post.reactions.like %></strong>
                 </span>
-
               <% } %>
 
-
               <% if (post.reactions.dislike > 0) { %>
-
                 <span>
                   👎 <strong><%= post.reactions.dislike %></strong>
                 </span>
-
               <% } %>
 
-
               <% if (post.reactions.heart > 0) { %>
-
                 <span>
                   ❤️ <strong><%= post.reactions.heart %></strong>
                 </span>
-
               <% } %>
 
-
               <% if (post.reactions.horse > 0) { %>
-
                 <span>
                   🐴 <strong><%= post.reactions.horse %></strong>
                 </span>
-
               <% } %>
 
-
               <% if (post.reactions.rose > 0) { %>
-
                 <span>
                   🌹 <strong><%= post.reactions.rose %></strong>
                 </span>
-
               <% } %>
 
-
               <% if (post.reactions.fly > 0) { %>
-
                 <span>
                   🪰 <strong><%= post.reactions.fly %></strong>
                 </span>
-
               <% } %>
 
-
               <% if (post.reactions.call > 0) { %>
-
                 <span>
                   📞 <strong><%= post.reactions.call %></strong>
                 </span>
-
               <% } %>
 
-
               <% if (post.reactions.website > 0) { %>
-
                 <span>
                   🌐 <strong><%= post.reactions.website %></strong>
                 </span>
-
               <% } %>
 
-
               <% if (post.reactions.email > 0) { %>
-
                 <span>
                   ✉️ <strong><%= post.reactions.email %></strong>
                 </span>
-
               <% } %>
 
-
               <% if (post.reactions.smile > 0) { %>
-
                 <span>
                   🙂 <strong><%= post.reactions.smile %></strong>
                 </span>
-
               <% } %>
 
-
               <% if (post.reactions.victory > 0) { %>
-
                 <span>
                   ✌️ <strong><%= post.reactions.victory %></strong>
                 </span>
-
               <% } %>
 
             </div>
@@ -265,9 +237,16 @@
 
 
         </article>
+
+
+        <!-- ====================================================
+             SEPARATOR BETWEEN POSTS
+        ===================================================== -->
+
         <% if (index < posts.length - 1) { %>
-    <hr>
-  <% } %>
+          <hr>
+        <% } %>
+
 
       <% }) %>
 
@@ -282,7 +261,6 @@
   </div>
 
 </section>
-
    
   <!---->
  
