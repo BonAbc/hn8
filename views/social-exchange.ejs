@@ -51,25 +51,21 @@
 
                 <div class="social-date">
 
-                  <%= post.createdAt
-                    ? new Date(post.createdAt).toLocaleString()
-                    : ""
-                  %>
+  <%= post.createdAt || "" %>
 
-                  <% if (post.visibility === "admin_only") { %>
-                    · 🔒 Only me + Admin
-                  <% } %>
+  <% if (post.visibility === "admin_only") { %>
+    · 🔒 Only me + Admin
+  <% } %>
 
-                  <% if (
-                    post.updatedAt &&
-                    post.createdAt &&
-                    new Date(post.updatedAt).getTime() !==
-                    new Date(post.createdAt).getTime()
-                  ) { %>
-                    · edited
-                  <% } %>
+  <% if (
+    post.updatedAt &&
+    post.createdAt &&
+    post.updatedAt !== post.createdAt
+  ) { %>
+    · edited
+  <% } %>
 
-                </div>
+</div>
 
               </div>
 
@@ -157,7 +153,7 @@
               <% }) %>
 
             </div>
-
+ 
             
           <% } %>
 

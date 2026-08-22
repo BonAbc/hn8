@@ -3970,7 +3970,6 @@ app.post(
 );
 
 //publish a few specific post ids : show need ejs here
-
 app.get("/social/exchange", async (req, res) => {
   try {
     const result = await db.query(`
@@ -4036,7 +4035,6 @@ app.get("/social/exchange", async (req, res) => {
 
     // ========================================================
     // POST REACTION HELPER
-    // SAME REACTIONS AS /social/post
     // ========================================================
 
     function getPostReactions(postId) {
@@ -4113,8 +4111,19 @@ app.get("/social/exchange", async (req, res) => {
       content: row.content,
       color: row.color,
       visibility: row.visibility,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
+
+      // CHICAGO LOCAL TIME
+      createdAt: row.created_at
+        ? DateTime.fromJSDate(new Date(row.created_at))
+            .setZone("America/Chicago")
+            .toFormat("M/d/yyyy, h:mm:ss a")
+        : "",
+
+      updatedAt: row.updated_at
+        ? DateTime.fromJSDate(new Date(row.updated_at))
+            .setZone("America/Chicago")
+            .toFormat("M/d/yyyy, h:mm:ss a")
+        : "",
 
       media: mediaByPost[row.id] || [],
 
@@ -4131,6 +4140,8 @@ app.get("/social/exchange", async (req, res) => {
     return res.status(500).send("Unable to load public posts.");
   }
 });
+//
+
 //social make public
 
 function canDownloadSocialMedia(userEmail) {
