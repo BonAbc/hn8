@@ -2423,6 +2423,90 @@ button:hover {
   margin-top: 12px;
   text-align: left;
 }
+/* PUBLIC Social POSTS ONLY Pagination */
+.public-post-pagination {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  margin: 25px 0;
+}
+
+/* Page buttons */
+.public-post-pagination .public-post-pagination__page {
+  width: 32px;
+  height: 32px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+  box-sizing: border-box;
+
+  border: 1px solid #d9dee7;
+  border-radius: 8px;
+
+  background: #fff;
+  color: #1f2937;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  text-decoration: none;
+}
+
+/* Active page */
+.public-post-pagination .public-post-pagination__active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+/* Previous / Next */
+.public-post-pagination .public-post-pagination__nav {
+  height: 32px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 9px;
+  box-sizing: border-box;
+
+  border: 1px solid #d9dee7;
+  border-radius: 8px;
+
+  background: #fff;
+  color: #6b7280;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Disabled */
+.public-post-pagination .public-post-pagination__disabled {
+  background: #f5f6f8;
+  color: #a0a7b2;
+  border-color: #e1e4e9;
+}
+
+/* Dots */
+.public-post-pagination .public-post-pagination__dots {
+  width: 20px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #8b929d;
+  font-size: 12px;
+}
+/*public social pagination*/
 /* ============================================================
    END OF STYLESHEET
    ============================================================ */

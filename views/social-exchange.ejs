@@ -268,7 +268,72 @@
   </div>
 
 </section>
-   
+   <!---->
+    <section class="py-5 bg-light border border-black mt-4 mb-4">
+   <% if (pagination.totalPages > 1) { %>
+
+  <div class="public-post-pagination">
+
+    <% if (pagination.hasPrevious) { %>
+      <a
+        href="/public/post?page=<%= pagination.previousPage %>"
+        class="public-post-pagination__nav"
+      >
+        ← Previous
+      </a>
+    <% } else { %>
+      <span class="public-post-pagination__nav public-post-pagination__disabled">
+        ← Previous
+      </span>
+    <% } %>
+
+
+    <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+
+      <% if (
+        i === 1 ||
+        i === pagination.totalPages ||
+        (i >= pagination.page - 2 && i <= pagination.page + 2)
+      ) { %>
+
+        <a
+          href="/public/post?page=<%= i %>"
+          class="public-post-pagination__page <%= i === pagination.page ? 'public-post-pagination__active' : '' %>"
+        >
+          <%= i %>
+        </a>
+
+      <% } else if (
+        i === pagination.page - 3 ||
+        i === pagination.page + 3
+      ) { %>
+
+        <span class="public-post-pagination__dots">...</span>
+
+      <% } %>
+
+    <% } %>
+
+
+    <% if (pagination.hasNext) { %>
+      <a
+        href="/public/post?page=<%= pagination.nextPage %>"
+        class="public-post-pagination__nav"
+      >
+        Next →
+      </a>
+    <% } else { %>
+      <span class="public-post-pagination__nav public-post-pagination__disabled">
+        Next →
+      </span>
+    <% } %>
+
+  </div>
+
+<% } %>
+
+
+     </section>
   <!---->
  
 

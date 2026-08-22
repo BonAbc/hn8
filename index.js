@@ -3972,7 +3972,36 @@ app.post(
 //publish a few specific post ids : show need ejs here
 app.get("/social/exchange", async (req, res) => {
   try {
-    const result = await db.query(`
+    //
+    // ========================================================
+    // PAGINATION
+    // ========================================================
+
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = 2;
+
+    const countResult = await db.query(`
+      SELECT
+        COUNT(*)::INTEGER AS total
+
+      FROM social_posts
+
+      WHERE
+        public_enabled = TRUE
+    `);
+
+    const totalPosts = countResult.rows[0].total;
+
+    const totalPages = Math.max(Math.ceil(totalPosts / limit), 1);
+
+    const currentPage = Math.min(page, totalPages);
+
+    const offset = (currentPage - 1) * limit;
+
+    //
+
+    const result = await db.query(
+      `
       SELECT
         p.id,
         p.user_id,
@@ -3994,7 +4023,12 @@ app.get("/social/exchange", async (req, res) => {
       ORDER BY
         p.created_at DESC,
         p.id DESC
-    `);
+
+      LIMIT $1
+      OFFSET $2
+      `,
+      [limit, offset],
+    );
 
     // ========================================================
     // POST REACTIONS
@@ -4131,15 +4165,42 @@ app.get("/social/exchange", async (req, res) => {
       reactions: getPostReactions(row.id),
     }));
 
+    // ========================================================
+    // PAGINATION NAVIGATION
+    // ========================================================
+
+    const pagination = {
+      page: currentPage,
+      limit: limit,
+
+      totalPosts,
+      totalPages,
+
+      hasPrevious: currentPage > 1,
+      hasNext: currentPage < totalPages,
+
+      previousPage: currentPage > 1 ? currentPage - 1 : null,
+
+      nextPage: currentPage < totalPages ? currentPage + 1 : null,
+    };
+
+    // ========================================================
+    // RENDER
+    // ========================================================
+
     return res.render("social-exchange", {
       defaultDate: getToday(),
       posts,
+      pagination,
     });
   } catch (err) {
     console.error("PUBLIC POSTS ERROR:", err);
     return res.status(500).send("Unable to load public posts.");
   }
 });
+
+//
+
 //
 
 //social make public
