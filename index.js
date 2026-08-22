@@ -4150,13 +4150,13 @@ app.get("/social/exchange", async (req, res) => {
       createdAt: row.created_at
         ? DateTime.fromJSDate(new Date(row.created_at))
             .setZone("America/Chicago")
-            .toFormat("M/d/yyyy, h:mm:ss a")
+            .toFormat("M/d/yyyy")
         : "",
 
       updatedAt: row.updated_at
         ? DateTime.fromJSDate(new Date(row.updated_at))
             .setZone("America/Chicago")
-            .toFormat("M/d/yyyy, h:mm:ss a")
+            .toFormat("M/d/yyyy")
         : "",
 
       media: mediaByPost[row.id] || [],
