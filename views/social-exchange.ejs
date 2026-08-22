@@ -276,7 +276,7 @@
 
     <% if (pagination.hasPrevious) { %>
       <a
-        href="/public/post?page=<%= pagination.previousPage %>"
+        href="/social/exchange?page=<%= pagination.previousPage %>"
         class="public-post-pagination__nav"
       >
         ← Previous
@@ -297,7 +297,7 @@
       ) { %>
 
         <a
-          href="/public/post?page=<%= i %>"
+          href="/social/exchange?page=<%= i %>"
           class="public-post-pagination__page <%= i === pagination.page ? 'public-post-pagination__active' : '' %>"
         >
           <%= i %>
@@ -317,7 +317,7 @@
 
     <% if (pagination.hasNext) { %>
       <a
-        href="/public/post?page=<%= pagination.nextPage %>"
+        href="/social/exchange?page=<%= pagination.nextPage %>"
         class="public-post-pagination__nav"
       >
         Next →
