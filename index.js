@@ -1539,6 +1539,7 @@ const ALLOWED_REACTIONS = [
   "website",
   "email",
   "smile",
+  "bell",
   "trophy",
   "victory",
 ];
@@ -4469,6 +4470,8 @@ app.get("/social/exchange", async (req, res) => {
         website: reactionCounts[key]?.website || 0,
         email: reactionCounts[key]?.email || 0,
         smile: reactionCounts[key]?.smile || 0,
+        bell: reactionCounts[key]?.bell || 0,
+        trophy: reactionCounts[key]?.trophy || 0,
         victory: reactionCounts[key]?.victory || 0,
       };
     }
