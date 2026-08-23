@@ -2507,6 +2507,141 @@ button:hover {
   font-size: 12px;
 }
 /*public social pagination*/
+/* Social seperate line between post Page*/
+.social-post-separator {
+  border: 0;
+  border-top: 2px solid #000;
+  margin: 30px 0;
+}
+/* Social Page*/
+/* ============================================================
+   SOCIAL NOTIFICATIONS
+   ============================================================ */
+
+.social-notifications {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.social-notification-count {
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  background: #fff3cd;
+  color: #664d03;
+  border: 1px solid #ffecb5;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.social-notification {
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+}
+
+.social-notification-content {
+  color: #212529;
+  font-weight: 500;
+}
+
+.social-notification-date {
+  margin-top: 4px;
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+/**/
+/* ============================================================
+   SOCIAL SEARCH PAGINATION
+   ============================================================ */
+
+.social-search-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.social-search-page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* All pagination buttons */
+.social-search-page-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 40px;
+  min-width: 40px;
+  padding: 0 10px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #d1d9e6;
+  border-radius: 6px;
+
+  background: #fff;
+  color: #1f2937;
+
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+/* Number buttons = square */
+.social-search-page-number {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  padding: 0;
+}
+
+/* Active page */
+.social-search-page-number.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+/* Previous / Next */
+.social-search-page-prev,
+.social-search-page-next {
+  min-width: 84px;
+}
+
+/* Hover */
+.social-search-page-button:not(.disabled):hover {
+  background: #f3f6fa;
+  border-color: #b8c4d4;
+  color: #111827;
+}
+
+/* Active hover */
+.social-search-page-number.active:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+
+/* Disabled */
+.social-search-page-button.disabled {
+  color: #94a3b8;
+  background: #f8fafc;
+  cursor: default;
+}
+/**/
+/*Pagination Social search page*/
+
 /* ============================================================
    END OF STYLESHEET
    ============================================================ */

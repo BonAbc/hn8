@@ -229,7 +229,20 @@ function isValidPassword(password) {
 const adminEmails = process.env.ADMIN_EMAILS
   ? process.env.ADMIN_EMAILS.split(",").map((email) => email.trim())
   : [];
+//
+function isEmailsAdmin(userEmail) {
+  const emailsAdmin = (process.env.EMAILS_ADMIN || "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
 
+  return emailsAdmin.includes(
+    String(userEmail || "")
+      .trim()
+      .toLowerCase(),
+  );
+}
+//
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) return next();
   res.redirect("/login");
@@ -959,11 +972,7 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
 
     delete req.session.pending2FAUser;
 
-    if (req.session.isAdmin) {
-      return res.redirect("/");
-    } else {
-      return res.redirect("/");
-    }
+    return res.redirect(`/social/post`);
     //
   });
 });
@@ -1541,6 +1550,7 @@ const ALLOWED_REACTIONS = [
   "website",
   "email",
   "smile",
+  "trophy",
   "victory",
 ];
 
@@ -1551,7 +1561,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
   try {
     // ========================================================
     // CURRENT USER
-    // ================first 2: table my_user; last one: social_post_media===========
+    // ========================================================
 
     const userId = req.user?.id || null;
     const userEmail = req.user?.email || null;
@@ -1573,7 +1583,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
     // ========================================================
 
     let userGroupId = null;
-    // if user id = value > select its group id.
+
     if (userId) {
       const groupResult = await db.query(
         `
@@ -1587,12 +1597,12 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       userGroupId = groupResult.rows[0]?.group_id ?? null;
     }
 
-    // userId is Line 2729
-    // above get group_id from current✌ user id table my_user: How to get value from Different fields on the records. ✌
     console.log("SOCIAL userGroupId:", userGroupId);
 
     // ========================================================
     // ADMIN CHECK
+    //
+    // ADMIN_EMAILS = FULL ADMIN
     // ========================================================
 
     const adminEmails = (process.env.ADMIN_EMAILS || "")
@@ -1600,15 +1610,30 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean);
 
-    const isAdmin =
-      !!userEmail && adminEmails.includes(userEmail.toLowerCase());
+    const normalizedUserEmail = String(userEmail || "")
+      .trim()
+      .toLowerCase();
 
-    // !!: covert to true/false if userEmail also adminEmail > true
+    const isAdmin =
+      !!normalizedUserEmail && adminEmails.includes(normalizedUserEmail);
+
     console.log("SOCIAL isAdmin:", isAdmin);
 
     // ========================================================
+    // HN CPA / EMAILS ADMIN CHECK
+    //
+    // IMPORTANT:
+    // isEmailsAdmin = FUNCTION
+    // emailsAdmin   = BOOLEAN RESULT
+    // ========================================================
+
+    const emailsAdmin = isEmailsAdmin(userEmail);
+
+    console.log("SOCIAL emailsAdmin:", emailsAdmin);
+
+    // ========================================================
     // PAGINATION
-    // ================10 is 0 to 9: base 10 system; decimal system 1,1: at least 1 : if not 1 larger====
+    // ========================================================
 
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
 
@@ -1619,19 +1644,59 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
     let totalPages = 1;
 
     // ========================================================
-    // COUNT NORMAL FEED
+    // COUNT FEED
     // ========================================================
 
     if (!postId) {
       let totalPostsResult;
 
-      // ::integer count(*): count all rows/record > convert to integer
+      // ======================================================
+      // FULL ADMIN
+      //
+      // ADMIN_EMAILS can see ANY post
+      // ======================================================
+
       if (isAdmin) {
-        totalPostsResult = await db.query(`
+        totalPostsResult = await db.query(
+          `
           SELECT COUNT(*)::INTEGER AS total
           FROM social_posts
-        `);
-      } else {
+          `,
+        );
+      }
+
+      // ======================================================
+      // EMAILS ADMIN
+      //
+      // SPECIAL / HN CPA ADMIN can see:
+      //   loggedin users
+      //   ANY group_only
+      //   own posts
+      //
+      // admin_only is NOT included here unless it is their
+      // own post.
+      // ======================================================
+      else if (emailsAdmin) {
+        totalPostsResult = await db.query(
+          `
+          SELECT COUNT(*)::INTEGER AS total
+          FROM social_posts p
+
+          WHERE
+            p.visibility = 'loggedin users'
+
+            OR p.visibility = 'group_only'
+
+            OR p.user_id = $1
+          `,
+          [userId],
+        );
+      }
+
+      // ======================================================
+      // NORMAL USER
+      // ======================================================
+      else {
         totalPostsResult = await db.query(
           `
           SELECT COUNT(*)::INTEGER AS total
@@ -1664,16 +1729,17 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       }
     }
 
-    // ===================Line 2742: join: 2 table =====================================
-    // LOAD POSTS ✌
+    // ========================================================
+    // LOAD POSTS
     // ========================================================
 
     let postsResult;
 
     // ========================================================
     // SINGLE POST
+    //
     // /social/post?postId=26
-    // ===========================Line 2797 join=============================
+    // ========================================================
 
     if (postId) {
       postsResult = await db.query(
@@ -1698,25 +1764,34 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
           p.id = $1
 
           AND (
+            -- Everyone logged in can see public-to-users posts
             p.visibility = 'loggedin users'
 
+            -- Owner can always see own post
             OR p.user_id = $2
 
+            -- Full ADMIN_EMAILS admin can see ANY post
             OR $3 = TRUE
 
+            -- HN CPA / EMAILS ADMIN can see ANY group post
+            OR (
+              $4 = TRUE
+              AND p.visibility = 'group_only'
+            )
+
+            -- Normal user can see own group's posts
             OR (
               p.visibility = 'group_only'
-              AND $4::INTEGER IS NOT NULL
-              AND u.group_id = $4::INTEGER
+              AND $5::INTEGER IS NOT NULL
+              AND u.group_id = $5::INTEGER
             )
           )
 
         LIMIT 1
         `,
-        [postId, userId, isAdmin, userGroupId],
+        [postId, userId, isAdmin, emailsAdmin, userGroupId],
       );
 
-      // postId: table social_post_media: line 2811 refer to Line
       console.log("SINGLE POST RESULT:", postsResult.rows);
 
       if (!postsResult.rowCount) {
@@ -1724,11 +1799,10 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       }
     }
 
-    // Line 2881: technique: find if current user group ID equal to post user group ID: another technique.compare VALUE of the same FIELD ✌
-    // ======== Line 2683: Current userid =user group id.Next: join Line 2797:user_id of post > find id of post user > Line 2813: group_id of post user; ======
-    //Line 2819: userGroupId is current user > compared: Line 2813: groupid of post user to current user.✌
-
-    // ADMIN FEED
+    // ========================================================
+    // FULL ADMIN FEED
+    //
+    // ADMIN_EMAILS can see ANY post
     // ========================================================
     else if (isAdmin) {
       postsResult = await db.query(
@@ -1757,6 +1831,51 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         OFFSET $2
         `,
         [limit, offset],
+      );
+    }
+
+    // ========================================================
+    // EMAILS ADMIN FEED
+    //
+    // HN CPA / SPECIAL ADMIN can see:
+    //   loggedin users
+    //   ANY group_only
+    //   own posts
+    // ========================================================
+    else if (emailsAdmin) {
+      postsResult = await db.query(
+        `
+        SELECT
+          p.id,
+          p.user_id,
+          p.content,
+          p.color,
+          p.visibility,
+          p.created_at,
+          p.updated_at,
+          u.email,
+          u.group_id
+
+        FROM social_posts p
+
+        JOIN my_user u
+          ON u.id = p.user_id
+
+        WHERE
+          p.visibility = 'loggedin users'
+
+          OR p.visibility = 'group_only'
+
+          OR p.user_id = $1
+
+        ORDER BY
+          p.created_at DESC,
+          p.id DESC
+
+        LIMIT $2
+        OFFSET $3
+        `,
+        [userId, limit, offset],
       );
     }
 
@@ -1846,10 +1965,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         fileName: row.file_name,
         mimeType: row.mime_type,
         fileSize: row.file_size,
-
-        // IMPORTANT
         mediaText: row.media_text,
-
         createdAt: row.created_at,
       });
     }
@@ -1993,6 +2109,9 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         email: reactionCounts[key]?.email || 0,
         smile: reactionCounts[key]?.smile || 0,
         victory: reactionCounts[key]?.victory || 0,
+        // NEW
+        bell: reactionCounts[key]?.bell || 0,
+        trophy: reactionCounts[key]?.trophy || 0,
         myReaction: myReactions[key] || null,
       };
     }
@@ -2073,7 +2192,6 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       color: row.color,
       visibility: row.visibility,
 
-      // NEW
       media: mediaByPost[row.id] || [],
 
       createdAt: row.created_at,
@@ -2098,17 +2216,17 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       })),
     );
 
-    // ========================================================
-    // RENDER
-    // ========================================================
-
     return res.render("social", {
       posts,
 
       media: mediaResult.rows,
+
       currentUserId: userId,
       currentUserEmail: userEmail,
+
       isAdmin,
+
+      isEmailsAdmin: emailsAdmin,
 
       defaultDate: getToday(),
 
@@ -2128,6 +2246,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
     return res.status(500).send(`Unable to load social feed: ${err.message}`);
   }
 });
+
 //
 // socialFileUpload handle upload and pasted from multer
 app.post(
@@ -2144,6 +2263,7 @@ app.post(
       // ======================================================
 
       const userId = req.user?.id;
+      const userEmail = req.user?.email || null;
 
       if (!userId) {
         return res.status(401).json({
@@ -2155,9 +2275,37 @@ app.post(
       console.log("========================================");
       console.log("CREATE SOCIAL POST");
       console.log("userId:", userId);
+      console.log("userEmail:", userEmail);
       console.log("body:", req.body);
       console.log("files:", req.files);
       console.log("========================================");
+
+      // ======================================================
+      // ADMIN CHECK
+      //
+      // ADMIN_EMAILS
+      // ======================================================
+
+      const adminEmails = (process.env.ADMIN_EMAILS || "")
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+
+      const normalizedUserEmail = String(userEmail || "")
+        .trim()
+        .toLowerCase();
+
+      const isAdmin =
+        !!normalizedUserEmail && adminEmails.includes(normalizedUserEmail);
+
+      // ======================================================
+      // HN CPA / EMAILS ADMIN CHECK
+      // ======================================================
+
+      const userIsEmailsAdmin = isEmailsAdmin(userEmail);
+
+      console.log("CREATE POST isAdmin:", isAdmin);
+      console.log("CREATE POST isEmailsAdmin:", userIsEmailsAdmin);
 
       // ======================================================
       // POST CONTENT
@@ -2209,11 +2357,51 @@ app.post(
       // VISIBILITY
       // ======================================================
 
-      const allowedVisibility = ["loggedin users", "admin_only", "group_only"];
+      const requestedVisibility = String(
+        req.body.visibility || "loggedin users",
+      ).trim();
 
-      const visibility = allowedVisibility.includes(req.body.visibility)
-        ? req.body.visibility
-        : "loggedin users";
+      // ======================================================
+      // SECURITY RULES
+      //
+      // ADMIN:
+      //   loggedin users
+      //   group_only
+      //   admin_only
+      //
+      // HN CPA / EMAILS_ADMIN:
+      //   loggedin users
+      //   group_only
+      //   admin_only
+      //
+      // NORMAL USER:
+      //   loggedin users
+      //   group_only
+      //   NOT admin_only
+      // ======================================================
+
+      let visibility = "loggedin users";
+
+      if (requestedVisibility === "admin_only") {
+        // ADMIN and HN CPA can create admin_only posts.
+        if (isAdmin || userIsEmailsAdmin) {
+          visibility = "admin_only";
+        } else {
+          // Prevent normal users from forging admin_only.
+          console.log(
+            "POST VISIBILITY BLOCKED: normal user attempted admin_only",
+          );
+
+          visibility = "loggedin users";
+        }
+      } else if (requestedVisibility === "group_only") {
+        visibility = "group_only";
+      } else if (requestedVisibility === "loggedin users") {
+        visibility = "loggedin users";
+      }
+
+      console.log("REQUESTED VISIBILITY:", requestedVisibility);
+      console.log("FINAL VISIBILITY:", visibility);
 
       // ======================================================
       // RANDOM COLOR
@@ -2250,6 +2438,66 @@ app.post(
       const postId = postResult.rows[0].id;
 
       console.log("NEW POST ID:", postId);
+
+      // ======================================================
+      // NOTIFY SPECIAL ADMINS
+      //
+      // SPECIAL_ADMIN_EMAILS ONLY
+      //
+      // This is completely separate from:
+      //   ADMIN_EMAILS
+      //   EMAILS_ADMIN
+      // ======================================================
+
+      const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+
+      if (specialAdminEmails.length > 0) {
+        const specialAdminsResult = await client.query(
+          `
+          SELECT id
+          FROM my_user
+          WHERE LOWER(email) = ANY($1::TEXT[])
+          `,
+          [specialAdminEmails],
+        );
+
+        console.log("SPECIAL ADMINS FOUND:", specialAdminsResult.rows.length);
+
+        for (const specialAdmin of specialAdminsResult.rows) {
+          await client.query(
+            `
+            INSERT INTO social_notifications
+            (
+              recipient_user_id,
+              actor_user_id,
+              notification_type,
+              post_id,
+              message
+            )
+            VALUES
+            (
+              $1,
+              $2,
+              'new_post',
+              $3,
+              $4
+            )
+            `,
+            [specialAdmin.id, userId, postId, "A new social post was created."],
+          );
+
+          console.log("SOCIAL NOTIFICATION CREATED:", {
+            recipientUserId: specialAdmin.id,
+            actorUserId: userId,
+            postId,
+          });
+        }
+      } else {
+        console.log("SPECIAL_ADMIN_EMAILS is empty. No notifications created.");
+      }
 
       // ======================================================
       // SAVE MEDIA
@@ -2314,6 +2562,7 @@ app.post(
       console.log("========================================");
       console.log("POST CREATED SUCCESSFULLY");
       console.log("postId:", postId);
+      console.log("visibility:", visibility);
       console.log("files:", files.length);
       console.log("url:", postUrl);
       console.log("========================================");
@@ -2360,7 +2609,161 @@ app.post(
     }
   },
 );
+//
+app.get("/notification", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const userEmail = req.user?.email || null;
 
+    if (!userId) {
+      return res.status(401).send("Please log in.");
+    }
+
+    // ========================================================
+    // SPECIAL ADMIN EMAIL CHECK
+    // ========================================================
+
+    const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const normalizedUserEmail = String(userEmail || "")
+      .trim()
+      .toLowerCase();
+
+    const isSpecialAdmin =
+      !!normalizedUserEmail && specialAdminEmails.includes(normalizedUserEmail);
+
+    if (!isSpecialAdmin) {
+      return res.status(403).send("Access denied.");
+    }
+
+    // ========================================================
+    // LOAD NOTIFICATIONS
+    // ========================================================
+
+    const notificationsResult = await db.query(
+      `
+      SELECT
+        n.id,
+        n.recipient_user_id,
+        n.actor_user_id,
+        n.notification_type,
+        n.post_id,
+        n.message,
+        n.is_read,
+        n.created_at,
+
+        u.email AS actor_email
+
+      FROM social_notifications n
+
+      LEFT JOIN my_user u
+        ON u.id = n.actor_user_id
+
+      WHERE
+        n.recipient_user_id = $1
+        AND n.is_read = FALSE
+
+      ORDER BY
+        n.created_at DESC,
+        n.id DESC
+      `,
+      [userId],
+    );
+
+    // ========================================================
+    // RENDER
+    // ========================================================
+
+    return res.render("notification", {
+      notifications: notificationsResult.rows,
+
+      currentUserId: userId,
+      currentUserEmail: userEmail,
+      defaultDate: today(),
+    });
+  } catch (err) {
+    console.error("========================================");
+    console.error("LOAD SOCIAL NOTIFICATIONS ERROR");
+    console.error("message:", err.message);
+    console.error("code:", err.code);
+    console.error("detail:", err.detail);
+    console.error("stack:", err.stack);
+    console.error("========================================");
+
+    return res.status(500).send("Unable to load notifications.");
+  }
+});
+// remove notification
+app.get(
+  "/notification/:notificationId",
+  ensureAuthenticated,
+  async (req, res) => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).send("Please log in.");
+      }
+
+      const notificationId = parseInt(req.params.notificationId, 10);
+
+      if (!Number.isInteger(notificationId)) {
+        return res.status(400).send("Invalid notification.");
+      }
+
+      // ======================================================
+      // MARK THIS NOTIFICATION AS READ
+      //
+      // IMPORTANT:
+      // Only the recipient can mark their notification read.
+      // ======================================================
+
+      const result = await db.query(
+        `
+        UPDATE social_notifications
+        SET is_read = TRUE
+        WHERE id = $1
+          AND recipient_user_id = $2
+        RETURNING post_id
+        `,
+        [notificationId, userId],
+      );
+
+      if (!result.rowCount) {
+        return res.status(404).send("Notification not found.");
+      }
+
+      const postId = result.rows[0].post_id;
+
+      if (!postId) {
+        return res.status(404).send("Post not found.");
+      }
+
+      // ======================================================
+      // GO DIRECTLY TO THE POST
+      // ======================================================
+
+      return res.redirect(
+        `/social/post?postId=${encodeURIComponent(String(postId))}`,
+      );
+    } catch (err) {
+      console.error("========================================");
+      console.error("NOTIFICATION CLICK ERROR");
+      console.error("message:", err.message);
+      console.error("code:", err.code);
+      console.error("detail:", err.detail);
+      console.error("stack:", err.stack);
+      console.error("========================================");
+
+      return res.status(500).send("Unable to open notification.");
+    }
+  },
+);
+
+//
 // ============================================================
 // EDIT POST
 // ============================================================

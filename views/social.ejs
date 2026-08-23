@@ -18,10 +18,32 @@
 <!-- ============================================================
      SOCIAL FEED
 ============================================================= -->
+<section class="py-5 bg-light border border-black mt-4 mb-4">
 <div style="background:#fff3cd;padding:10px;">
-  currentUserId: <%= currentUserId %>
-</div>
+  <div>
+    <strong>User ID:</strong>
+    <%= currentUserId %>
+  </div>
 
+  <div>
+    <strong>User Name:</strong>
+    <%= currentUserEmail %>
+  </div>
+</div>
+<hr>
+<div>
+  <h6> Click Search Post, Enter your user name , you will find all your posts</h6>
+</div>
+<a
+  href="/social/search"
+  class="social-search-link"
+>
+  🔍 Search Posts
+</a>
+
+
+<hr>
+</section>
 <section class="py-5 bg-light border border-black mt-4 mb-4">
 
   <div class="container">
@@ -99,7 +121,9 @@
 
 </div>
 
+ 
   <!-- VISIBILITY -->
+<!-- VISIBILITY -->
   <div class="social-visibility-options">
 
     <label>
@@ -119,7 +143,7 @@
         value="admin_only"
         
       >
-      <span>🔒 Only me + HN CPA 🔒</span>
+      <span>🔒 Only me + HN CPA/ 🔒</span>
     </label>
 
     <label>
@@ -132,7 +156,7 @@
     </label>
  
   </div>
-
+ <!-- VISIBILITY -->
   <div class="social-create-post-footer">
 
     <span class="social-character-count">
@@ -150,14 +174,7 @@
 
 </form>
  
-<a
-  href="/social/search"
-  class="social-search-link"
->
-  🔍 Search Posts
-</a>
 
-<p>Click search post then interact</p>
  
 <hr>
     <!-- ========================================================
@@ -171,7 +188,9 @@
         class="social-post"
         style="--social-post-color: <%= post.color || '#ffffff' %>;"
       >
-
+    <% if (index > 0) { %>
+      <hr class="social-post-separator">
+    <% } %>
         <!-- ====================================================
              POST HEADER
         ===================================================== -->
@@ -439,7 +458,9 @@
             (r.website || 0) +
             (r.email || 0) +
             (r.smile || 0) +
-            (r.victory || 0);
+            (r.victory || 0)+
+            (r.bell || 0)+
+            (r.trophy || 0);
         %>
 
 
@@ -464,6 +485,8 @@
               <% if (r.email) { %>📧<% } %>
               <% if (r.smile) { %>😊<% } %>
               <% if (r.victory) { %>✌️<% } %>
+                <% if (r.bell) { %>🔔<% } %>
+                  <% if (r.trophy) { %>🏆<% } %>
 
             </span>
 
@@ -646,10 +669,12 @@
                   ["website", "🌐", "Website"],
                   ["email", "📧", "Email"],
                   ["smile", "😊", "Smile"],
-                  ["victory", "✌️", "Victory"]
+                  ["victory", "✌️", "Victory"],
+                  ["bell", "🔔", "Bell"],
+                  ["trophy", "🏆", "Trophy"]
                 ];
               %>
-
+ 
               <% reactionList.forEach(([type, emoji, name]) => { %>
 
                 <form
@@ -2033,9 +2058,9 @@
 </section>
                         
 
+  
+
  
-
-
 
   <!--👇👆👆👇👆👇-->
   <!--👇👆👆👇👆👇-->
