@@ -1035,7 +1035,7 @@ app.post("/add-user", ensureAdmin, async (req, res) => {
         await db.query(
           `INSERT INTO my_user
            (email, pw, is_active, two_factor_enabled, group_id)
-           VALUES ($1, $2, $3, $4)`,
+           VALUES ($1, $2, $3, $4, $5)`,
           [email, hash, true, false, group_id],
         );
 
