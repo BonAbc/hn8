@@ -2671,7 +2671,7 @@ app.get("/notification", ensureAuthenticated, async (req, res) => {
 
       currentUserId: userId,
       currentUserEmail: userEmail,
-      defaultDate: today(),
+      defaultDate: getToday(),
     });
   } catch (err) {
     console.error("========================================");
