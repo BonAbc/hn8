@@ -230,18 +230,7 @@ const adminEmails = process.env.ADMIN_EMAILS
   ? process.env.ADMIN_EMAILS.split(",").map((email) => email.trim())
   : [];
 //
-function isEmailsAdmin(userEmail) {
-  const emailsAdmin = (process.env.EMAILS_ADMIN || "")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
 
-  return emailsAdmin.includes(
-    String(userEmail || "")
-      .trim()
-      .toLowerCase(),
-  );
-}
 //
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) return next();
@@ -3744,6 +3733,19 @@ app.post("/social/reaction", ensureAuthenticated, async (req, res) => {
   }
 });
 //
+function isEmailsAdmin(userEmail) {
+  const emailsAdmin = (process.env.EMAILS_ADMIN || "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+
+  return emailsAdmin.includes(
+    String(userEmail || "")
+      .trim()
+      .toLowerCase(),
+  );
+}
+//
 app.get("/social/search", ensureAuthenticated, async (req, res) => {
   try {
     // ========================================================
@@ -3777,8 +3779,10 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     console.log("SOCIAL SEARCH userGroupId =", userGroupId);
 
     // ========================================================
-    // ADMIN CHECK
-    // ADMIN_EMAILS comes from .env
+    // FULL ADMIN CHECK
+    // ADMIN_EMAILS
+    //
+    // Sees EVERYTHING
     // ========================================================
 
     const adminEmails = (process.env.ADMIN_EMAILS || "")
@@ -3786,11 +3790,18 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean);
 
+    const normalizedUserEmail = String(userEmail || "")
+      .trim()
+      .toLowerCase();
+
     const isAdmin =
-      !!userEmail && adminEmails.includes(userEmail.toLowerCase());
+      !!normalizedUserEmail && adminEmails.includes(normalizedUserEmail);
+
+    const userIsEmailsAdmin = isEmailsAdmin(userEmail);
 
     console.log("SOCIAL SEARCH userEmail =", userEmail);
     console.log("SOCIAL SEARCH isAdmin =", isAdmin);
+    console.log("SOCIAL SEARCH isEmailsAdmin =", userIsEmailsAdmin);
 
     // ========================================================
     // SEARCH INPUT
@@ -3802,44 +3813,32 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     // ========================================================
     // FILTER INPUT
     // ========================================================
-    //
-    // visibility = ADMIN ONLY
-    //
-    // dateFrom / dateTo = ALL USERS
-    //
-    // Normal users can search by date, but their existing
-    // visibility security remains enforced below.
-    // ========================================================
 
     let visibility = "";
 
     let dateFrom = (req.query.dateFrom || "").trim();
     let dateTo = (req.query.dateTo || "").trim();
 
-    // ========================================================
-    // ADMIN VISIBILITY FILTER
-    // ========================================================
-
     if (isAdmin) {
       visibility = (req.query.visibility || "").trim();
-
-      // ------------------------------------------------------
-      // ONLY THESE VISIBILITY VALUES ARE ALLOWED
-      // ------------------------------------------------------
 
       const allowedVisibility = ["loggedin users", "admin_only", "group_only"];
 
       if (!allowedVisibility.includes(visibility)) {
         visibility = "";
       }
+    } else if (userIsEmailsAdmin) {
+      visibility = (req.query.visibility || "").trim();
+
+      const allowedEmailsAdminVisibility = ["loggedin users", "group_only"];
+
+      if (!allowedEmailsAdminVisibility.includes(visibility)) {
+        visibility = "";
+      }
     }
 
     // ========================================================
     // DATE VALIDATION
-    // AVAILABLE TO ALL USERS
-    //
-    // Expected:
-    // YYYY-MM-DD
     // ========================================================
 
     const validDate = (value) => {
@@ -3858,25 +3857,25 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       );
     };
 
-    // --------------------------------------------------------
+    // ========================================================
     // VALIDATE DATE FROM
-    // --------------------------------------------------------
+    // ========================================================
 
     if (dateFrom && !validDate(dateFrom)) {
       dateFrom = "";
     }
 
-    // --------------------------------------------------------
+    // ========================================================
     // VALIDATE DATE TO
-    // --------------------------------------------------------
+    // ========================================================
 
     if (dateTo && !validDate(dateTo)) {
       dateTo = "";
     }
 
-    // --------------------------------------------------------
+    // ========================================================
     // INVALID DATE RANGE
-    // --------------------------------------------------------
+    // ========================================================
 
     if (dateFrom && dateTo && dateFrom > dateTo) {
       dateFrom = "";
@@ -3895,7 +3894,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
 
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
 
-    const limit = 10;
+    const limit = 6;
     const offset = (page - 1) * limit;
 
     // ========================================================
@@ -3905,68 +3904,42 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     const conditions = [];
     const values = [];
 
-    // ========================================================
-    // VISIBILITY SECURITY
-    // ========================================================
-    //
-    // ADMIN:
-    //   Can see everything.
-    //
-    // NORMAL USER:
-    //
-    //   everyone:
-    //      everyone can see
-    //
-    //   admin_only:
-    //      owner can see
-    //
-    //   group_only:
-    //      same group can see
-    //      owner can see
-    //
-    // Date filters do NOT bypass this security.
-    // ========================================================
-
     if (isAdmin) {
-      // ------------------------------------------------------
-      // ADMIN
-      // ------------------------------------------------------
-      //
-      // Admin has access to all visibility types.
-      //
-      // If an admin selected a visibility filter, that filter
-      // is added below.
-      // ------------------------------------------------------
+      // FULL ADMIN sees everything.
+      // No security condition needed.
+    } else if (userIsEmailsAdmin) {
+      const userIdParam = values.length + 1;
+
+      values.push(userId);
+
+      conditions.push(`
+        (
+          p.visibility = 'loggedin users'
+
+          OR p.visibility = 'group_only'
+
+          OR p.user_id = $${userIdParam}
+        )
+      `);
     } else {
       // ------------------------------------------------------
-      // CURRENT USER ID
+      // NORMAL USER
       // ------------------------------------------------------
 
       const userIdParam = values.length + 1;
 
       values.push(userId);
 
-      // ------------------------------------------------------
-      // CURRENT USER GROUP
-      // ------------------------------------------------------
-
       const groupIdParam = values.length + 1;
 
       values.push(userGroupId);
 
-      // ------------------------------------------------------
-      // NORMAL USER VISIBILITY SECURITY
-      // ------------------------------------------------------
-
       conditions.push(`
         (
-          -- Everyone
           p.visibility = 'loggedin users'
 
-          -- Owner can see own post
           OR p.user_id = $${userIdParam}
 
-          -- Same group can see group posts
           OR (
             p.visibility = 'group_only'
             AND $${groupIdParam}::INTEGER IS NOT NULL
@@ -3976,11 +3949,15 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       `);
     }
 
-    if (isAdmin && visibility) {
+    if ((isAdmin || userIsEmailsAdmin) && visibility) {
       values.push(visibility);
 
       conditions.push(`p.visibility = $${values.length}`);
     }
+
+    // ========================================================
+    // DATE FROM
+    // ========================================================
 
     if (dateFrom) {
       values.push(dateFrom);
@@ -3988,6 +3965,8 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       conditions.push(`p.created_at >= $${values.length}::DATE`);
     }
 
+    // ========================================================
+    // DATE TO
     // ========================================================
 
     if (dateTo) {
@@ -4051,15 +4030,11 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
 
     const totalPosts = Number(totalResult.rows[0]?.total) || 0;
 
-    // ========================================================
-    // ADMIN BREAKDOWN
-    // ========================================================
-
     let everyonePosts = 0;
     let userAdminPosts = 0;
     let groupPosts = 0;
 
-    if (isAdmin) {
+    if (isAdmin || userIsEmailsAdmin) {
       const breakdownResult = await db.query(
         `
         SELECT
@@ -4088,10 +4063,22 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
 
       everyonePosts = Number(breakdownResult.rows[0]?.everyone_posts) || 0;
 
-      userAdminPosts = Number(breakdownResult.rows[0]?.user_admin_posts) || 0;
-
       groupPosts = Number(breakdownResult.rows[0]?.group_posts) || 0;
+
+      // ------------------------------------------------------
+      // EMAILS_ADMIN must NEVER expose admin_only count.
+      // ------------------------------------------------------
+
+      if (isAdmin) {
+        userAdminPosts = Number(breakdownResult.rows[0]?.user_admin_posts) || 0;
+      } else {
+        userAdminPosts = 0;
+      }
     }
+
+    // ========================================================
+    // TOTAL PAGES
+    // ========================================================
 
     const totalPages = Math.max(Math.ceil(totalPosts / limit), 1);
 
@@ -4102,10 +4089,6 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     if (page > totalPages && totalPosts > 0) {
       const params = new URLSearchParams();
 
-      // ------------------------------------------------------
-      // SEARCH
-      // ------------------------------------------------------
-
       if (q) {
         params.set("q", q);
       }
@@ -4113,11 +4096,6 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       if (user) {
         params.set("user", user);
       }
-
-      // ------------------------------------------------------
-      // DATE FILTER
-      // AVAILABLE TO ALL USERS
-      // ------------------------------------------------------
 
       if (dateFrom) {
         params.set("dateFrom", dateFrom);
@@ -4127,11 +4105,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
         params.set("dateTo", dateTo);
       }
 
-      // ------------------------------------------------------
-      // ADMIN VISIBILITY FILTER
-      // ------------------------------------------------------
-
-      if (isAdmin && visibility) {
+      if ((isAdmin || userIsEmailsAdmin) && visibility) {
         params.set("visibility", visibility);
       }
 
@@ -4145,35 +4119,36 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     // ========================================================
 
     const limitParam = values.length + 1;
+
     const offsetParam = values.length + 2;
 
     const searchResult = await db.query(
       `
-      SELECT
-        p.id,
-        p.user_id,
-        p.content,
-        p.color,
-        p.visibility,
-         p.public_enabled,
-        p.created_at,
-        p.updated_at,
-        u.email
+        SELECT
+          p.id,
+          p.user_id,
+          p.content,
+          p.color,
+          p.visibility,
+          p.public_enabled,
+          p.created_at,
+          p.updated_at,
+          u.email
 
-      FROM social_posts p
+        FROM social_posts p
 
-      JOIN my_user u
-        ON u.id = p.user_id
+        JOIN my_user u
+          ON u.id = p.user_id
 
-      ${whereClause}
+        ${whereClause}
 
-      ORDER BY
-        p.created_at DESC,
-        p.id DESC
+        ORDER BY
+          p.created_at DESC,
+          p.id DESC
 
-      LIMIT $${limitParam}
-      OFFSET $${offsetParam}
-      `,
+        LIMIT $${limitParam}
+        OFFSET $${offsetParam}
+        `,
       [...values, limit, offset],
     );
 
@@ -4193,7 +4168,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       color: row.color,
 
       visibility: row.visibility,
-      // ADMIN PUBLIC PUBLISHING
+
       publicEnabled: row.public_enabled,
 
       createdAt: row.created_at,
@@ -4206,7 +4181,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     // ========================================================
 
     res.render("social-search", {
-      defaultDate: getToday(),
+      defaultDate: today(),
 
       posts,
 
@@ -4215,7 +4190,11 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       currentUserEmail: userEmail,
 
       isAdmin,
+
+      // IMPORTANT:
+      // EJS can use this if needed.
       isEmailsAdmin: userIsEmailsAdmin,
+
       // Search
       q,
       user,
@@ -4244,6 +4223,8 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     res.status(500).send("Unable to search social posts.");
   }
 });
+// ============================================================
+// SOCIAL SEARCH
 //
 // publish a few specific post ids
 app.post(
