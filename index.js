@@ -2207,7 +2207,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
 
       media: mediaResult.rows,
 
-      // currentUserId: userId,
+      currentUserId: userId,
       currentUserEmail: userEmail,
 
       isAdmin,
