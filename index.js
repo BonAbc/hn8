@@ -215,7 +215,7 @@ const saltRounds = 12;
 function isValidPassword(password) {
   const minLength = 8;
   const hasNumber = /\d/;
-  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/;
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|/<>]/;
   const hasUppercase = /[A-Z]/;
   if (!password || typeof password !== "string") return false;
   return (
