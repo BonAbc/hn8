@@ -2641,6 +2641,52 @@ button:hover {
 }
 /**/
 /*Pagination Social search page*/
+/*webtraffic page*/
+/* Mobile  */
+@media (max-width: 767.98px) {
+  .web-traffic-page .visitor-table,
+  .web-traffic-page .visitor-table tbody,
+  .web-traffic-page .visitor-table tr,
+  .web-traffic-page .visitor-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .web-traffic-page .visitor-table thead {
+    display: none;
+  }
+
+  .web-traffic-page .visitor-table tr {
+    margin-bottom: 15px;
+    border: 1px solid #dee2e6;
+    background: white;
+    padding: 10px;
+  }
+
+  .web-traffic-page .visitor-table td {
+    border: 0;
+    border-bottom: 1px solid #eee;
+    padding: 8px 5px 8px 45%;
+    position: relative;
+    min-height: 40px;
+    word-break: break-word;
+  }
+
+  .web-traffic-page .visitor-table td:last-child {
+    border-bottom: 0;
+  }
+
+  .web-traffic-page .visitor-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 5px;
+    top: 8px;
+    width: 40%;
+    font-weight: 700;
+  }
+}
+/*webtraffic page*/
+/* Mobile  */
 
 /* ============================================================
    END OF STYLESHEET

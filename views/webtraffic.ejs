@@ -10,10 +10,11 @@
   </form>
 
   <!---->
+   <h2 id="hm">Hoa Mai</h2>
+   <!--👇👆👆👇👆👇--> 
   <!---->
-  <h2 id="hm">Hoa Mai</h2>
- 
-  <section class="py-5 bg-light border border-black mt-4 mb-4">
+  <!--👇👆👆👇👆👇-->
+    <section class="py-5 bg-light border border-black mt-4 mb-4">
     <div class="container-fluid">
       <h2>Web Support</h2>
       <h4>
@@ -22,92 +23,142 @@
         <%= total %>
     </span>
 </h4>
-     <form
-  action="/web/traffic/test/delete-selected"
-  method="POST"
-  onsubmit="return confirmBulkDelete();"
+   </div>
+  </section>
+  <!--👇👆👆👇👆👇--> 
+  <!---->
+  <!--👇👆👆👇👆👇-->
+  <section class="web-traffic-page py-4 bg-light border border-black mt-4 mb-4">
+
+  <div class="container-fluid">
+
+    <form
+      action="/web/traffic/test/delete-selected"
+      method="POST"
+      onsubmit="return confirmBulkDelete();"
+    >
+
+      <input type="hidden" name="page" value="<%= page %>">
+
+      <button
+        type="submit"
+        class="btn btn-danger btn-sm rounded-0 mb-3"
+      >
+        Delete Selected
+      </button>
+
+      <div class="table-wrapper">
+
+        <table class="table table-striped table-hover table-bordered visitor-table">
+
+          <thead>
+            <tr>
+              <th>Select</th>
+              <th>ID</th>
+              <th>IP</th>
+              <th>Country</th>
+              <th>City</th>
+              <th>Timezone</th>
+              <th>Page</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+
+          <tbody id="list">
+
+            <% visitors.forEach(visitor => { %>
+
+              <tr>
+
+                <td data-label="Select">
+                  <input
+                    type="checkbox"
+                    name="ids"
+                    value="<%= visitor.id %>"
+                    class="visitor-checkbox"
+                  >
+                </td>
+
+                <td data-label="ID">
+                  <%= visitor.id %>
+                </td>
+
+                <td data-label="IP">
+                  <%= visitor.ip_address %>
+                </td>
+
+                <td data-label="Country">
+                  <%= visitor.country %>
+                </td>
+
+                <td data-label="City">
+                  <%= visitor.city %>
+                </td>
+
+                <td data-label="Timezone">
+                  <%= visitor.timezone %>
+                </td>
+
+                <td data-label="Page">
+                  <%= visitor.page %>
+                </td>
+
+                <td data-label="Time">
+                  <%= visitor.created_at %>
+                </td>
+
+              </tr>
+
+            <% }) %>
+ 
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </form>
+
+  </div>
+</section>
+  <!--👇👆👆👇👆👇--> 
+  <!---->
+  <!--👇👆👆👇👆👇-->
+ <!-- PAGINATION -->
+  <section class="py-5 bg-light border border-black mt-4 mb-4"> 
+   
+      
+<nav
+  class="social-search-pagination "
+  aria-label="Search results pagination"
 >
 
-  <input type="hidden" name="page" value="<%= page %>">
+  <!-- PREVIOUS -->
 
-  <div class="mb-2">
-    <button
-      type="submit"
-      class="btn btn-danger btn-sm rounded-0"
+  <% if (page > 1) { %>
+
+    <a
+      href="/web/traffic/test?page=<%= page - 1 %>"
+      class="social-search-page-button social-search-page-prev"
     >
-      Delete Selected
-    </button>
-  </div>
- 
-  <table class="table table-striped table-hover table-bordered">
-    <thead>
-      <tr>
-        <th>
-          <input
-            type="checkbox"
-            id="selectAll"
-            onclick="toggleAll(this)"
-          >
-        </th>
-        <th>ID</th>
-        <th>IP</th>
-        <th>Country</th>
-        <th>City</th>
-        <th>Timezone</th>
-        <th>Page</th>
-        <th>Time</th>
-      </tr>
-    </thead>
+      ← Previous
+    </a>
 
-    <tbody id="list">
+  <% } else { %>
 
-      <% visitors.forEach(visitor => { %>
+    <span
+      class="social-search-page-button social-search-page-prev disabled"
+    >
+      ← Previous
+    </span>
 
-        <tr>
-          <td>
-            <input
-              type="checkbox"
-              name="ids"
-              value="<%= visitor.id %>"
-              class="visitor-checkbox"
-            >
-          </td>
+  <% } %>
 
-          <td><%= visitor.id %></td>
-          <td><%= visitor.ip_address %></td>
-          <td><%= visitor.country %></td>
-          <td><%= visitor.city %></td>
-          <td><%= visitor.timezone %></td>
-          <td><%= visitor.page %></td>
-          <td><%= visitor.created_at %></td>
-        </tr>
 
-      <% }) %>
+  <!-- NUMBERED PAGES -->
 
-    </tbody>
-  </table>
+  <div class="social-search-page-numbers">
 
-</form>
-<div style="margin-top:20px;">
-<!-- PAGINATION -->
-<nav>
-  <ul class="pagination justify-content-center">
-
-    <!-- First -->
-    <li class="page-item <%= page === 1 ? 'disabled' : '' %>">
-      <a class="page-link rounded-0" href="/web/traffic/test?page=1">
-        First
-      </a>
-    </li>
-
-    <!-- Previous -->
-    <li class="page-item <%= page === 1 ? 'disabled' : '' %>">
-      <a class="page-link rounded-0" href="/web/traffice/test?page=<%= page - 1 %>">
-        Previous
-      </a>
-    </li>
-
-    <!-- Page Numbers -->
     <%
       let start = Math.max(1, page - 2);
       let end = Math.min(totalPages, page + 2);
@@ -115,67 +166,115 @@
       if (start > 1) {
     %>
 
-      <li class="page-item">
-        <a class="page-link rounded-0" href="/web/traffic/test?page=1">1</a>
-      </li>
+      <a
+        href="/web/traffic/test?page=1"
+        class="social-search-page-button social-search-page-number"
+        aria-label="Page 1"
+      >
+        1
+      </a>
 
       <% if (start > 2) { %>
-        <li class="page-item disabled">
-          <span class="page-link rounded-0">...</span>
-        </li>
+
+        <span
+          class="social-search-page-button social-search-page-number disabled"
+        >
+          ...
+        </span>
+
       <% } %>
 
     <% } %>
 
+
     <% for (let i = start; i <= end; i++) { %>
-      <li class="page-item <%= i === page ? 'active' : '' %>">
-        <a class="page-link rounded-0" href="/web/traffic/test?page=<%= i %>">
-          <%= i %>
-        </a>
-      </li>
+
+      <a
+        href="/web/traffic/test?page=<%= i %>"
+        class="social-search-page-button social-search-page-number <%= i === page ? 'active' : '' %>"
+        aria-label="Page <%= i %>"
+        <%= i === page ? 'aria-current="page"' : '' %>
+      >
+        <%= i %>
+      </a>
+
     <% } %>
+
 
     <% if (end < totalPages) { %>
 
       <% if (end < totalPages - 1) { %>
-        <li class="page-item disabled">
-          <span class="page-link rounded-0">...</span>
-        </li>
+
+        <span
+          class="social-search-page-button social-search-page-number disabled"
+        >
+          ...
+        </span>
+
       <% } %>
 
-      <li class="page-item">
-        <a class="page-link rounded-0" href="/web/traffic/test?page=<%= totalPages %>">
-          <%= totalPages %>
-        </a>
-      </li>
+      <a
+        href="/web/traffic/test?page=<%= totalPages %>"
+        class="social-search-page-button social-search-page-number"
+        aria-label="Page <%= totalPages %>"
+      >
+        <%= totalPages %>
+      </a>
 
     <% } %>
 
-    <!-- Next -->
-    <li class="page-item <%= page === totalPages ? 'disabled' : '' %>">
-      <a class="page-link rounded-0" href="/web/traffic/test?page=<%= page + 1 %>">
-        Next
-      </a>
-    </li>
-
-    <!-- Last -->
-    <li class="page-item <%= page === totalPages ? 'disabled' : '' %>">
-      <a class="page-link rounded-0" href="/web/traffic/test?page=<%= totalPages %>">
-        Last
-      </a>
-    </li> 
-
-  </ul>
-
-  <div class="text-center mt-2">
-    Page <strong><%= page %></strong> of <strong><%= totalPages %></strong>
   </div>
+
+
+  <!-- NEXT -->
+
+  <% if (page < totalPages) { %>
+
+    <a
+      href="/web/traffic/test?page=<%= page + 1 %>"
+      class="social-search-page-button social-search-page-next"
+    >
+      Next →
+    </a>
+
+  <% } else { %>
+
+    <span
+      class="social-search-page-button social-search-page-next disabled"
+    >
+      Next →
+    </span>
+
+  <% } %>
+
+
+  <!-- LAST -->
+
+  <% if (page < totalPages) { %>
+
+    <a
+      href="/web/traffic/test?page=<%= totalPages %>"
+      class="social-search-page-button social-search-page-next"
+    >
+      Last →
+    </a>
+
+  <% } else { %>
+
+    <span
+      class="social-search-page-button social-search-page-next disabled"
+    >
+      Last →
+    </span>
+
+  <% } %>
+
 </nav>
-<!-- PAGINATION -->
-</div>
-    </div>
-  </section>
- 
+</section>
+   <!-- PAGINATION -->
+   <!--👇👆👆👇👆👇--> 
+  <!---->
+  <!--👇👆👆👇👆👇-->
 </main>
 
 
