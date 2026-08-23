@@ -4181,7 +4181,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     // ========================================================
 
     res.render("social-search", {
-      defaultDate: today(),
+      defaultDate: getToday(),
 
       posts,
 
