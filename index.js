@@ -4215,7 +4215,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       currentUserEmail: userEmail,
 
       isAdmin,
-
+      isEmailsAdmin: userIsEmailsAdmin,
       // Search
       q,
       user,
