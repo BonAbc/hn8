@@ -29,7 +29,7 @@
     <label for="group_id" class="form-label fw-bold mb-1">
       Filter by Group ID:
     </label>
-
+ 
     <select
       name="group_id"
       id="group_id"
@@ -37,25 +37,14 @@
     >
       <option value="">All Groups</option>
 
-      <option value="1" <%= String(groupId) === "1" ? "selected" : "" %>>
-        Group 1
-      </option>
-
-      <option value="2" <%= String(groupId) === "2" ? "selected" : "" %>>
-        Group 2
-      </option>
-
-      <option value="3" <%= String(groupId) === "3" ? "selected" : "" %>>
-        Group 3
-      </option>
-
-      <option value="4" <%= String(groupId) === "4" ? "selected" : "" %>>
-        Group 4
-      </option>
-
-      <option value="5" <%= String(groupId) === "5" ? "selected" : "" %>>
-        Group 5
-      </option>
+      <% groups.forEach(group => { %>
+        <option
+          value="<%= group.group_id %>"
+          <%= String(groupId || "") === String(group.group_id) ? "selected" : "" %>
+        >
+          Group <%= group.group_id %>
+        </option>
+      <% }) %>
     </select>
   </div>
 
