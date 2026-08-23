@@ -231,6 +231,18 @@
                   🙂 <strong><%= post.reactions.smile %></strong>
                 </span>
               <% } %>
+              <% if (post.reactions.bell > 0) { %>
+  <span>
+    🔔 <strong><%= post.reactions.bell %></strong>
+  </span>
+<% } %>
+
+<% if (post.reactions.trophy > 0) { %>
+  <span>
+    🏆 <strong><%= post.reactions.trophy %></strong>
+  </span>
+<% } %>
+
 
               <% if (post.reactions.victory > 0) { %>
                 <span>
