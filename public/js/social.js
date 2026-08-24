@@ -256,9 +256,9 @@ function socialAddPostAttachment(file) {
     return false;
   }
 
-  // Maximum 10 MB per file
-  if (file.size > 10 * 1024 * 1024) {
-    alert(`${file.name} must be 10 MB or smaller.`);
+  // Maximum 100 MB per file
+  if (file.size > 100 * 1024 * 1024) {
+    alert(`${file.name} must be 100 MB or smaller.`);
 
     return false;
   }
@@ -269,11 +269,13 @@ function socialAddPostAttachment(file) {
     "image/png",
     "image/webp",
     "image/gif",
+    "video/mp4",
+    "video/webm",
     "application/pdf",
   ];
 
   if (!allowedTypes.includes(file.type)) {
-    alert("Only JPG, PNG, WebP, GIF, and PDF files are allowed.");
+    alert("Only JPG, PNG, WebP, GIF, MP4, WebM, and PDF files are allowed.");
 
     return false;
   }
