@@ -428,7 +428,22 @@ function socialRenderPostAttachments() {
 
       wrapper.appendChild(image);
     }
+    //
+    else if (attachment.file.type.startsWith("video/")) {
+      if (!attachment.objectUrl) {
+        attachment.objectUrl = URL.createObjectURL(attachment.file);
+      }
 
+      const video = document.createElement("video");
+
+      video.src = attachment.objectUrl;
+      video.className = "social-post-create-video";
+      video.controls = true;
+      video.preload = "metadata";
+      video.playsInline = true;
+
+      wrapper.appendChild(video);
+    }
     // ------------------------------------------------------
     // PDF PREVIEW
     // ------------------------------------------------------
