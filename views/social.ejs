@@ -15,9 +15,6 @@
   <!---->
   <!--👇👆👆👇👆👇-->
 
-<!-- ============================================================
-     SOCIAL FEED
-============================================================= -->
 <section class="py-5 bg-light border border-black mt-4 mb-4">
     <h2>Hieu Nguyen, CPA EA SAP Certified Professional</h2>
 <div style="background:#fff3cd;padding:10px;">
@@ -47,9 +44,7 @@
 
   <div class="container">
 
-    <!-- ========================================================
-         CREATE POST 
-    ========================================================= -->
+  
 
     <div class="social-create-post">
 
@@ -102,8 +97,7 @@
 <br>
   <!-- IMAGE -->
   <!-- FILES -->
-  <!-- IMAGE -->
-  <!-- FILES -->
+  
 <div class="social-file-upload">
 
  <label for="socialPostFiles">
@@ -250,19 +244,14 @@
  
        
 
-       <!-- ====================================================
-     POST OWNER / ADMIN CONTROLS
-===================================================== -->
+    
 
 <% if (
   currentUserId &&
   String(currentUserId) === String(post.userId)
 ) { %>
 
-  <!-- ==================================================
-       POST OWNER
-       Can EDIT + DELETE
-  =================================================== -->
+
 
   <div class="social-owner-actions">
 
@@ -319,7 +308,7 @@
     </details>
  
 
-    <!-- DELETE — OWNER -->
+  
     <form
       action="/social/post/delete"
       method="POST"
@@ -348,11 +337,7 @@
 
 <% } else if (isAdmin) { %>
 
-  <!-- ==================================================
-       ADMIN
-       Can DELETE ANY POST
-       Cannot EDIT other user's post
-  =================================================== -->
+
 
   <div class="social-owner-actions">
 
@@ -383,9 +368,7 @@
 
 <% } %>
 
-<!-- ====================================================
-     POST MEDIA
-===================================================== -->
+
 
 <% if (post.media && post.media.length > 0) { %>
 
@@ -472,16 +455,12 @@
 
 
  
-<!-- ====================================================
-     POST CONTENT
-===================================================== -->
+
 
 <div class="social-post-content">
   <%= post.content %>
 </div>
-        <!-- ====================================================
-             REACTION DATA
-        ===================================================== -->
+       
 
         <%
           const r = post.reactions || {};
@@ -503,9 +482,7 @@
         %>
 
 
-        <!-- ====================================================
-             REACTION SUMMARY
-        ===================================================== -->
+     
 
         <% if (totalReactions > 0) { %>
 
@@ -592,7 +569,7 @@
           </form>
 
 
-          <!-- DISLIKE -->
+        
 
           <form
             action="/social/reaction"
@@ -637,9 +614,7 @@
             </button>
 
           </form>
-
-
-          <!-- HEART -->
+       
 
           <form
             action="/social/reaction"
@@ -684,9 +659,7 @@
             </button>
 
           </form>
-
-
-          <!-- MORE REACTIONS -->
+         
 
           <details class="social-more">
 
@@ -765,7 +738,7 @@
           </details>
 
 
-          <!-- COMMENT -->
+       
 
           <button
             type="button"
@@ -776,9 +749,7 @@
           >
             💬 <span>Comment</span>
           </button>
-<!-- ====================================================
-     SHARE
-===================================================== -->
+
 
 <button
   type="button"
@@ -797,9 +768,7 @@
 
 
 
-        <!-- ====================================================
-             COMMENTS
-        ===================================================== -->
+       
 
         <div class="social-comments">
 
@@ -815,9 +784,6 @@
               <div class="social-comment-body">
 
 
-                <!-- =================================================
-                     COMMENT BUBBLE
-                ================================================== -->
 
                 <div class="social-comment-bubble">
 
@@ -936,9 +902,7 @@
                 <% } %>
 
 
-                <!-- =================================================
-                     COMMENT REACTIONS
-                ================================================== -->
+             
 
                 <%
                   const cr = comment.reactions || {};
@@ -947,7 +911,6 @@
                 <div class="social-comment-actions">
 
 
-                  <!-- LIKE -->
 
                   <form
                     action="/social/reaction"
@@ -975,7 +938,7 @@
                   </form>
 
 
-                  <!-- DISLIKE -->
+                 
 
                   <form
                     action="/social/reaction"
@@ -1087,7 +1050,7 @@
                   </form>
 
 
-                  <!-- REPLY -->
+                
 
                  <button
   type="button"
@@ -1103,9 +1066,7 @@
                 </div>
 
 
-                <!-- =================================================
-                     REPLY FORM
-                ================================================== -->
+                
 
                 <form
                   id="social-reply-<%= comment.id %>"
@@ -1146,20 +1107,13 @@
                 </form>
 
 
-                <!-- =================================================
-                     REPLIES
-                ================================================== -->
-<!-- =================================================
-     REPLIES
-================================================== -->
+          
 
 <div class="social-replies">
 
   <% (comment.replies || []).forEach(reply => { %>
 
-    <!-- =============================================
-         TOP-LEVEL REPLY C
-    ============================================== -->
+  
 
     <div class="social-reply">
 
@@ -1197,9 +1151,6 @@
         </div>
 
 
-        <!-- =========================================
-             REPLY C OWNER CONTROLS
-        ========================================== -->
 
         <% if (
           currentUserId &&
@@ -1288,9 +1239,7 @@
         <% } %>
 
 
-        <!-- =========================================
-             REPLY C REACTIONS
-        ========================================== -->
+      
 
         <% const rr = reply.reactions || {}; %>
 
@@ -1517,7 +1466,7 @@
           </form>
 
 
-          <!-- REPLY TO REPLY C -->
+          
 
        <button
   type="button"
@@ -1535,10 +1484,7 @@
         </div>
 
 
-        <!-- =========================================
-             REPLY D FORM
-             Hidden until Reply is clicked
-        ========================================== -->
+       
 
         <form
           id="social-reply-to-<%= reply.id %>"
