@@ -121,6 +121,20 @@
                       class="social-post-image"
                       loading="lazy"
                     >
+<% } else if (file.mimeType && file.mimeType.startsWith("video/")) { %>
+
+  <video
+    class="social-post-video"
+    controls
+    preload="metadata"
+    playsinline
+  >
+    <source
+      src="<%= file.fileUrl %>"
+      type="<%= file.mimeType %>"
+    >
+    Your browser does not support video playback.
+  </video>
 
                   <!-- ==========================================
                        PDF
@@ -242,7 +256,7 @@
     🏆 <strong><%= post.reactions.trophy %></strong>
   </span>
 <% } %>
-
+ 
 
               <% if (post.reactions.victory > 0) { %>
                 <span>
