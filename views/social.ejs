@@ -102,24 +102,33 @@
 <br>
   <!-- IMAGE -->
   <!-- FILES -->
+  <!-- IMAGE -->
+  <!-- FILES -->
 <div class="social-file-upload">
 
-  <label for="socialPostFiles">
-    📎 Add images or PDF
-  </label>
- 
-  <input
-    type="file"
-    id="socialPostFiles"
-    name="files"
-    accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
-    multiple
-  >
+ <label for="socialPostFiles">
+  📎 Add images, video, or PDF
+</label>
+
+<input
+  type="file"
+  id="socialPostFiles"
+  name="files"
+  accept="
+    image/jpeg,
+    image/png,
+    image/webp,
+    image/gif,
+    video/mp4,
+    video/webm,
+    application/pdf
+  "
+  multiple
+>
 
   <div id="socialPostFilesPreview"></div>
 
 </div>
-
  
   <!-- VISIBILITY -->
 <!-- VISIBILITY -->
@@ -399,6 +408,24 @@
           >
 
         <% } else if (
+          file.mimeType &&
+          file.mimeType.startsWith("video/")
+        ) { %>
+
+          <video
+            class="social-post-video"
+            controls
+            preload="metadata"
+            playsinline
+          >
+            <source
+              src="<%= file.fileUrl %>"
+              type="<%= file.mimeType %>"
+            >
+            Your browser does not support video playback.
+          </video>
+
+        <% } else if (
           file.mimeType === "application/pdf"
         ) { %>
 
@@ -407,7 +434,17 @@
             target="_blank"
             rel="noopener noreferrer"
           >
-            📄 <%= file.fileName %>
+            📄 <%= file.fileName || "PDF document" %>
+          </a>
+
+        <% } else { %>
+
+          <a
+            href="<%= file.fileUrl %>"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            📎 <%= file.fileName || "Attached file" %>
           </a>
 
         <% } %>
@@ -425,13 +462,16 @@
 
       </div>
 
-    <% }) %>
+    <% }); %>
 
   </div>
 
 <% } %>
 
+<!---->
 
+
+ 
 <!-- ====================================================
      POST CONTENT
 ===================================================== -->

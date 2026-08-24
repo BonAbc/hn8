@@ -2306,6 +2306,16 @@ app.post(
       const files = req.files || [];
 
       // ======================================================
+      const videoFiles = files.filter((file) =>
+        ["video/mp4", "video/webm"].includes(file.mimetype),
+      );
+
+      if (videoFiles.length > 1) {
+        return res.status(400).json({
+          success: false,
+          error: "You can upload only 1 video per post.",
+        });
+      }
       // VALIDATE CONTENT LENGTH
       // ======================================================
 
@@ -2595,6 +2605,7 @@ app.post(
     }
   },
 );
+//
 //
 app.get("/notification", ensureAuthenticated, async (req, res) => {
   try {

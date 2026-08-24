@@ -2,16 +2,6 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-// ======================================================
-// UPLOAD DIRECTORY
-// ======================================================
-//
-// Render Persistent Disk should be mounted at:
-// /var/data
-//
-// Files will be saved here:
-// /var/data/uploads/social
-//
 const uploadDir = "/uploads/social";
 
 if (!fs.existsSync(uploadDir)) {
@@ -46,7 +36,7 @@ const socialFileUpload = multer({
   storage,
 
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10 MB per file
+    fileSize: 100 * 1024 * 1024, // 100 MB per file
     files: 10, // maximum 10 files
   },
 
@@ -56,12 +46,16 @@ const socialFileUpload = multer({
       "image/png",
       "image/webp",
       "image/gif",
+      "video/webm",
+      "video/mp4",
       "application/pdf",
     ];
 
     if (!allowedTypes.includes(file.mimetype)) {
       return cb(
-        new Error("Only JPG, PNG, WebP, GIF, and PDF files are allowed."),
+        new Error(
+          "Only JPG, PNG, WebP, GIF,WebM, MP4, and PDF files are allowed.",
+        ),
       );
     }
 
