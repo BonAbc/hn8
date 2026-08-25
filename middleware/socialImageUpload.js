@@ -1,4 +1,3 @@
-//
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -7,19 +6,18 @@ import fs from "fs";
 // RENDER PERSISTENT DISK
 // ======================================================
 //
-// In Render, mount your Persistent Disk at:
+// Render Disk Mount Path:
 //
-// /var/data
+// /uploads
 //
-// Files will be stored at:
+// Therefore social files are stored at:
 //
-// /var/data/uploads/social
+// /uploads/social
 //
 // ======================================================
 
-const uploadDir = "/var/data/uploads/social";
+const uploadDir = "/uploads/social";
 
-// Make sure directory exists
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, {
     recursive: true,
@@ -54,10 +52,7 @@ const socialFileUpload = multer({
   storage,
 
   limits: {
-    // 100 MB maximum per file
     fileSize: 100 * 1024 * 1024,
-
-    // Maximum 10 files per post
     files: 10,
   },
 
