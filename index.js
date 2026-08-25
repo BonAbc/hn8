@@ -65,6 +65,17 @@ app.use(express.static("public"));
 
 app.set("view engine", "ejs");
 //
+app.get("/uploads/social/:filename", (req, res) => {
+  console.log("VIDEO REQUEST:", {
+    filename: req.params.filename,
+    range: req.headers.range,
+    userAgent: req.headers["user-agent"],
+  });
+
+  res.sendFile(`/uploads/social/${req.params.filename}`);
+});
+
+//
 app.use("/uploads", express.static("/uploads"));
 
 //
