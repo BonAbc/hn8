@@ -123,18 +123,19 @@
                     >
 <% } else if (file.mimeType && file.mimeType.startsWith("video/")) { %>
 
-  <video
-    class="social-post-video"
-    controls
-    preload="metadata"
-    playsinline
+<video
+  class="social-post-video"
+  controls
+  preload="auto"
+  playsinline
+  webkit-playsinline
+>
+  <source
+    src="<%= file.fileUrl %>"
+    type="<%= file.mimeType %>"
   >
-    <source
-      src="<%= file.fileUrl %>"
-      type="<%= file.mimeType %>"
-    >
-    Your browser does not support video playback.
-  </video>
+  Your browser does not support video playback.
+</video>
 
                   <!-- ==========================================
                        PDF
