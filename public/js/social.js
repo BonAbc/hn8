@@ -838,8 +838,10 @@ if (!socialPostCreateForm) {
         xhr.open("POST", socialPostCreateForm.action, true);
 
         // -----------------------------------------------
-        // UPLOAD PROGRESS
+        // UPLOAD PROGRESS + TIME REMAINING
         // -----------------------------------------------
+
+        const uploadStartTime = Date.now();
 
         xhr.upload.addEventListener("progress", (event) => {
           if (!event.lengthComputable || !hasVideo) {
@@ -848,10 +850,32 @@ if (!socialPostCreateForm) {
 
           const percent = Math.round((event.loaded / event.total) * 100);
 
-          console.log(`UPLOAD PROGRESS: ${percent}%`);
+          const elapsedSeconds = (Date.now() - uploadStartTime) / 1000;
+
+          const uploadSpeed =
+            elapsedSeconds > 0 ? event.loaded / elapsedSeconds : 0;
+
+          const remainingBytes = event.total - event.loaded;
+
+          const remainingSeconds =
+            uploadSpeed > 0 ? remainingBytes / uploadSpeed : 0;
+
+          let timeText = "";
+
+          if (remainingSeconds > 60) {
+            timeText = ` — ~${Math.ceil(remainingSeconds / 60)} min left`;
+          } else if (remainingSeconds > 0) {
+            timeText = ` — ~${Math.ceil(remainingSeconds)} sec left`;
+          }
+
+          console.log(
+            `UPLOAD PROGRESS: ${percent}% — ${Math.ceil(
+              remainingSeconds,
+            )} sec remaining`,
+          );
 
           if (socialPostCreateButton) {
-            const uploadText = `⏳ Uploading video... ${percent}%`;
+            const uploadText = `⏳ Uploading video... ${percent}%${timeText}`;
 
             if (socialPostCreateButton.tagName === "INPUT") {
               socialPostCreateButton.value = uploadText;
@@ -861,10 +885,7 @@ if (!socialPostCreateForm) {
           }
         });
 
-        // -----------------------------------------------
         // SERVER RESPONSE
-        // -----------------------------------------------
-
         xhr.addEventListener("load", () => {
           console.log("SERVER STATUS:", xhr.status);
 
@@ -875,18 +896,12 @@ if (!socialPostCreateForm) {
           });
         });
 
-        // -----------------------------------------------
         // NETWORK ERROR
-        // -----------------------------------------------
-
         xhr.addEventListener("error", () => {
           reject(new Error("Network error while uploading the post."));
         });
 
-        // -----------------------------------------------
         // ABORT
-        // -----------------------------------------------
-
         xhr.addEventListener("abort", () => {
           reject(new Error("Upload was cancelled."));
         });
