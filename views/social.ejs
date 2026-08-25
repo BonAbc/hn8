@@ -81,7 +81,7 @@
   class="social-create-post-form"
   id="socialCreatePostForm"
 >
- 
+  
   <div
     id="socialPostCreateComposer"
     class="social-post-create-composer"
@@ -119,7 +119,7 @@
   "
   multiple
 >
-
+ 
   <div id="socialPostFilesPreview"></div>
 
 </div>
@@ -395,18 +395,21 @@
           file.mimeType.startsWith("video/")
         ) { %>
 
+         
           <video
-            class="social-post-video"
-            controls
-            preload="metadata"
-            playsinline
-          >
-            <source
-              src="<%= file.fileUrl %>"
-              type="<%= file.mimeType %>"
-            >
-            Your browser does not support video playback.
-          </video>
+  class="social-post-video"
+  controls
+  preload="metadata"
+  playsinline
+  poster="/images/video-placeholder.jpg"
+>
+  <source
+    src="<%= file.fileUrl %>"
+    type="<%= file.mimeType %>"
+  >
+  Your browser does not support video playback.
+</video>
+
 
         <% } else if (
           file.mimeType === "application/pdf"
