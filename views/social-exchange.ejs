@@ -122,11 +122,13 @@
                       loading="lazy"
                     >
 <% } else if (file.mimeType && file.mimeType.startsWith("video/")) { %>
-
+ 
 <video
   class="social-post-video"
   controls
-  preload="auto"
+  controlsList="nodownload noplaybackrate"
+  disablePictureInPicture
+  preload="metadata"
   playsinline
   webkit-playsinline
 >

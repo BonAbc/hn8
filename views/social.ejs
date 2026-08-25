@@ -399,10 +399,12 @@
           <video
   class="social-post-video"
   controls
-  preload="auto"
+  controlsList="nodownload noplaybackrate"
+  disablePictureInPicture
+  preload="metadata"
   playsinline
  
->
+> 
   <source
     src="<%= file.fileUrl %>"
     type="<%= file.mimeType %>"
