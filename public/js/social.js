@@ -26,13 +26,9 @@ function socialFocusComment(postId) {
 function socialShowReply(commentId, parentReplyId = null) {
   let form;
 
-  // Reply to COMMENT
   if (!parentReplyId) {
     form = document.getElementById("social-reply-" + commentId);
-  }
-
-  // Reply to REPLY
-  else {
+  } else {
     form = document.getElementById("social-reply-to-" + parentReplyId);
   }
 
@@ -82,34 +78,27 @@ function socialEditPost(postId) {
 
   if (trimmed.length > 5000) {
     alert("Your post is too long. Please keep it under 5000 characters.");
-
     return;
   }
 
   const form = document.createElement("form");
 
   form.method = "POST";
-
   form.action = "/social/post/edit";
 
   const id = document.createElement("input");
 
   id.type = "hidden";
-
   id.name = "id";
-
   id.value = postId;
 
   const text = document.createElement("input");
 
   text.type = "hidden";
-
   text.name = "content";
-
   text.value = trimmed;
 
   form.appendChild(id);
-
   form.appendChild(text);
 
   document.body.appendChild(form);
@@ -159,17 +148,13 @@ document.addEventListener("click", async (event) => {
       throw new Error(data.error || "Unable to share post.");
     }
 
-    // Native phone/browser share
     if (navigator.share) {
       await navigator.share({
         title: "Social Post",
         text: "Check out this post",
         url: data.url,
       });
-    }
-
-    // Clipboard fallback
-    else if (navigator.clipboard) {
+    } else if (navigator.clipboard) {
       await navigator.clipboard.writeText(data.url);
 
       button.innerHTML = "✓ <span>Link copied</span>";
@@ -187,10 +172,8 @@ document.addEventListener("click", async (event) => {
       button.innerHTML = originalHTML;
     }, 2000);
   } catch (err) {
-    // User closed native share dialog
     if (err.name === "AbortError") {
       button.innerHTML = originalHTML;
-
       return;
     }
 
@@ -225,16 +208,25 @@ const socialPostFilesPreview = document.getElementById(
   "socialPostFilesPreview",
 );
 
-const socialPostCreateForm = socialPostCreateComposer?.closest("form");
+// IMPORTANT:
+// Find the form directly by ID instead of using
+// composer.closest("form").
+//
+// This prevents the submit handler from failing
+// when the JavaScript loads before the HTML structure
+// is completely available.
+
+const socialPostCreateForm = document.getElementById("socialCreatePostForm");
 
 // ============================================================
 // ATTACHMENTS
 //
-// Every attachment is:
+// Every attachment:
 //
 // {
 //   file: File,
-//   mediaText: ""
+//   mediaText: "",
+//   objectUrl: null
 // }
 // ============================================================
 
@@ -252,14 +244,12 @@ function socialAddPostAttachment(file) {
   // Maximum 10 files
   if (socialPostAttachments.length >= 10) {
     alert("You can upload a maximum of 10 files.");
-
     return false;
   }
 
   // Maximum 100 MB per file
   if (file.size > 100 * 1024 * 1024) {
     alert(`${file.name} must be 100 MB or smaller.`);
-
     return false;
   }
 
@@ -280,12 +270,18 @@ function socialAddPostAttachment(file) {
     return false;
   }
 
-  // Add file with its own media text
+  console.log("ADDING ATTACHMENT:", {
+    name: file.name,
+    type: file.type,
+    size: file.size,
+  });
+
   socialPostAttachments.push({
     file: file,
     mediaText: "",
     objectUrl: null,
   });
+
   socialRenderPostAttachments();
 
   return true;
@@ -299,30 +295,25 @@ if (socialPostFilesInput) {
   socialPostFilesInput.addEventListener("change", () => {
     const files = Array.from(socialPostFilesInput.files || []);
 
+    console.log("FILES SELECTED:", files);
+
     for (const file of files) {
       if (socialPostAttachments.length >= 10) {
         alert("You can upload a maximum of 10 files.");
-
         break;
       }
 
       socialAddPostAttachment(file);
     }
 
-    // Clear the real file input.
+    // Clear the actual input.
     //
-    // Files are now stored in
+    // The files are safely stored in
     // socialPostAttachments.
-    //
-    // This also allows the user to
-    // select the same file again.
+
     socialPostFilesInput.value = "";
   });
 }
-
-// ============================================================
-// PASTE IMAGE
-// ============================================================
 
 // ============================================================
 // PASTE IMAGE INTO SOCIAL POST
@@ -376,8 +367,6 @@ if (socialPostCreateComposer) {
 
       socialAddPostAttachment(pastedFile);
 
-      // Do not allow the browser to paste the image
-      // into the contenteditable area.
       event.preventDefault();
 
       break;
@@ -424,11 +413,15 @@ function socialRenderPostAttachments() {
 
       image.src = attachment.objectUrl;
       image.alt = attachment.file.name;
+
       image.className = "social-post-create-pasted-image";
 
       wrapper.appendChild(image);
     }
-    //
+
+    // ------------------------------------------------------
+    // VIDEO PREVIEW
+    // ------------------------------------------------------
     else if (attachment.file.type.startsWith("video/")) {
       if (!attachment.objectUrl) {
         attachment.objectUrl = URL.createObjectURL(attachment.file);
@@ -437,13 +430,16 @@ function socialRenderPostAttachments() {
       const video = document.createElement("video");
 
       video.src = attachment.objectUrl;
+
       video.className = "social-post-create-video";
+
       video.controls = true;
       video.preload = "metadata";
       video.playsInline = true;
 
       wrapper.appendChild(video);
     }
+
     // ------------------------------------------------------
     // PDF PREVIEW
     // ------------------------------------------------------
@@ -470,14 +466,7 @@ function socialRenderPostAttachments() {
     wrapper.appendChild(fileName);
 
     // ------------------------------------------------------
-    // INDIVIDUAL TEXT FIELD
-    // ------------------------------------------------------
-    //
-    // THIS BELONGS TO THIS FILE ONLY
-    //
-    // image 0 → mediaText 0
-    // image 1 → mediaText 1
-    // image 2 → mediaText 2
+    // INDIVIDUAL MEDIA TEXT
     // ------------------------------------------------------
 
     const mediaText = document.createElement("textarea");
@@ -493,7 +482,9 @@ function socialRenderPostAttachments() {
     mediaText.maxLength = 5000;
 
     mediaText.addEventListener("input", () => {
-      socialPostAttachments[index].mediaText = mediaText.value;
+      if (socialPostAttachments[index]) {
+        socialPostAttachments[index].mediaText = mediaText.value;
+      }
     });
 
     wrapper.appendChild(mediaText);
@@ -511,7 +502,6 @@ function socialRenderPostAttachments() {
     removeButton.textContent = "Remove";
 
     removeButton.addEventListener("click", () => {
-      // Release image object URL
       const attachment = socialPostAttachments[index];
 
       if (attachment?.objectUrl) {
@@ -537,9 +527,18 @@ function socialRenderPostAttachments() {
 // SUBMIT SOCIAL POST
 // ============================================================
 
-if (socialPostCreateForm) {
+if (!socialPostCreateForm) {
+  console.error("SOCIAL POST FORM NOT FOUND: #socialCreatePostForm");
+} else {
+  console.log("SOCIAL POST FORM FOUND:", socialPostCreateForm);
+
   socialPostCreateForm.addEventListener("submit", async (event) => {
     event.preventDefault();
+
+    console.log("================================");
+    console.log("POST BUTTON CLICKED");
+    console.log("ATTACHMENTS:", socialPostAttachments);
+    console.log("================================");
 
     // ------------------------------------------------------
     // MAIN POST CONTENT
@@ -556,6 +555,7 @@ if (socialPostCreateForm) {
     // ------------------------------------------------------
 
     if (!content && socialPostAttachments.length === 0) {
+      alert("Post cannot be empty.");
       return;
     }
 
@@ -570,7 +570,7 @@ if (socialPostCreateForm) {
     }
 
     // ------------------------------------------------------
-    // FORM DATA
+    // CREATE FORM DATA
     // ------------------------------------------------------
 
     const formData = new FormData();
@@ -592,33 +592,52 @@ if (socialPostCreateForm) {
     formData.append("visibility", visibility?.value || "loggedin users");
 
     // ------------------------------------------------------
-    // FILES + INDIVIDUAL MEDIA TEXT
-    // ------------------------------------------------------
-    //
-    // IMPORTANT:
-    //
-    // files[0]      ↔ media_text[0]
-    // files[1]      ↔ media_text[1]
-    // files[2]      ↔ media_text[2]
-    //
-    // Multer receives the files.
-    // Express receives media_text.
+    // FILES + MEDIA TEXT
     // ------------------------------------------------------
 
-    socialPostAttachments.forEach((attachment) => {
+    socialPostAttachments.forEach((attachment, index) => {
+      console.log("ADDING FILE TO FORM DATA:", {
+        index,
+        name: attachment.file.name,
+        type: attachment.file.type,
+        size: attachment.file.size,
+      });
+
       formData.append("files", attachment.file, attachment.file.name);
 
       formData.append("media_text", attachment.mediaText || "");
     });
 
     // ------------------------------------------------------
+    // DEBUG FORM DATA
+    // ------------------------------------------------------
+
+    for (const [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log("FORM DATA FILE:", {
+          key,
+          name: value.name,
+          type: value.type,
+          size: value.size,
+        });
+      } else {
+        console.log("FORM DATA:", key, value);
+      }
+    }
+
+    // ------------------------------------------------------
     // SEND TO EXPRESS
     // ------------------------------------------------------
+
     try {
+      console.log("SENDING POST TO:", socialPostCreateForm.action);
+
       const response = await fetch(socialPostCreateForm.action, {
         method: "POST",
         body: formData,
       });
+
+      console.log("SERVER STATUS:", response.status);
 
       const data = await response.json();
 
@@ -632,19 +651,20 @@ if (socialPostCreateForm) {
         throw new Error("Post created but postId is missing.");
       }
 
-      const postUrl = `/social/post?postId=${encodeURIComponent(String(data.postId))}`;
+      const postUrl = `/social/post?postId=${encodeURIComponent(
+        String(data.postId),
+      )}`;
 
       console.log("REDIRECTING TO:", postUrl);
 
       window.location.assign(postUrl);
     } catch (error) {
-      console.error("Create social post error:", error);
+      console.error("CREATE SOCIAL POST ERROR:", error);
 
       alert(error.message || "Unable to create post.");
     }
   });
 }
-//
 
 // ============================================================
 // SAVED POSTS — DYNAMIC IMAGE RATIO
@@ -691,15 +711,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-//
+
+// ============================================================
+// SOCIAL REPLY BUTTON
+// ============================================================
+
 document.addEventListener("click", (event) => {
   const button = event.target.closest(".social-reply-button");
 
   if (!button) return;
 
   const commentId = button.dataset.commentId;
+
   const parentReplyId = button.dataset.parentReplyId || null;
 
   socialShowReply(commentId, parentReplyId);
 });
-//
