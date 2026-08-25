@@ -816,28 +816,83 @@ if (!socialPostCreateForm) {
         attachment.file.type.startsWith("video/"),
       );
 
-      if (hasVideo) {
-        if (socialPostCreateButton) {
-          if (socialPostCreateButton.tagName === "INPUT") {
-            socialPostCreateButton.value = "⏳ Uploading video...";
-          } else {
-            socialPostCreateButton.innerHTML = "⏳ Uploading video...";
-          }
+      if (hasVideo && socialPostCreateButton) {
+        const uploadText = "⏳ Uploading video... 0%";
+
+        if (socialPostCreateButton.tagName === "INPUT") {
+          socialPostCreateButton.value = uploadText;
+        } else {
+          socialPostCreateButton.innerHTML = uploadText;
         }
       }
 
       // ----------------------------------------------------
-      // SEND TO EXPRESS
+      // SEND TO EXPRESS WITH UPLOAD PROGRESS
       // ----------------------------------------------------
 
       console.log("SENDING POST TO:", socialPostCreateForm.action);
 
-      const response = await fetch(socialPostCreateForm.action, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
 
-      console.log("SERVER STATUS:", response.status);
+        xhr.open("POST", socialPostCreateForm.action, true);
+
+        // -----------------------------------------------
+        // UPLOAD PROGRESS
+        // -----------------------------------------------
+
+        xhr.upload.addEventListener("progress", (event) => {
+          if (!event.lengthComputable || !hasVideo) {
+            return;
+          }
+
+          const percent = Math.round((event.loaded / event.total) * 100);
+
+          console.log(`UPLOAD PROGRESS: ${percent}%`);
+
+          if (socialPostCreateButton) {
+            const uploadText = `⏳ Uploading video... ${percent}%`;
+
+            if (socialPostCreateButton.tagName === "INPUT") {
+              socialPostCreateButton.value = uploadText;
+            } else {
+              socialPostCreateButton.innerHTML = uploadText;
+            }
+          }
+        });
+
+        // -----------------------------------------------
+        // SERVER RESPONSE
+        // -----------------------------------------------
+
+        xhr.addEventListener("load", () => {
+          console.log("SERVER STATUS:", xhr.status);
+
+          resolve({
+            ok: xhr.status >= 200 && xhr.status < 300,
+            status: xhr.status,
+            text: () => Promise.resolve(xhr.responseText),
+          });
+        });
+
+        // -----------------------------------------------
+        // NETWORK ERROR
+        // -----------------------------------------------
+
+        xhr.addEventListener("error", () => {
+          reject(new Error("Network error while uploading the post."));
+        });
+
+        // -----------------------------------------------
+        // ABORT
+        // -----------------------------------------------
+
+        xhr.addEventListener("abort", () => {
+          reject(new Error("Upload was cancelled."));
+        });
+
+        xhr.send(formData);
+      });
 
       // ----------------------------------------------------
       // READ RESPONSE SAFELY
