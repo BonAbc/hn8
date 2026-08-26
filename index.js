@@ -87,12 +87,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 app.set("views", path.join(__dirname, "views"));
 const nowChicago = DateTime.now().setZone("America/Chicago").toISO();
-// Refer to Line 19
+
 console.log(nowChicago);
 
-//change to https
-// Canonical URL Middleware (Production Only)
-// ----------------------------
 function getCanonicalUrl(req) {
   const baseUrl = process.env.BASE_URL || "https://hieuncpa.com";
   return `${baseUrl}${req.originalUrl}`;
@@ -197,9 +194,6 @@ authenticator.options = {
 };
 
 const token = authenticator.generate(secret);
-// use in Line 591 : generate(secret: variable can change)👆👆👆👆👆
-console.log("Secret:", secret);
-console.log("Token:", token);
 
 const authLimiter = rateLimit({
   windowMs: 30 * 60 * 1000,
@@ -427,9 +421,6 @@ app.get("/logout", (req, res, next) => {
 passport.use(
   new Strategy(async function verify(username, password, cb) {
     try {
-      console.log("🔐 PASSPORT STRATEGY START");
-      console.log("Username:", username);
-
       const result = await db.query("SELECT * FROM my_user WHERE email = $1", [
         username,
       ]);
@@ -444,7 +435,7 @@ passport.use(
 
       const user = result.rows[0];
 
-      console.log("✅ USER FOUND:", user.id);
+      console.log("✅ USER FOUND:");
       console.log("is_active:", user.is_active);
 
       if (!user.is_active) {
@@ -517,15 +508,10 @@ app.post("/login", (req, res, next) => {
 
   console.log("");
   console.log("========================================");
-  console.log("🔥 LOGIN POST HIT:", requestId);
-  console.log("Email:", req.body.email);
-  console.log("========================================");
 
   passport.authenticate("local", (err, user, info) => {
     console.log("🔥 PASSPORT RESULT:", requestId);
     console.log("err:", err);
-    console.log("user:", user ? user.id : user);
-    console.log("info:", info);
 
     if (err) {
       console.error("❌ PASSPORT ERROR:", err);
@@ -569,12 +555,6 @@ app.post("/login", (req, res, next) => {
       });
     }
 
-    // ==========================================
-    // EXISTING USER WITH 2FA
-    // ==========================================
-
-    console.log("🔐 EXISTING USER WITH 2FA");
-
     req.session.pending2FAUser = user.id;
     req.session.pendingSetupUser = null;
     req.session.isAdmin = adminEmails.includes(user.email);
@@ -584,9 +564,6 @@ app.post("/login", (req, res, next) => {
         console.error("❌ SESSION SAVE ERROR:", sessionErr);
         return next(sessionErr);
       }
-
-      console.log("✅ 2FA SESSION SAVED");
-      console.log("➡️ REDIRECTING TO /2fa/verify-2fa");
 
       return res.redirect("/2fa/verify-2fa");
     });
@@ -607,10 +584,6 @@ app.get("/enable-2fa", (req, res) => {
 //Add 2FA Page 👌👌👌👌👌👌
 app.post("/enable-2fa", async (req, res, next) => {
   try {
-    console.log("🔥 ENABLE 2FA POST HIT");
-    console.log("Session ID:", req.sessionID);
-    console.log("pendingSetupUser:", req.session.pendingSetupUser);
-
     const userId = req.session.pendingSetupUser;
 
     if (!userId) {
@@ -634,10 +607,6 @@ app.post("/enable-2fa", async (req, res, next) => {
 
     const email = result.rows[0].email;
 
-    console.log("✅ USER:", userId);
-    console.log("📧 EMAIL:", email);
-
-    // Generate unique TOTP secret
     const secret = authenticator.generateSecret();
 
     // Save secret
@@ -652,15 +621,10 @@ app.post("/enable-2fa", async (req, res, next) => {
 
     console.log("✅ 2FA SECRET SAVED");
 
-    // Generate OTP URI
     const otpauth = authenticator.keyuri(email, "HieuCPA", secret);
-
-    console.log("✅ OTP AUTH URI CREATED");
 
     // Generate QR
     const qrCode = await QRCode.toDataURL(otpauth);
-
-    console.log("✅ QR CODE CREATED");
 
     return res.render("setup-2fa.ejs", {
       defaultDate: getToday(),
@@ -688,10 +652,6 @@ app.post("/verify-2fa-setup", async (req, res, next) => {
   try {
     const userId = req.session.pendingSetupUser;
     const code = String(req.body.code || "").trim();
-
-    console.log("🔥 VERIFY INITIAL 2FA");
-    console.log("User ID:", userId);
-    console.log("Code received:", code ? "YES" : "NO");
 
     if (!userId) {
       return res.redirect("/login");
@@ -739,8 +699,6 @@ app.post("/verify-2fa-setup", async (req, res, next) => {
       });
     }
 
-    console.log("✅ INITIAL 2FA CODE VALID");
-
     await db.query(
       `
       UPDATE my_user
@@ -753,9 +711,6 @@ app.post("/verify-2fa-setup", async (req, res, next) => {
       [userId],
     );
 
-    console.log("✅ 2FA ENABLED FOR USER:", userId);
-
-    // Now authenticate the user
     req.logIn(user, (err) => {
       if (err) {
         console.error("❌ req.logIn ERROR:", err);
@@ -773,9 +728,6 @@ app.post("/verify-2fa-setup", async (req, res, next) => {
           return next(sessionErr);
         }
 
-        console.log("✅ INITIAL 2FA COMPLETE");
-        console.log("✅ USER LOGGED IN:", user.id);
-
         return res.redirect("/");
       });
     });
@@ -784,10 +736,7 @@ app.post("/verify-2fa-setup", async (req, res, next) => {
     return next(err);
   }
 });
-//Add 2FA Page 👌👌👌👌👌👌
-//Add 2FA Page 👌👌👌👌👌👌
-//Add 2FA Page 👌👌👌👌👌👌
-// Add 2FA Page 👌👌👌👌👌👌
+
 app.get("/2fa/verify-2fa", (req, res) => {
   res.render("verify-2fa.ejs", {
     defaultDate: getToday(),
@@ -958,9 +907,6 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
   req.logIn(user, (err) => {
     if (err) {
       console.log("=== 2fa-verify-2fa ===");
-      console.log("Authenticated:", req.isAuthenticated());
-
-      console.log("Session ID:", req.sessionID);
 
       console.log("User:", req.user);
 
@@ -968,10 +914,6 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
     }
     // Recompute admin status
     req.session.isAdmin = adminEmails.includes(user.email);
-    console.log("User:", req.user);
-    console.log("User Admin:", req.user.isAdmin);
-    console.log("Session Admin:", req.session.isAdmin);
-    // Remove temporary 2FA session
 
     delete req.session.pending2FAUser;
 
@@ -1008,7 +950,6 @@ app.post("/reset-2fa", ensureAdmin, async (req, res) => {
 //
 //Admin add user 👆
 app.get("/add-user", ensureAdmin, (req, res) => {
-  console.log("ENTERED /add-user");
   res.render("adduserbyadmin.ejs", { defaultDate: getToday() });
 });
 //
@@ -1073,8 +1014,6 @@ app.get("/users/loveme", ensureAdmin, async (req, res) => {
     const offset = (page - 1) * limit;
 
     const groupId = req.query.group_id || "";
-
-    console.log("GROUP FILTER:", groupId);
 
     // Get group IDs dynamically
     const groupsResult = await db.query(`
@@ -1507,9 +1446,7 @@ app.post("/complete-password-change", async (req, res) => {
       `,
       [hashedPassword, pending.userId],
     );
-    console.log("Updated user:", pending.userId);
-    console.log("New hash:", hashedPassword);
-    // Clear recovery session
+
     delete req.session.pendingPasswordChange;
 
     return res.redirect("/login");
@@ -1569,9 +1506,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
     const postId = req.query.postId ? parseInt(req.query.postId, 10) : null;
 
     console.log("========================================");
-    console.log("SOCIAL GET");
-    console.log("userId:", userId);
-    console.log("userEmail:", userEmail);
+
     console.log("postId:", postId);
 
     if (req.query.postId && !Number.isInteger(postId)) {
@@ -1597,14 +1532,6 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       userGroupId = groupResult.rows[0]?.group_id ?? null;
     }
 
-    console.log("SOCIAL userGroupId:", userGroupId);
-
-    // ========================================================
-    // ADMIN CHECK
-    //
-    // ADMIN_EMAILS = FULL ADMIN
-    // ========================================================
-
     const adminEmails = (process.env.ADMIN_EMAILS || "")
       .split(",")
       .map((email) => email.trim().toLowerCase())
@@ -1628,12 +1555,6 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
     // ========================================================
 
     const emailsAdmin = isEmailsAdmin(userEmail);
-
-    console.log("SOCIAL emailsAdmin:", emailsAdmin);
-
-    // ========================================================
-    // PAGINATION
-    // ========================================================
 
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
 
@@ -1792,8 +1713,6 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         [postId, userId, isAdmin, emailsAdmin, userGroupId],
       );
 
-      console.log("SINGLE POST RESULT:", postsResult.rows);
-
       if (!postsResult.rowCount) {
         return res.status(404).send("Post not found.");
       }
@@ -1945,12 +1864,6 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         created_at ASC,
         id ASC
     `);
-
-    console.log("SOCIAL MEDIA COUNT:", mediaResult.rows.length);
-
-    // ========================================================
-    // MEDIA LOOKUP
-    // ========================================================
 
     const mediaByPost = {};
 
@@ -2276,10 +2189,7 @@ app.post(
 
       console.log("========================================");
       console.log("CREATE SOCIAL POST");
-      console.log("userId:", userId);
-      console.log("userEmail:", userEmail);
-      console.log("body:", req.body);
-      console.log("files:", req.files);
+
       console.log("========================================");
 
       // ======================================================
@@ -2300,25 +2210,9 @@ app.post(
 
       const userIsEmailsAdmin = isEmailsAdmin(userEmail);
 
-      console.log("CREATE POST isAdmin:", isAdmin);
-      console.log("CREATE POST isEmailsAdmin:", userIsEmailsAdmin);
-
-      // ======================================================
-      // POST CONTENT
-      // ======================================================
-
       const content = String(req.body.content || "").trim();
 
-      // ======================================================
-      // FILES
-      // ======================================================
-
       const files = req.files || [];
-
-      // ======================================================
-      // VIDEO LIMIT
-      // ONLY 1 VIDEO PER POST
-      // ======================================================
 
       const videoFiles = files.filter((file) =>
         ["video/mp4", "video/webm"].includes(file.mimetype),
@@ -2330,10 +2224,6 @@ app.post(
           error: "You can upload only 1 video per post.",
         });
       }
-
-      // ======================================================
-      // VALIDATE CONTENT
-      // ======================================================
 
       if (content.length > 5000) {
         return res.status(400).json({
@@ -2383,28 +2273,11 @@ app.post(
         visibility = "loggedin users";
       }
 
-      console.log("REQUESTED VISIBILITY:", requestedVisibility);
-      console.log("FINAL VISIBILITY:", visibility);
-
       // ======================================================
       // RANDOM COLOR
       // ======================================================
 
       const color = colors[Math.floor(Math.random() * colors.length)];
-
-      // ======================================================
-      // DIRECTORIES
-      //
-      // Render Persistent Disk:
-      //
-      // /uploads
-      //
-      // Social files:
-      // /uploads/social
-      //
-      // Video thumbnails:
-      // /uploads/social/thumbnails
-      // ======================================================
 
       const uploadDir = "/uploads/social";
       const thumbnailDir = "/uploads/social/thumbnails";
@@ -2416,10 +2289,6 @@ app.post(
       await fs.promises.mkdir(thumbnailDir, {
         recursive: true,
       });
-
-      // ======================================================
-      // BEGIN TRANSACTION
-      // ======================================================
 
       await client.query("BEGIN");
 
@@ -2447,12 +2316,6 @@ app.post(
 
       console.log("NEW POST ID:", postId);
 
-      // ======================================================
-      // SPECIAL ADMIN NOTIFICATIONS
-      //
-      // SPECIAL_ADMIN_EMAILS controls who receives them.
-      // ======================================================
-
       const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
         .split(",")
         .map((email) => email.trim().toLowerCase())
@@ -2467,8 +2330,6 @@ app.post(
           `,
           [specialAdminEmails],
         );
-
-        console.log("SPECIAL ADMINS FOUND:", specialAdminsResult.rows.length);
 
         for (const specialAdmin of specialAdminsResult.rows) {
           await client.query(
@@ -2623,10 +2484,7 @@ app.post(
 
       console.log("========================================");
       console.log("POST CREATED SUCCESSFULLY");
-      console.log("postId:", postId);
-      console.log("visibility:", visibility);
-      console.log("files:", files.length);
-      console.log("url:", postUrl);
+
       console.log("========================================");
 
       return res.status(200).json({
@@ -2908,9 +2766,6 @@ app.post("/social/post/delete", ensureAuthenticated, async (req, res) => {
     const isAdmin =
       !!userEmail && adminEmails.includes(userEmail.toLowerCase());
 
-    console.log("DELETE POST userId =", userId);
-    console.log("DELETE POST userEmail =", userEmail);
-    console.log("DELETE POST isAdmin =", isAdmin);
     console.log("DELETE POST postId =", postId);
 
     // ========================================================
@@ -3152,8 +3007,7 @@ app.post("/social/comment/edit", ensureAuthenticated, async (req, res) => {
 
     console.log("========================================");
     console.log("SOCIAL COMMENT EDIT");
-    console.log("userId:", userId);
-    console.log("commentId:", commentId);
+
     console.log("content:", content);
 
     if (!userId) {
@@ -3344,11 +3198,7 @@ app.post("/social/comment/reply", ensureAuthenticated, async (req, res) => {
   try {
     console.log("========================================");
     console.log("SOCIAL REPLY REQUEST");
-    console.log("userId:", req.user?.id);
-    console.log("body:", req.body);
-    console.log("commentId:", req.body?.commentId);
-    console.log("parentReplyId:", req.body?.parentReplyId);
-    console.log("reply:", req.body?.reply);
+
     console.log("========================================");
 
     const userId = req.user?.id;
@@ -3488,10 +3338,6 @@ app.post("/social/reply/edit", ensureAuthenticated, async (req, res) => {
     const content = (req.body.content || "").trim();
 
     console.log("========================================");
-    console.log("SOCIAL REPLY EDIT");
-    console.log("userId:", userId);
-    console.log("replyId:", replyId);
-    console.log("content:", content);
 
     // ----------------------------------------------------------
     // LOGIN
@@ -3869,10 +3715,6 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       !!normalizedUserEmail && adminEmails.includes(normalizedUserEmail);
 
     const userIsEmailsAdmin = isEmailsAdmin(userEmail);
-
-    console.log("SOCIAL SEARCH userEmail =", userEmail);
-    console.log("SOCIAL SEARCH isAdmin =", isAdmin);
-    console.log("SOCIAL SEARCH isEmailsAdmin =", userIsEmailsAdmin);
 
     // ========================================================
     // SEARCH INPUT
@@ -4796,19 +4638,12 @@ app.post(
   },
 );
 
-// ============================================================
-
 app.post(
   "/social/post/disable-public-reactions/:postId",
   ensureAuthenticated,
   async (req, res) => {
     try {
       const userEmail = req.user?.email || null;
-
-      // ========================================================
-      // ADMIN CHECK
-      // ADMIN = ADMIN_EMAILS from .env
-      // ========================================================
 
       const adminEmails = (process.env.ADMIN_EMAILS || "")
         .split(",")
@@ -4822,10 +4657,6 @@ app.post(
       const isAdmin =
         !!normalizedUserEmail && adminEmails.includes(normalizedUserEmail);
 
-      // ========================================================
-      // SPECIAL ADMIN CHECK
-      // ========================================================
-
       const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
         .split(",")
         .map((email) => email.trim().toLowerCase())
@@ -4834,12 +4665,6 @@ app.post(
       const isSpecialAdmin =
         !!normalizedUserEmail &&
         specialAdminEmails.includes(normalizedUserEmail);
-
-      // ========================================================
-      // ADMIN OR SPECIAL ADMIN ONLY
-      //
-      // EMAIL ADMIN IS NOT USED
-      // ========================================================
 
       if (!isAdmin && !isSpecialAdmin) {
         return res.status(403).send("Admin access required.");
@@ -4874,30 +4699,8 @@ app.post(
   },
 );
 
-//
-// ============================================================
-// PUBLIC REACTION PAGE
-// NON-LOGGED-IN USERS
-// ============================================================
-
-// ============================================================
-// PUBLIC POST REACTION PAGE
-// PUBLIC / NON-LOGGED-IN USERS
-// PAGINATED
-// ============================================================
-
-// ============================================================
-// PUBLIC POST REACTION PAGE
-// PUBLIC / NON-LOGGED-IN USERS
-// PAGINATED
-// ============================================================
-
 app.get("/public/post/connect", async (req, res) => {
   try {
-    // ==========================================================
-    // PUBLIC VISITOR ID
-    // ==========================================================
-
     let publicVisitorId = req.cookies.publicVisitorId;
 
     if (!publicVisitorId) {
@@ -4911,17 +4714,9 @@ app.get("/public/post/connect", async (req, res) => {
       });
     }
 
-    // ==========================================================
-    // PAGINATION
-    // ==========================================================
-
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
 
     const limit = 2;
-
-    // ==========================================================
-    // TOTAL PUBLIC + REACTION-ENABLED POSTS
-    // ==========================================================
 
     const countResult = await db.query(`
       SELECT COUNT(*)::INTEGER AS total
@@ -4935,18 +4730,9 @@ app.get("/public/post/connect", async (req, res) => {
 
     const totalPages = Math.max(Math.ceil(totalPosts / limit), 1);
 
-    // ==========================================================
-    // PREVENT PAGE FROM GOING PAST LAST PAGE
-    // ==========================================================
-
     const currentPage = Math.min(page, totalPages);
 
     const offset = (currentPage - 1) * limit;
-
-    // ==========================================================
-    // POSTS
-    // ONLY PUBLIC + REACTION ENABLED
-    // ==========================================================
 
     const postResult = await db.query(
       `
@@ -5051,7 +4837,6 @@ app.get("/public/post/connect", async (req, res) => {
         heart: reactionCounts[key]?.heart || 0,
         horse: reactionCounts[key]?.horse || 0,
         rose: reactionCounts[key]?.rose || 0,
-        fly: reactionCounts[key]?.fly || 0,
         call: reactionCounts[key]?.call || 0,
         website: reactionCounts[key]?.website || 0,
         email: reactionCounts[key]?.email || 0,
@@ -5059,6 +4844,7 @@ app.get("/public/post/connect", async (req, res) => {
         bell: reactionCounts[key]?.bell || 0,
         trophy: reactionCounts[key]?.trophy || 0,
         victory: reactionCounts[key]?.victory || 0,
+        checkmark: reactionCounts[key]?.checkmark || 0,
       };
     }
 
@@ -5187,11 +4973,6 @@ app.get("/public/post/connect", async (req, res) => {
 });
 //
 app.post("/public/post/connect", async (req, res) => {
-  console.log("========================================");
-  console.log("🔥 PUBLIC CONNECT POST HIT");
-  console.log("BODY:", req.body);
-  console.log("COOKIES:", req.cookies);
-  console.log("========================================");
   try {
     // ========================================================
     // PUBLIC VISITOR ID
@@ -5230,7 +5011,6 @@ app.post("/public/post/connect", async (req, res) => {
       "heart",
       "horse",
       "rose",
-      "fly",
       "call",
       "website",
       "email",
@@ -5238,6 +5018,7 @@ app.post("/public/post/connect", async (req, res) => {
       "bell",
       "trophy",
       "victory",
+      "checkmark",
     ];
 
     if (!allowedReactions.includes(reactionType)) {
@@ -5246,10 +5027,6 @@ app.post("/public/post/connect", async (req, res) => {
         message: "Invalid reaction type.",
       });
     }
-
-    // ========================================================
-    // VERIFY POST
-    // ========================================================
 
     const postResult = await db.query(
       `
@@ -5309,9 +5086,6 @@ app.post("/public/post/connect", async (req, res) => {
     });
   }
 });
-//
-
-//social make public
 
 function canDownloadSocialMedia(userEmail) {
   const downloadAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
