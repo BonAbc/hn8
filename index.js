@@ -5187,6 +5187,11 @@ app.get("/public/post/connect", async (req, res) => {
 });
 //
 app.post("/public/post/connect", async (req, res) => {
+  console.log("========================================");
+  console.log("🔥 PUBLIC CONNECT POST HIT");
+  console.log("BODY:", req.body);
+  console.log("COOKIES:", req.cookies);
+  console.log("========================================");
   try {
     // ========================================================
     // PUBLIC VISITOR ID
