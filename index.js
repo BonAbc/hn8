@@ -4792,6 +4792,7 @@ app.get("/public/post/connect", async (req, res) => {
         victory: reactionCounts[key]?.victory || 0,
         checkmark: reactionCounts[key]?.checkmark || 0,
         buom_xinh: reactionCounts[key]?.buom_xinh || 0,
+        eagle: reactionCounts[key]?.eagle || 0,
       };
     }
 
@@ -4967,6 +4968,7 @@ app.post("/public/post/connect", async (req, res) => {
       "victory",
       "checkmark",
       "buom_xinh",
+      "eagle",
     ];
     console.log("PUBLIC REACTION:", {
       ip: req.ip,
