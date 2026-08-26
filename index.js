@@ -35,6 +35,7 @@ import socialFileUpload from "./middleware/socialImageUpload.js";
 import methodOverride from "method-override";
 
 import ffmpeg from "fluent-ffmpeg";
+import fs from "fs";
 
 dotenv.config();
 
@@ -72,7 +73,12 @@ app.set("view engine", "ejs");
 app.use("/uploads", express.static("/uploads"));
 
 //
+const thumbnailDir = "/uploads/social/thumbnails";
 
+if (!fs.existsSync(thumbnailDir)) {
+  fs.mkdirSync(thumbnailDir, { recursive: true });
+}
+//
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 app.set("views", path.join(__dirname, "views"));
@@ -1926,6 +1932,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         mime_type,
         file_size,
         media_text,
+         thumbnail_url,
         created_at
 
       FROM social_post_media
@@ -1956,6 +1963,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         mimeType: row.mime_type,
         fileSize: row.file_size,
         mediaText: row.media_text,
+        thumbnailUrl: row.thumbnail_url || null,
         createdAt: row.created_at,
       });
     }
@@ -2272,8 +2280,6 @@ app.post(
 
       // ======================================================
       // ADMIN CHECK
-      //
-      // ADMIN_EMAILS
       // ======================================================
 
       const adminEmails = (process.env.ADMIN_EMAILS || "")
@@ -2287,10 +2293,6 @@ app.post(
 
       const isAdmin =
         !!normalizedUserEmail && adminEmails.includes(normalizedUserEmail);
-
-      // ======================================================
-      // HN CPA / EMAILS ADMIN CHECK
-      // ======================================================
 
       const userIsEmailsAdmin = isEmailsAdmin(userEmail);
 
@@ -2309,7 +2311,6 @@ app.post(
 
       const files = req.files || [];
 
-      // ======================================================
       const videoFiles = files.filter((file) =>
         ["video/mp4", "video/webm"].includes(file.mimetype),
       );
@@ -2320,7 +2321,9 @@ app.post(
           error: "You can upload only 1 video per post.",
         });
       }
-      // VALIDATE CONTENT LENGTH
+
+      // ======================================================
+      // VALIDATE CONTENT
       // ======================================================
 
       if (content.length > 5000) {
@@ -2330,13 +2333,7 @@ app.post(
         });
       }
 
-      // ======================================================
-      // NO CONTENT + NO FILES
-      // ======================================================
-
       if (!content && files.length === 0) {
-        console.log("POST REJECTED: empty post");
-
         return res.status(400).json({
           success: false,
           error: "Post cannot be empty.",
@@ -2361,38 +2358,11 @@ app.post(
         req.body.visibility || "loggedin users",
       ).trim();
 
-      // ======================================================
-      // SECURITY RULES
-      //
-      // ADMIN:
-      //   loggedin users
-      //   group_only
-      //   admin_only
-      //
-      // HN CPA / EMAILS_ADMIN:
-      //   loggedin users
-      //   group_only
-      //   admin_only
-      //
-      // NORMAL USER:
-      //   loggedin users
-      //   group_only
-      //   NOT admin_only
-      // ======================================================
-
       let visibility = "loggedin users";
 
       if (requestedVisibility === "admin_only") {
-        // ADMIN and HN CPA can create admin_only posts.
         if (isAdmin || userIsEmailsAdmin) {
           visibility = "admin_only";
-        } else {
-          // Prevent normal users from forging admin_only.
-          console.log(
-            "POST VISIBILITY BLOCKED: normal user attempted admin_only",
-          );
-
-          visibility = "loggedin users";
         }
       } else if (requestedVisibility === "group_only") {
         visibility = "group_only";
@@ -2408,6 +2378,137 @@ app.post(
       // ======================================================
 
       const color = colors[Math.floor(Math.random() * colors.length)];
+
+      // ======================================================
+      // DIRECTORIES
+      // ======================================================
+
+      const uploadDir = "/uploads/social";
+      const thumbnailDir = "/uploads/social/thumbnails";
+
+      await fs.promises.mkdir(uploadDir, {
+        recursive: true,
+      });
+
+      await fs.promises.mkdir(thumbnailDir, {
+        recursive: true,
+      });
+
+      // ======================================================
+      // VIDEO CONVERSION INFORMATION
+      // ======================================================
+
+      const processedVideo = new Map();
+
+      for (const videoFile of videoFiles) {
+        const originalPath = videoFile.path;
+
+        const baseName = path.basename(
+          videoFile.filename,
+          path.extname(videoFile.filename),
+        );
+
+        const convertedFilename = `${baseName}-converted.mp4`;
+
+        const thumbnailFilename = `${baseName}-thumbnail.jpg`;
+
+        const outputPath = path.join(uploadDir, convertedFilename);
+
+        const thumbnailPath = path.join(thumbnailDir, thumbnailFilename);
+
+        console.log("========================================");
+        console.log("VIDEO PROCESSING");
+        console.log("Original:", originalPath);
+        console.log("Converted:", outputPath);
+        console.log("Thumbnail:", thumbnailPath);
+        console.log("========================================");
+
+        // ====================================================
+        // FFMPEG CONVERT
+        // ====================================================
+
+        await new Promise((resolve, reject) => {
+          ffmpeg(originalPath)
+            .videoCodec("libx264")
+            .audioCodec("aac")
+            .outputOptions([
+              "-pix_fmt yuv420p",
+              "-profile:v main",
+              "-level 4.0",
+              "-movflags +faststart",
+              "-preset veryfast",
+              "-r 30",
+              "-ar 48000",
+              "-ac 2",
+            ])
+            .format("mp4")
+            .on("start", (commandLine) => {
+              console.log("FFmpeg started:");
+              console.log(commandLine);
+            })
+            .on("progress", (progress) => {
+              console.log(
+                `FFmpeg progress: ${Math.round(progress.percent || 0)}%`,
+              );
+            })
+            .on("end", () => {
+              console.log("FFmpeg conversion complete.");
+              resolve();
+            })
+            .on("error", (err, stdout, stderr) => {
+              console.error("FFmpeg conversion error:", err.message);
+
+              console.error("FFmpeg stderr:", stderr);
+
+              reject(err);
+            })
+            .save(outputPath);
+        });
+
+        // ====================================================
+        // CREATE THUMBNAIL
+        // ====================================================
+
+        await new Promise((resolve, reject) => {
+          ffmpeg(outputPath)
+            .screenshots({
+              timestamps: ["1"],
+              filename: thumbnailFilename,
+              folder: thumbnailDir,
+              size: "1280x?",
+            })
+            .on("end", () => {
+              console.log("Video thumbnail created:", thumbnailPath);
+
+              resolve();
+            })
+            .on("error", (err) => {
+              console.error("Thumbnail generation error:", err.message);
+
+              reject(err);
+            });
+        });
+
+        // ====================================================
+        // REMOVE ORIGINAL
+        // ====================================================
+
+        try {
+          await fs.promises.unlink(originalPath);
+
+          console.log("Original video removed:", originalPath);
+        } catch (unlinkError) {
+          console.warn("Could not remove original video:", unlinkError.message);
+        }
+
+        processedVideo.set(videoFile.filename, {
+          filename: convertedFilename,
+          fileUrl: `/uploads/social/${convertedFilename}`,
+          thumbnailUrl: `/uploads/social/thumbnails/${thumbnailFilename}`,
+          mimeType: "video/mp4",
+          fileSize: (await fs.promises.stat(outputPath)).size,
+        });
+      }
 
       // ======================================================
       // BEGIN TRANSACTION
@@ -2440,13 +2541,7 @@ app.post(
       console.log("NEW POST ID:", postId);
 
       // ======================================================
-      // NOTIFY SPECIAL ADMINS
-      //
-      // SPECIAL_ADMIN_EMAILS ONLY
-      //
-      // This is completely separate from:
-      //   ADMIN_EMAILS
-      //   EMAILS_ADMIN
+      // SPECIAL ADMIN NOTIFICATIONS
       // ======================================================
 
       const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
@@ -2463,8 +2558,6 @@ app.post(
           `,
           [specialAdminEmails],
         );
-
-        console.log("SPECIAL ADMINS FOUND:", specialAdminsResult.rows.length);
 
         for (const specialAdmin of specialAdminsResult.rows) {
           await client.query(
@@ -2488,15 +2581,7 @@ app.post(
             `,
             [specialAdmin.id, userId, postId, "A new social post was created."],
           );
-
-          console.log("SOCIAL NOTIFICATION CREATED:", {
-            recipientUserId: specialAdmin.id,
-            actorUserId: userId,
-            postId,
-          });
         }
-      } else {
-        console.log("SPECIAL_ADMIN_EMAILS is empty. No notifications created.");
       }
 
       // ======================================================
@@ -2506,19 +2591,42 @@ app.post(
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
-        console.log("SAVING FILE:", {
-          filename: file.filename,
-          originalname: file.originalname,
-          mimetype: file.mimetype,
-          size: file.size,
-        });
+        let fileUrl = `/uploads/social/${file.filename}`;
+        let fileName = file.originalname;
+        let mimeType = file.mimetype;
+        let fileSize = file.size;
+        let thumbnailUrl = null;
 
-        const fileUrl = `/uploads/social/${file.filename}`;
+        // ====================================================
+        // VIDEO
+        // ====================================================
+
+        if (["video/mp4", "video/webm"].includes(file.mimetype)) {
+          const processed = processedVideo.get(file.filename);
+
+          if (!processed) {
+            throw new Error("Processed video information was not found.");
+          }
+
+          fileUrl = processed.fileUrl;
+          fileName = processed.filename;
+          mimeType = processed.mimeType;
+          fileSize = processed.fileSize;
+          thumbnailUrl = processed.thumbnailUrl;
+        }
+
+        // ====================================================
+        // MEDIA TEXT
+        // ====================================================
 
         const mediaText =
           typeof mediaTexts[i] === "string"
             ? mediaTexts[i].trim().slice(0, 5000)
             : "";
+
+        // ====================================================
+        // INSERT MEDIA
+        // ====================================================
 
         await client.query(
           `
@@ -2529,20 +2637,29 @@ app.post(
             file_name,
             mime_type,
             file_size,
-            media_text
+            media_text,
+            thumbnail_url
           )
           VALUES
-          ($1, $2, $3, $4, $5, $6)
+          ($1, $2, $3, $4, $5, $6, $7)
           `,
           [
             postId,
             fileUrl,
-            file.originalname,
-            file.mimetype,
-            file.size,
+            fileName,
+            mimeType,
+            fileSize,
             mediaText,
+            thumbnailUrl,
           ],
         );
+
+        console.log("MEDIA SAVED:", {
+          postId,
+          fileUrl,
+          thumbnailUrl,
+          mimeType,
+        });
       }
 
       // ======================================================
@@ -2584,7 +2701,7 @@ app.post(
       }
 
       // ======================================================
-      // ERROR LOG
+      // ERROR
       // ======================================================
 
       console.error("========================================");
@@ -2596,13 +2713,9 @@ app.post(
       console.error("stack:", err.stack);
       console.error("========================================");
 
-      // ======================================================
-      // ERROR RESPONSE
-      // ======================================================
-
       return res.status(500).json({
         success: false,
-        error: err.message || "Unable to create post.",
+        error: err.message || "Unable to create social post.",
       });
     } finally {
       client.release();
@@ -4368,7 +4481,6 @@ app.post(
 //publish a few specific post ids : show need ejs here
 app.get("/social/exchange", async (req, res) => {
   try {
-    //
     // ========================================================
     // PAGINATION
     // ========================================================
@@ -4377,16 +4489,12 @@ app.get("/social/exchange", async (req, res) => {
     const limit = 2;
 
     const countResult = await db.query(`
-      SELECT
-        COUNT(*)::INTEGER AS total
-
+      SELECT COUNT(*)::INTEGER AS total
       FROM social_posts
-
-      WHERE
-        public_enabled = TRUE
+      WHERE public_enabled = TRUE
     `);
 
-    const totalPosts = countResult.rows[0].total;
+    const totalPosts = Number(countResult.rows[0]?.total) || 0;
 
     const totalPages = Math.max(Math.ceil(totalPosts / limit), 1);
 
@@ -4394,7 +4502,9 @@ app.get("/social/exchange", async (req, res) => {
 
     const offset = (currentPage - 1) * limit;
 
-    //
+    // ========================================================
+    // PUBLIC POSTS
+    // ========================================================
 
     const result = await db.query(
       `
@@ -4404,6 +4514,7 @@ app.get("/social/exchange", async (req, res) => {
         p.content,
         p.color,
         p.visibility,
+        p.public_enabled,
         p.created_at,
         p.updated_at,
         u.email
@@ -4427,40 +4538,48 @@ app.get("/social/exchange", async (req, res) => {
     );
 
     // ========================================================
+    // POST IDS ON THIS PAGE
+    // ========================================================
+
+    const postIds = result.rows.map((row) => row.id);
+
+    // ========================================================
     // POST REACTIONS
-    // EXISTING REACTIONS — POST LEVEL ONLY
-    // ========================================================
-
-    const reactionsResult = await db.query(`
-      SELECT
-        target_id,
-        reaction_type,
-        COUNT(*)::INTEGER AS count
-
-      FROM social_reactions
-
-      WHERE
-        target_type = 'post'
-
-      GROUP BY
-        target_id,
-        reaction_type
-    `);
-
-    // ========================================================
-    // REACTION COUNTS LOOKUP
+    // ONLY FOR POSTS ON THIS PAGE
     // ========================================================
 
     const reactionCounts = {};
 
-    for (const row of reactionsResult.rows) {
-      const key = String(row.target_id);
+    if (postIds.length > 0) {
+      const reactionsResult = await db.query(
+        `
+        SELECT
+          target_id,
+          reaction_type,
+          COUNT(*)::INTEGER AS count
 
-      if (!reactionCounts[key]) {
-        reactionCounts[key] = {};
+        FROM social_reactions
+
+        WHERE
+          target_type = 'post'
+          AND target_id = ANY($1::INTEGER[])
+
+        GROUP BY
+          target_id,
+          reaction_type
+        `,
+        [postIds],
+      );
+
+      for (const row of reactionsResult.rows) {
+        const key = String(row.target_id);
+
+        if (!reactionCounts[key]) {
+          reactionCounts[key] = {};
+        }
+
+        reactionCounts[key][row.reaction_type] = Number(row.count);
       }
-
-      reactionCounts[key][row.reaction_type] = Number(row.count);
     }
 
     // ========================================================
@@ -4489,51 +4608,56 @@ app.get("/social/exchange", async (req, res) => {
 
     // ========================================================
     // MEDIA
-    // ========================================================
-
-    const mediaResult = await db.query(`
-      SELECT
-        id,
-        post_id,
-        file_url,
-        file_name,
-        mime_type,
-        file_size,
-        media_text,
-        created_at
-
-      FROM social_post_media
-
-      ORDER BY
-        created_at ASC,
-        id ASC
-    `);
-
-    // ========================================================
-    // MEDIA LOOKUP
+    // ONLY FOR POSTS ON THIS PAGE
     // ========================================================
 
     const mediaByPost = {};
 
-    for (const row of mediaResult.rows) {
-      if (!mediaByPost[row.post_id]) {
-        mediaByPost[row.post_id] = [];
-      }
+    if (postIds.length > 0) {
+      const mediaResult = await db.query(
+        `
+        SELECT
+          id,
+          post_id,
+          file_url,
+          file_name,
+          mime_type,
+          file_size,
+          media_text,
+          created_at
 
-      mediaByPost[row.post_id].push({
-        id: row.id,
-        postId: row.post_id,
-        fileUrl: row.file_url,
-        fileName: row.file_name,
-        mimeType: row.mime_type,
-        fileSize: row.file_size,
-        mediaText: row.media_text,
-        createdAt: row.created_at,
-      });
+        FROM social_post_media
+
+        WHERE
+          post_id = ANY($1::INTEGER[])
+
+        ORDER BY
+          created_at ASC,
+          id ASC
+        `,
+        [postIds],
+      );
+
+      for (const row of mediaResult.rows) {
+        if (!mediaByPost[row.post_id]) {
+          mediaByPost[row.post_id] = [];
+        }
+
+        mediaByPost[row.post_id].push({
+          id: row.id,
+          postId: row.post_id,
+          fileUrl: row.file_url,
+          fileName: row.file_name,
+          mimeType: row.mime_type,
+          fileSize: row.file_size,
+          mediaText: row.media_text,
+          createdAt: row.created_at,
+        });
+      }
     }
 
     // ========================================================
-    // POSTS
+    // BUILD POSTS
     // ========================================================
 
     const posts = result.rows.map((row) => ({
@@ -4543,8 +4667,8 @@ app.get("/social/exchange", async (req, res) => {
       content: row.content,
       color: row.color,
       visibility: row.visibility,
+      publicEnabled: row.public_enabled,
 
-      // CHICAGO LOCAL TIME
       createdAt: row.created_at
         ? DateTime.fromJSDate(new Date(row.created_at))
             .setZone("America/Chicago")
@@ -4559,17 +4683,16 @@ app.get("/social/exchange", async (req, res) => {
 
       media: mediaByPost[row.id] || [],
 
-      // ALL EXISTING POST-LEVEL REACTIONS
       reactions: getPostReactions(row.id),
     }));
 
     // ========================================================
-    // PAGINATION NAVIGATION
+    // PAGINATION
     // ========================================================
 
     const pagination = {
       page: currentPage,
-      limit: limit,
+      limit,
 
       totalPosts,
       totalPages,
@@ -4593,6 +4716,7 @@ app.get("/social/exchange", async (req, res) => {
     });
   } catch (err) {
     console.error("PUBLIC POSTS ERROR:", err);
+
     return res.status(500).send("Unable to load public posts.");
   }
 });

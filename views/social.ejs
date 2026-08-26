@@ -368,7 +368,7 @@
 
 <% } %>
 
-
+ 
 
 <% if (post.media && post.media.length > 0) { %>
 
@@ -390,29 +390,33 @@
             loading="lazy"
           >
 
-        <% } else if (
-          file.mimeType &&
-          file.mimeType.startsWith("video/")
-        ) { %>
+       <% } else if (
+  file.mimeType &&
+  file.mimeType.startsWith("video/")
+) { %>
 
-         
-         
- <video
-  class="social-post-video"
-  controls
-  controlsList="nodownload noplaybackrate"
-  disablePictureInPicture
-  preload="auto"
-  playsinline
-  webkit-playsinline
-  poster="<%= file.thumbnailUrl %>"
->
-  <source
-    src="<%= file.fileUrl %>"
-    type="<%= file.mimeType %>"
+  <video
+    class="social-post-video"
+    controls
+    controlsList="nodownload noplaybackrate"
+    disablePictureInPicture
+    preload="metadata"
+    playsinline
+    webkit-playsinline
+    <% if (file.thumbnailUrl) { %>
+      poster="<%= file.thumbnailUrl %>"
+    <% } %>
   >
-  Your browser does not support video playback.
-</video>
+    <source
+      src="<%= file.fileUrl %>"
+      type="<%= file.mimeType %>"
+    >
+
+    Your browser does not support video playback.
+  </video>
+
+<% } %>
+
 
         <% } else if (
           file.mimeType === "application/pdf"
@@ -457,10 +461,7 @@
 
 <% } %>
 
-<!---->
-
-
- 
+<!----> 
 
 
 <div class="social-post-content">
@@ -486,9 +487,7 @@
             (r.bell || 0)+
             (r.trophy || 0);
         %>
-
-
-     
+    
 
         <% if (totalReactions > 0) { %>
 
@@ -526,10 +525,7 @@
         ===================================================== -->
 
         <div class="social-action-bar">
-
-
-          <!-- LIKE -->
-
+        
           <form
             action="/social/reaction"
             method="POST"
@@ -572,10 +568,7 @@
 
             </button>
 
-          </form>
-
-
-        
+          </form>        
 
           <form
             action="/social/reaction"
@@ -769,12 +762,7 @@
   <span>Share</span>
 </button>
         </div>
-
-
-
-
-
-       
+      
 
         <div class="social-comments">
 
@@ -905,10 +893,7 @@
 
                   </div>
 
-                <% } %>
-
-
-             
+                <% } %>             
 
                 <%
                   const cr = comment.reactions || {};
@@ -971,9 +956,6 @@
 
                   </form>
 
-
-                  <!-- HEART -->
-
                   <form
                     action="/social/reaction"
                     method="POST"
@@ -998,9 +980,7 @@
                     </button>
 
                   </form>
-
-
-                  <!-- ROSE -->
+                
 
                   <form
                     action="/social/reaction"
@@ -1070,8 +1050,6 @@
 
 
                 </div>
-
-
                 
 
                 <form
@@ -1251,9 +1229,7 @@
 
         <div class="social-reply-actions">
 
-
-          <!-- LIKE -->
-
+          
           <form
             action="/social/reaction"
             method="POST"
@@ -1294,9 +1270,7 @@
             </button>
 
           </form>
-
-
-          <!-- DISLIKE -->
+       
 
           <form
             action="/social/reaction"
@@ -1338,9 +1312,7 @@
             </button>
 
           </form>
-
-
-          <!-- HEART -->
+         
 
           <form
             action="/social/reaction"
@@ -1383,9 +1355,6 @@
 
           </form>
 
-
-          <!-- ROSE -->
-
           <form
             action="/social/reaction"
             method="POST"
@@ -1425,10 +1394,7 @@
 
             </button>
 
-          </form>
-
-
-          <!-- SMILE -->
+          </form>          
 
           <form
             action="/social/reaction"
@@ -1530,11 +1496,7 @@
           </button>
 
         </form>
-
-
-        <!-- =========================================
-             NESTED REPLIES - REPLY D
-        ========================================== -->
+     
 
         <% if (reply.replies && reply.replies.length) { %>
 
@@ -1551,8 +1513,7 @@
 
                 <div class="social-reply-body">
 
-                  <!-- REPLY D BUBBLE -->
-
+                 
                   <div class="social-reply-bubble">
 
                     <div class="social-reply-user">
@@ -1668,11 +1629,7 @@
                     </div>
 
                   <% } %>
-
-
-                  <!-- =================================
-                       REPLY D REACTIONS
-                  ================================== -->
+               
 
                   <% const nr = nestedReply.reactions || {}; %>
 
@@ -1719,10 +1676,7 @@
 
                       </button>
 
-                    </form>
-
-
-                    <!-- DISLIKE -->
+                    </form>                    
 
                     <form
                       action="/social/reaction"
@@ -1764,9 +1718,7 @@
                       </button>
 
                     </form>
-
-
-                    <!-- HEART -->
+                 
 
                     <form
                       action="/social/reaction"
@@ -1808,9 +1760,7 @@
                       </button>
 
                     </form>
-
-
-                    <!-- ROSE -->
+                    
 
                     <form
                       action="/social/reaction"
@@ -1851,10 +1801,7 @@
 
                       </button>
 
-                    </form>
-
-
-                    <!-- SMILE -->
+                    </form>                   
 
                     <form
                       action="/social/reaction"
@@ -1923,11 +1870,6 @@
 
           <% }) %>
 
-
-          <!-- ==================================================
-               NEW COMMENT
-          =================================================== -->
-
           <form
             id="social-comment-<%= post.id %>"
             action="/social/post/comment"
@@ -1978,10 +1920,6 @@
 
 </section>
 
-
-  <!-- ============================================================
-     SOCIAL POST PAGINATION
-     ============================================================ -->
 <section class="py-5 bg-light border border-black mt-4 mb-4">
 <% if (totalPages > 1) { %>
   <nav class="social-pagination" aria-label="Social post pagination">
@@ -2045,23 +1983,16 @@
 
   </nav>
 <% } %>
-
-</section>           
+ 
+</section>        
 
   
-  <!---->
-  <!--👇👆👆👇👆👇-->
-  <!---->
-  <!--Refer to index.ejs how to include header and footer.ejs-->
+
 </main>
 
 
 <script src="/js/social.js"></script>
-
   
 
-  <!---->
-  <!--👇👆👆👇👆👇-->
-  <!---->
 
 <%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->  

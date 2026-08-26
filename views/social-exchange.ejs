@@ -121,24 +121,27 @@
                       class="social-post-image"
                       loading="lazy"
                     >
-<% } else if (file.mimeType && file.mimeType.startsWith("video/")) { %>
- 
-<video
-  class="social-post-video"
-  controls
-  controlsList="nodownload noplaybackrate"
-  disablePictureInPicture
-  preload="auto"
-  playsinline
-  webkit-playsinline
-    poster="<%= file.thumbnailUrl %>"
-> 
-  <source
-    src="<%= file.fileUrl %>"
-    type="<%= file.mimeType %>"
-  > 
-  Your browser does not support video playback.
-</video>
+<% if (file.mimeType && file.mimeType.startsWith("video/")) { %>
+
+  <div style="font-size:12px;">
+    Thumbnail: <%= file.thumbnailUrl || "MISSING" %>
+  </div>
+
+  <video
+    class="social-post-video"
+    controls
+    preload="metadata"
+    playsinline
+    poster="<%= file.thumbnailUrl || '' %>"
+  >
+    <source
+      src="<%= file.fileUrl %>"
+      type="<%= file.mimeType %>"
+    >
+  </video>
+
+<% } %>
+
 
                   <!-- ==========================================
                        PDF

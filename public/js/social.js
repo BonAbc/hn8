@@ -363,23 +363,16 @@ if (socialPostFilesInput) {
     for (const file of files) {
       if (socialPostAttachments.length >= SOCIAL_MAX_FILES) {
         alert(`You can upload a maximum of ${SOCIAL_MAX_FILES} files.`);
-
         break;
       }
 
       socialAddPostAttachment(file);
     }
 
-    // IMPORTANT:
-    //
-    // DO NOT DO:
-    //
-    // socialPostFilesInput.value = "";
-    //
-    // Keep the actual selected files available.
-    //
-    // We also have them inside
+    // Clear the native file input.
+    // The actual File objects are already stored in
     // socialPostAttachments.
+    socialPostFilesInput.value = "";
   });
 }
 
