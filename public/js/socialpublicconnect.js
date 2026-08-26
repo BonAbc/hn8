@@ -13,6 +13,9 @@
 // Public reactions are stored separately in:
 //     social_public_reactions
 //
+// CONNECT ENDPOINT:
+//     POST /public/post/connect
+//
 // Existing logged-in social reactions remain untouched.
 // ============================================================
 
@@ -140,6 +143,10 @@ function socialPublicReactInitializePost(post) {
 // NOT:
 //
 //     social_reactions
+//
+// CONNECT ENDPOINT:
+//
+//     POST /public/post/connect
 // ============================================================
 
 async function socialPublicReact(button) {
@@ -169,8 +176,15 @@ async function socialPublicReact(button) {
 
   const reactionType = button.dataset.reaction;
 
+  // ----------------------------------------------------------
+  // Validate
+  // ----------------------------------------------------------
+
   if (!postId || !reactionType) {
-    console.error("PUBLIC REACTION: missing postId or reactionType");
+    console.error("PUBLIC REACTION: missing postId or reactionType", {
+      postId,
+      reactionType,
+    });
 
     return;
   }
@@ -194,6 +208,8 @@ async function socialPublicReact(button) {
   try {
     // --------------------------------------------------------
     // SAVE PUBLIC REACTION
+    //
+    // CONNECT ENDPOINT
     // --------------------------------------------------------
 
     const response = await fetch("/public/post/connect", {
@@ -256,16 +272,54 @@ async function socialPublicReact(button) {
 // PUBLIC REACTION CLICK HANDLER
 //
 // Event delegation.
-// No separate listener is needed for every button.
+//
+// IMPORTANT:
+// This handler is initialized only ONCE.
+//
+// This prevents multiple document click listeners from
+// causing multiple reaction requests when the initialization
+// function is accidentally called more than once.
 // ============================================================
 
 function socialPublicReactInitializeReactions() {
+  // ----------------------------------------------------------
+  // Prevent duplicate event listeners
+  // ----------------------------------------------------------
+
+  if (window.socialPublicReactClickHandlerInitialized) {
+    return;
+  }
+
+  window.socialPublicReactClickHandlerInitialized = true;
+
+  // ----------------------------------------------------------
+  // One delegated click listener
+  // ----------------------------------------------------------
+
   document.addEventListener("click", (event) => {
     const button = event.target.closest(".social-public-reaction-btn");
 
     if (!button) {
       return;
     }
+
+    // ------------------------------------------------------
+    // Prevent default button behavior
+    // ------------------------------------------------------
+
+    event.preventDefault();
+
+    // ------------------------------------------------------
+    // Ignore another click while processing
+    // ------------------------------------------------------
+
+    if (button.disabled) {
+      return;
+    }
+
+    // ------------------------------------------------------
+    // Process reaction
+    // ------------------------------------------------------
 
     socialPublicReact(button);
   });
