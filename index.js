@@ -4790,7 +4790,7 @@ app.get("/public/post/connect", async (req, res) => {
         bell: reactionCounts[key]?.bell || 0,
         trophy: reactionCounts[key]?.trophy || 0,
         victory: reactionCounts[key]?.victory || 0,
-        checkmark: reactionCounts[key]?.checkmark || 0,
+        folder: reactionCounts[key]?.folder || 0,
         buom_xinh: reactionCounts[key]?.buom_xinh || 0,
         eagle: reactionCounts[key]?.eagle || 0,
       };
@@ -4966,7 +4966,7 @@ app.post("/public/post/connect", connectReactionLimiter, async (req, res) => {
       "bell",
       "trophy",
       "victory",
-      "checkmark",
+      "folder",
       "buom_xinh",
       "eagle",
     ];
