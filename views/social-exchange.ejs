@@ -98,91 +98,98 @@
                POST MEDIA
           ===================================================== -->
 
-          <% if (post.media && post.media.length > 0) { %>
+         <% if (post.media && post.media.length > 0) { %>
 
-            <div class="social-post-media">
+  <div class="social-post-media">
 
-              <% post.media.forEach((file) => { %>
+    <% post.media.forEach((file) => { %>
 
-                <div class="social-post-media-item">
+      <div class="social-post-media-item">
 
-                  <!-- ==========================================
-                       IMAGE
-                  =========================================== -->
+        <!-- IMAGE -->
+        <% if (
+          file.mimeType &&
+          file.mimeType.startsWith("image/")
+        ) { %>
 
-                  <% if (
-                    file.mimeType &&
-                    file.mimeType.startsWith("image/")
-                  ) { %>
+          <img
+            src="<%= file.fileUrl %>"
+            alt="<%= file.fileName || 'Post image' %>"
+            class="social-post-image"
+            loading="lazy"
+          >
 
-                    <img
-                      src="<%= file.fileUrl %>"
-                      alt="<%= file.fileName || 'Post image' %>"
-                      class="social-post-image"
-                      loading="lazy"
-                    >
-<% if (file.mimeType && file.mimeType.startsWith("video/")) { %>
+        <!-- VIDEO -->
+        <% } else if (
+          file.mimeType &&
+          file.mimeType.startsWith("video/")
+        ) { %>
 
-  <div style="font-size:12px;">
-    Thumbnail: <%= file.thumbnailUrl || "MISSING" %>
+          <div style="font-size:12px;">
+            Thumbnail: <%= file.thumbnailUrl || "MISSING" %>
+          </div>
+
+          <video
+            class="social-post-video"
+            controls
+            preload="metadata"
+            playsinline
+            <% if (file.thumbnailUrl) { %>
+              poster="<%= file.thumbnailUrl %>"
+            <% } %>
+          >
+            <source
+              src="<%= file.fileUrl %>"
+              type="<%= file.mimeType %>"
+            >
+
+            Your browser does not support video playback.
+          </video>
+
+        <!-- PDF -->
+        <% } else if (
+          file.mimeType === "application/pdf"
+        ) { %>
+
+          <a
+            href="<%= file.fileUrl %>"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="social-public-pdf"
+          >
+            📄 <%= file.fileName || "View PDF" %>
+          </a>
+
+        <!-- OTHER FILE -->
+        <% } else { %>
+
+          <a
+            href="<%= file.fileUrl %>"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            📎 <%= file.fileName || "Attached file" %>
+          </a>
+
+        <% } %>
+
+        <!-- TEXT FOR THIS MEDIA ITEM -->
+        <% if (file.mediaText) { %>
+
+          <div class="social-post-media-text">
+            <%= file.mediaText %>
+          </div>
+
+        <% } %>
+
+      </div>
+
+    <% }) %>
+
   </div>
-
-  <video
-    class="social-post-video"
-    controls
-    preload="metadata"
-    playsinline
-    poster="<%= file.thumbnailUrl || '' %>"
-  >
-    <source
-      src="<%= file.fileUrl %>"
-      type="<%= file.mimeType %>"
-    >
-  </video>
 
 <% } %>
 
-
-                  <!-- ==========================================
-                       PDF
-                  =========================================== -->
-
-                  <% } else if (
-                    file.mimeType === "application/pdf"
-                  ) { %>
-
-                    <a
-                      href="<%= file.fileUrl %>"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="social-public-pdf"
-                    >
-                      📄
-                      <%= file.fileName || "View PDF" %>
-                    </a>
-
-                  <% } %>
-
-
-                  <!-- ==========================================
-                       TEXT FOR THIS SPECIFIC MEDIA ITEM
-                  =========================================== -->
-
-                  <% if (file.mediaText) { %>
-
-                    <div class="social-post-media-text">
-                      <%= file.mediaText %>
-                    </div>
-
-                  <% } %>
-
-                </div>
-
-              <% }) %>
-
-            </div>
-
-          <% } %>
 
 
           <!-- ====================================================
