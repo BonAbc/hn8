@@ -4892,7 +4892,7 @@ app.post(
 // PAGINATED
 // ============================================================
 
-app.get("/public/post/react", async (req, res) => {
+app.get("/public/post/connect", async (req, res) => {
   try {
     // ==========================================================
     // PUBLIC VISITOR ID
@@ -5167,7 +5167,7 @@ app.get("/public/post/react", async (req, res) => {
     // RENDER
     // ==========================================================
 
-    return res.render("social-public-react", {
+    return res.render("social-public-connect", {
       defaultDate: getToday(),
 
       // Keep your existing EJS variable name.
@@ -5186,7 +5186,7 @@ app.get("/public/post/react", async (req, res) => {
   }
 });
 //
-app.post("/public/post/react", async (req, res) => {
+app.post("/public/post/connect", async (req, res) => {
   try {
     // ========================================================
     // PUBLIC VISITOR ID
