@@ -2311,6 +2311,11 @@ app.post(
 
       const files = req.files || [];
 
+      // ======================================================
+      // VIDEO LIMIT
+      // ONLY 1 VIDEO PER POST
+      // ======================================================
+
       const videoFiles = files.filter((file) =>
         ["video/mp4", "video/webm"].includes(file.mimetype),
       );
@@ -2332,6 +2337,10 @@ app.post(
           error: "Post is too long. Maximum 5000 characters.",
         });
       }
+
+      // ======================================================
+      // NO CONTENT + NO FILES
+      // ======================================================
 
       if (!content && files.length === 0) {
         return res.status(400).json({
@@ -2381,6 +2390,16 @@ app.post(
 
       // ======================================================
       // DIRECTORIES
+      //
+      // Render Persistent Disk:
+      //
+      // /uploads
+      //
+      // Social files:
+      // /uploads/social
+      //
+      // Video thumbnails:
+      // /uploads/social/thumbnails
       // ======================================================
 
       const uploadDir = "/uploads/social";
@@ -2393,122 +2412,6 @@ app.post(
       await fs.promises.mkdir(thumbnailDir, {
         recursive: true,
       });
-
-      // ======================================================
-      // VIDEO CONVERSION INFORMATION
-      // ======================================================
-
-      const processedVideo = new Map();
-
-      for (const videoFile of videoFiles) {
-        const originalPath = videoFile.path;
-
-        const baseName = path.basename(
-          videoFile.filename,
-          path.extname(videoFile.filename),
-        );
-
-        const convertedFilename = `${baseName}-converted.mp4`;
-
-        const thumbnailFilename = `${baseName}-thumbnail.jpg`;
-
-        const outputPath = path.join(uploadDir, convertedFilename);
-
-        const thumbnailPath = path.join(thumbnailDir, thumbnailFilename);
-
-        console.log("========================================");
-        console.log("VIDEO PROCESSING");
-        console.log("Original:", originalPath);
-        console.log("Converted:", outputPath);
-        console.log("Thumbnail:", thumbnailPath);
-        console.log("========================================");
-
-        // ====================================================
-        // FFMPEG CONVERT
-        // ====================================================
-
-        await new Promise((resolve, reject) => {
-          ffmpeg(originalPath)
-            .videoCodec("libx264")
-            .audioCodec("aac")
-            .outputOptions([
-              "-pix_fmt yuv420p",
-              "-profile:v main",
-              "-level 4.0",
-              "-movflags +faststart",
-              "-preset veryfast",
-              "-r 30",
-              "-ar 48000",
-              "-ac 2",
-            ])
-            .format("mp4")
-            .on("start", (commandLine) => {
-              console.log("FFmpeg started:");
-              console.log(commandLine);
-            })
-            .on("progress", (progress) => {
-              console.log(
-                `FFmpeg progress: ${Math.round(progress.percent || 0)}%`,
-              );
-            })
-            .on("end", () => {
-              console.log("FFmpeg conversion complete.");
-              resolve();
-            })
-            .on("error", (err, stdout, stderr) => {
-              console.error("FFmpeg conversion error:", err.message);
-
-              console.error("FFmpeg stderr:", stderr);
-
-              reject(err);
-            })
-            .save(outputPath);
-        });
-
-        // ====================================================
-        // CREATE THUMBNAIL
-        // ====================================================
-
-        await new Promise((resolve, reject) => {
-          ffmpeg(outputPath)
-            .screenshots({
-              timestamps: ["1"],
-              filename: thumbnailFilename,
-              folder: thumbnailDir,
-              size: "1280x?",
-            })
-            .on("end", () => {
-              console.log("Video thumbnail created:", thumbnailPath);
-
-              resolve();
-            })
-            .on("error", (err) => {
-              console.error("Thumbnail generation error:", err.message);
-
-              reject(err);
-            });
-        });
-
-        // ====================================================
-        // REMOVE ORIGINAL
-        // ====================================================
-
-        try {
-          await fs.promises.unlink(originalPath);
-
-          console.log("Original video removed:", originalPath);
-        } catch (unlinkError) {
-          console.warn("Could not remove original video:", unlinkError.message);
-        }
-
-        processedVideo.set(videoFile.filename, {
-          filename: convertedFilename,
-          fileUrl: `/uploads/social/${convertedFilename}`,
-          thumbnailUrl: `/uploads/social/thumbnails/${thumbnailFilename}`,
-          mimeType: "video/mp4",
-          fileSize: (await fs.promises.stat(outputPath)).size,
-        });
-      }
 
       // ======================================================
       // BEGIN TRANSACTION
@@ -2542,6 +2445,8 @@ app.post(
 
       // ======================================================
       // SPECIAL ADMIN NOTIFICATIONS
+      //
+      // SPECIAL_ADMIN_EMAILS controls who receives them.
       // ======================================================
 
       const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
@@ -2558,6 +2463,8 @@ app.post(
           `,
           [specialAdminEmails],
         );
+
+        console.log("SPECIAL ADMINS FOUND:", specialAdminsResult.rows.length);
 
         for (const specialAdmin of specialAdminsResult.rows) {
           await client.query(
@@ -2581,6 +2488,12 @@ app.post(
             `,
             [specialAdmin.id, userId, postId, "A new social post was created."],
           );
+
+          console.log("SOCIAL NOTIFICATION CREATED:", {
+            recipientUserId: specialAdmin.id,
+            actorUserId: userId,
+            postId,
+          });
         }
       }
 
@@ -2591,29 +2504,19 @@ app.post(
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
-        let fileUrl = `/uploads/social/${file.filename}`;
-        let fileName = file.originalname;
-        let mimeType = file.mimetype;
-        let fileSize = file.size;
-        let thumbnailUrl = null;
+        console.log("SAVING FILE:", {
+          filename: file.filename,
+          originalname: file.originalname,
+          mimetype: file.mimetype,
+          size: file.size,
+          path: file.path,
+        });
 
         // ====================================================
-        // VIDEO
+        // FILE URL
         // ====================================================
 
-        if (["video/mp4", "video/webm"].includes(file.mimetype)) {
-          const processed = processedVideo.get(file.filename);
-
-          if (!processed) {
-            throw new Error("Processed video information was not found.");
-          }
-
-          fileUrl = processed.fileUrl;
-          fileName = processed.filename;
-          mimeType = processed.mimeType;
-          fileSize = processed.fileSize;
-          thumbnailUrl = processed.thumbnailUrl;
-        }
+        const fileUrl = `/uploads/social/${file.filename}`;
 
         // ====================================================
         // MEDIA TEXT
@@ -2623,6 +2526,44 @@ app.post(
           typeof mediaTexts[i] === "string"
             ? mediaTexts[i].trim().slice(0, 5000)
             : "";
+
+        // ====================================================
+        // VIDEO THUMBNAIL
+        // ====================================================
+
+        let thumbnailUrl = null;
+
+        if (file.mimetype === "video/mp4" || file.mimetype === "video/webm") {
+          const thumbnailFilename = `${file.filename}.jpg`;
+
+          console.log("========================================");
+          console.log("GENERATING VIDEO THUMBNAIL");
+          console.log("Video:", file.path);
+          console.log("Thumbnail:", thumbnailFilename);
+          console.log("========================================");
+
+          try {
+            await new Promise((resolve, reject) => {
+              ffmpeg(file.path)
+                .screenshots({
+                  timestamps: ["10%"],
+                  filename: thumbnailFilename,
+                  folder: thumbnailDir,
+                  size: "640x?",
+                })
+                .on("end", resolve)
+                .on("error", reject);
+            });
+
+            thumbnailUrl = `/uploads/social/thumbnails/${thumbnailFilename}`;
+
+            console.log("VIDEO THUMBNAIL CREATED:", thumbnailUrl);
+          } catch (err) {
+            console.error("Thumbnail generation failed:", err.message);
+
+            thumbnailUrl = null;
+          }
+        }
 
         // ====================================================
         // INSERT MEDIA
@@ -2646,9 +2587,9 @@ app.post(
           [
             postId,
             fileUrl,
-            fileName,
-            mimeType,
-            fileSize,
+            file.originalname,
+            file.mimetype,
+            file.size,
             mediaText,
             thumbnailUrl,
           ],
@@ -2658,7 +2599,7 @@ app.post(
           postId,
           fileUrl,
           thumbnailUrl,
-          mimeType,
+          mimeType: file.mimetype,
         });
       }
 
@@ -2722,6 +2663,7 @@ app.post(
     }
   },
 );
+
 //
 //
 app.get("/notification", ensureAuthenticated, async (req, res) => {

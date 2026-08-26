@@ -119,34 +119,33 @@
             loading="lazy"
           >
 
-        <!-- VIDEO -->
-        <% } else if (
-          file.mimeType &&
-          file.mimeType.startsWith("video/")
-        ) { %>
+     
+<% } else if (
+  file.mimeType &&
+  file.mimeType.startsWith("video/")
+) { %>
 
-          <div style="font-size:12px;">
-            Thumbnail: <%= file.thumbnailUrl || "MISSING" %>
-          </div>
+  <video
+    class="social-post-video"
+    controls
+      controlsList="nodownload noplaybackrate"
+    preload="metadata"
+    playsinline
+    webkit-playsinline
+    <% if (file.thumbnailUrl) { %>
+      poster="<%= file.thumbnailUrl %>"
+    <% } %>
+  >
+    <source
+      src="<%= file.fileUrl %>"
+      type="<%= file.mimeType %>"
+    >
 
-          <video
-            class="social-post-video"
-            controls
-            preload="metadata"
-            playsinline
-            <% if (file.thumbnailUrl) { %>
-              poster="<%= file.thumbnailUrl %>"
-            <% } %>
-          >
-            <source
-              src="<%= file.fileUrl %>"
-              type="<%= file.mimeType %>"
-            >
+    Your browser does not support video playback.
+  </video>
 
-            Your browser does not support video playback.
-          </video>
 
-        <!-- PDF -->
+       
         <% } else if (
           file.mimeType === "application/pdf"
         ) { %>
