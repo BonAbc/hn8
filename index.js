@@ -4727,22 +4727,38 @@ app.post(
   ensureAuthenticated,
   async (req, res) => {
     try {
-      const userId = req.user?.id || null;
+      const userEmail = req.user?.email || null;
 
-      const roleResult = await db.query(
-        `
-        SELECT role
-        FROM my_user
-        WHERE id = $1
-        `,
-        [userId],
-      );
+      // ========================================================
+      // ADMIN CHECK
+      // ADMIN = ADMIN_EMAILS from .env
+      // ========================================================
 
-      const userRole = roleResult.rows[0]?.role ?? null;
+      const adminEmails = (process.env.ADMIN_EMAILS || "")
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
 
-      const isAdmin = userRole === "admin" || userRole === "admin1";
+      const normalizedUserEmail = String(userEmail || "")
+        .trim()
+        .toLowerCase();
 
-      if (!isAdmin) {
+      const isAdmin =
+        !!normalizedUserEmail && adminEmails.includes(normalizedUserEmail);
+
+      // ========================================================
+      // SPECIAL ADMIN CHECK
+      // ========================================================
+
+      const userIsSpecialAdmin = isSpecialAdmin(userEmail);
+
+      // ========================================================
+      // ADMIN OR SPECIAL ADMIN ONLY
+      //
+      // EMAIL ADMIN IS NOT USED
+      // ========================================================
+
+      if (!isAdmin && !userIsSpecialAdmin) {
         return res.status(403).send("Admin access required.");
       }
 
@@ -4775,28 +4791,45 @@ app.post(
   },
 );
 
-//
+// ============================================================
+
 app.post(
   "/social/post/disable-public-reactions/:postId",
   ensureAuthenticated,
   async (req, res) => {
     try {
-      const userId = req.user?.id || null;
+      const userEmail = req.user?.email || null;
 
-      const roleResult = await db.query(
-        `
-        SELECT role
-        FROM my_user
-        WHERE id = $1
-        `,
-        [userId],
-      );
+      // ========================================================
+      // ADMIN CHECK
+      // ADMIN = ADMIN_EMAILS from .env
+      // ========================================================
 
-      const userRole = roleResult.rows[0]?.role ?? null;
+      const adminEmails = (process.env.ADMIN_EMAILS || "")
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
 
-      const isAdmin = userRole === "admin" || userRole === "admin1";
+      const normalizedUserEmail = String(userEmail || "")
+        .trim()
+        .toLowerCase();
 
-      if (!isAdmin) {
+      const isAdmin =
+        !!normalizedUserEmail && adminEmails.includes(normalizedUserEmail);
+
+      // ========================================================
+      // SPECIAL ADMIN CHECK
+      // ========================================================
+
+      const userIsSpecialAdmin = isSpecialAdmin(userEmail);
+
+      // ========================================================
+      // ADMIN OR SPECIAL ADMIN ONLY
+      //
+      // EMAIL ADMIN IS NOT USED
+      // ========================================================
+
+      if (!isAdmin && !userIsSpecialAdmin) {
         return res.status(403).send("Admin access required.");
       }
 
