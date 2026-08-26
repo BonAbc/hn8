@@ -88,8 +88,6 @@ const __dirname = dirname(__filename);
 app.set("views", path.join(__dirname, "views"));
 const nowChicago = DateTime.now().setZone("America/Chicago").toISO();
 
-console.log(nowChicago);
-
 function getCanonicalUrl(req) {
   const baseUrl = process.env.BASE_URL || "https://hieuncpa.com";
   return `${baseUrl}${req.originalUrl}`;
@@ -435,9 +433,6 @@ passport.use(
 
       const user = result.rows[0];
 
-      console.log("✅ USER FOUND:");
-      console.log("is_active:", user.is_active);
-
       if (!user.is_active) {
         console.log("❌ ACCOUNT INACTIVE");
 
@@ -447,27 +442,25 @@ passport.use(
       }
 
       if (!user.pw) {
-        console.log("❌ USER HAS NO PASSWORD HASH");
+        console.warn("User authentication failed: password  missing");
 
         return cb(null, false, {
           message: "Invalid username or password.",
         });
       }
 
+      //
       const match = await bcrypt.compare(password, user.pw);
 
-      console.log("🔑 PASSWORD MATCH:", match);
-
       if (!match) {
-        console.log("❌ WRONG PASSWORD");
+        console.warn("User authentication failed");
 
         return cb(null, false, {
           message: "Invalid username or password.",
         });
       }
 
-      console.log("✅ PASSWORD CORRECT");
-      console.log("✅ RETURNING USER:", user.id);
+      console.log("User authenticated:", user.id);
 
       return cb(null, user);
     } catch (err) {
@@ -506,13 +499,7 @@ app.post("/login", (req, res, next) => {
   const requestId =
     Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
 
-  console.log("");
-  console.log("========================================");
-
   passport.authenticate("local", (err, user, info) => {
-    console.log("🔥 PASSPORT RESULT:", requestId);
-    console.log("err:", err);
-
     if (err) {
       console.error("❌ PASSPORT ERROR:", err);
       return next(err);
@@ -526,9 +513,6 @@ app.post("/login", (req, res, next) => {
       return res.redirect("/login");
     }
 
-    console.log("✅ USER AUTHENTICATED:", user.id);
-    console.log("2FA enabled:", user.two_factor_enabled);
-
     // ==========================================
     // FIRST-TIME 2FA
     // ==========================================
@@ -540,16 +524,11 @@ app.post("/login", (req, res, next) => {
       req.session.pending2FAUser = null;
       req.session.isAdmin = adminEmails.includes(user.email);
 
-      console.log("pendingSetupUser:", req.session.pendingSetupUser);
-
       return req.session.save((sessionErr) => {
         if (sessionErr) {
           console.error("❌ SESSION SAVE ERROR:", sessionErr);
           return next(sessionErr);
         }
-
-        console.log("✅ SESSION SAVED");
-        console.log("➡️ REDIRECTING TO /enable-2fa");
 
         return res.redirect("/enable-2fa");
       });
@@ -587,7 +566,6 @@ app.post("/enable-2fa", async (req, res, next) => {
     const userId = req.session.pendingSetupUser;
 
     if (!userId) {
-      console.log("❌ NO pendingSetupUser");
       return res.redirect("/login");
     }
 
@@ -601,7 +579,6 @@ app.post("/enable-2fa", async (req, res, next) => {
     );
 
     if (result.rows.length === 0) {
-      console.log("❌ USER NOT FOUND:", userId);
       return res.redirect("/login");
     }
 
@@ -618,8 +595,6 @@ app.post("/enable-2fa", async (req, res, next) => {
       `,
       [secret, userId],
     );
-
-    console.log("✅ 2FA SECRET SAVED");
 
     const otpauth = authenticator.keyuri(email, "HieuCPA", secret);
 
@@ -690,8 +665,6 @@ app.post("/verify-2fa-setup", async (req, res, next) => {
     });
 
     if (!isValid) {
-      console.log("❌ INITIAL 2FA CODE INVALID");
-
       return res.render("setup-2fa.ejs", {
         qrCode: "",
         message: "Wrong verification code.",
@@ -906,10 +879,6 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
 
   req.logIn(user, (err) => {
     if (err) {
-      console.log("=== 2fa-verify-2fa ===");
-
-      console.log("User:", req.user);
-
       return next(err);
     }
     // Recompute admin status
@@ -1505,10 +1474,6 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
 
     const postId = req.query.postId ? parseInt(req.query.postId, 10) : null;
 
-    console.log("========================================");
-
-    console.log("postId:", postId);
-
     if (req.query.postId && !Number.isInteger(postId)) {
       return res.status(400).send("Invalid post ID.");
     }
@@ -1543,16 +1508,6 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
 
     const isAdmin =
       !!normalizedUserEmail && adminEmails.includes(normalizedUserEmail);
-
-    console.log("SOCIAL isAdmin:", isAdmin);
-
-    // ========================================================
-    // HN CPA / EMAILS ADMIN CHECK
-    //
-    // IMPORTANT:
-    // isEmailsAdmin = FUNCTION
-    // emailsAdmin   = BOOLEAN RESULT
-    // ========================================================
 
     const emailsAdmin = isEmailsAdmin(userEmail);
 
@@ -4773,15 +4728,6 @@ app.get("/public/post/connect", async (req, res) => {
 
     const postIds = postResult.rows.map((row) => row.id);
 
-    // ==========================================================
-    // PUBLIC REACTION COUNTS
-    //
-    // IMPORTANT:
-    // Uses social_public_reactions.
-    //
-    // Does NOT use social_reactions.
-    // ==========================================================
-
     let reactionsResult = {
       rows: [],
     };
@@ -5022,8 +4968,22 @@ app.post("/public/post/connect", async (req, res) => {
       "checkmark",
       "buom_xinh",
     ];
-
+    console.log("PUBLIC REACTION:", {
+      ip: req.ip,
+      postId,
+      reactionType,
+      visitorId: publicVisitorId,
+      userAgent: req.get("user-agent"),
+    });
     if (!allowedReactions.includes(reactionType)) {
+      console.warn("🚨 BLOCKED PUBLIC REACTION:", {
+        ip: req.ip,
+        postId,
+        reactionType,
+        visitorId: publicVisitorId,
+        userAgent: req.get("user-agent"),
+      });
+
       return res.status(400).json({
         success: false,
         message: "Invalid reaction type.",
