@@ -2268,6 +2268,20 @@ button:hover {
     width: 100%;
     white-space: normal;
   }
+  .social-reaction-popup {
+    left: auto;
+    right: 0;
+
+    width: 70px;
+    max-width: 70px;
+
+    display: grid;
+    grid-template-columns: 1fr;
+
+    gap: 3px;
+    padding: 6px;
+    box-sizing: border-box;
+  }
 
   /* ---------- Create Footer ---------- */
 
@@ -2319,8 +2333,15 @@ button:hover {
     left: auto;
     right: 0;
 
-    width: 260px;
-    max-width: calc(100vw - 30px);
+    width: 70px;
+    max-width: 70px;
+
+    display: grid;
+    grid-template-columns: 1fr;
+
+    gap: 3px;
+    padding: 6px;
+    box-sizing: border-box;
   }
 
   /* ---------- Owner Buttons ---------- */
