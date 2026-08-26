@@ -390,33 +390,30 @@
             loading="lazy"
           >
 
-       <% } else if (
-  file.mimeType &&
-  file.mimeType.startsWith("video/")
-) { %>
+        <% } else if (
+          file.mimeType &&
+          file.mimeType.startsWith("video/")
+        ) { %>
 
-  <video
-    class="social-post-video"
-    controls
-    controlsList="nodownload noplaybackrate"
-    disablePictureInPicture
-    preload="metadata"
-    playsinline
-    webkit-playsinline
-    <% if (file.thumbnailUrl) { %>
-      poster="<%= file.thumbnailUrl %>"
-    <% } %>
-  >
-    <source
-      src="<%= file.fileUrl %>"
-      type="<%= file.mimeType %>"
-    >
+          <video
+            class="social-post-video"
+            controls
+            controlsList="nodownload noplaybackrate"
+            disablePictureInPicture
+            preload="metadata"
+            playsinline
+            webkit-playsinline
+            <% if (file.thumbnailUrl) { %>
+              poster="<%= file.thumbnailUrl %>"
+            <% } %>
+          >
+            <source
+              src="<%= file.fileUrl %>"
+              type="<%= file.mimeType %>"
+            >
 
-    Your browser does not support video playback.
-  </video>
-
-<% } %>
-
+            Your browser does not support video playback.
+          </video>
 
         <% } else if (
           file.mimeType === "application/pdf"
@@ -442,7 +439,6 @@
 
         <% } %>
 
-
         <!-- TEXT FOR THIS SPECIFIC FILE -->
 
         <% if (file.mediaText) { %>
@@ -460,6 +456,7 @@
   </div>
 
 <% } %>
+
 
 <!----> 
 
