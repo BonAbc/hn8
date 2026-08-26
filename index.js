@@ -36,10 +36,6 @@ import methodOverride from "method-override";
 
 import ffmpeg from "fluent-ffmpeg";
 
-if (process.platform === "win32") {
-  ffmpeg.setFfmpegPath("C:\\ffmpeg\\bin\\ffmpeg.exe");
-}
-
 dotenv.config();
 
 const app = express();
