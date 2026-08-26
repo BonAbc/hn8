@@ -36,7 +36,10 @@ import methodOverride from "method-override";
 
 import ffmpeg from "fluent-ffmpeg";
 import fs from "fs";
-
+//allow public reaction
+import crypto from "crypto";
+import cookieParser from "cookie-parser";
+//
 dotenv.config();
 
 const app = express();
@@ -68,7 +71,8 @@ app.use(express.static("public"));
 
 app.set("view engine", "ejs");
 //
-
+// allow public react
+app.use(cookieParser());
 //
 app.use("/uploads", express.static("/uploads"));
 
@@ -3825,6 +3829,27 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     console.log("SOCIAL SEARCH req.user =", req.user);
 
     // ========================================================
+    // CURRENT USER ROLE
+    // ========================================================
+
+    let userRole = null;
+
+    if (userId) {
+      const roleResult = await db.query(
+        `
+        SELECT role
+        FROM my_user
+        WHERE id = $1
+        `,
+        [userId],
+      );
+
+      userRole = roleResult.rows[0]?.role ?? null;
+    }
+
+    console.log("SOCIAL SEARCH userRole =", userRole);
+
+    // ========================================================
     // CURRENT USER GROUP
     // ========================================================
 
@@ -3846,29 +3871,25 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     console.log("SOCIAL SEARCH userGroupId =", userGroupId);
 
     // ========================================================
-    // FULL ADMIN CHECK
-    // ADMIN_EMAILS
+    // ADMIN CHECK
     //
-    // Sees EVERYTHING
+    // admin  = full admin
+    // admin1 = full admin
     // ========================================================
 
-    const adminEmails = (process.env.ADMIN_EMAILS || "")
-      .split(",")
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean);
+    const isAdmin = userRole === "admin" || userRole === "admin1";
 
-    const normalizedUserEmail = String(userEmail || "")
-      .trim()
-      .toLowerCase();
+    // ========================================================
+    // CLOSE RELATIVE CHECK
+    //
+    // closerelative replaces isEmailsAdmin
+    // ========================================================
 
-    const isAdmin =
-      !!normalizedUserEmail && adminEmails.includes(normalizedUserEmail);
+    const userIsCloseRelative = userRole === "closerelative";
 
-    const userIsEmailsAdmin = isEmailsAdmin(userEmail);
-
-    console.log("SOCIAL SEARCH userEmail =", userEmail);
+    console.log("SOCIAL SEARCH userRole =", userRole);
     console.log("SOCIAL SEARCH isAdmin =", isAdmin);
-    console.log("SOCIAL SEARCH isEmailsAdmin =", userIsEmailsAdmin);
+    console.log("SOCIAL SEARCH isCloseRelative =", userIsCloseRelative);
 
     // ========================================================
     // SEARCH INPUT
@@ -3886,6 +3907,23 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     let dateFrom = (req.query.dateFrom || "").trim();
     let dateTo = (req.query.dateTo || "").trim();
 
+    // ========================================================
+    // VISIBILITY FILTER
+    //
+    // FULL ADMIN:
+    //   can filter all visibility types
+    //
+    // CLOSE RELATIVE:
+    //   can filter:
+    //      loggedin users
+    //      group_only
+    //
+    //   cannot see/filter admin_only
+    //
+    // NORMAL USER:
+    //   no admin visibility filter
+    // ========================================================
+
     if (isAdmin) {
       visibility = (req.query.visibility || "").trim();
 
@@ -3894,12 +3932,12 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       if (!allowedVisibility.includes(visibility)) {
         visibility = "";
       }
-    } else if (userIsEmailsAdmin) {
+    } else if (userIsCloseRelative) {
       visibility = (req.query.visibility || "").trim();
 
-      const allowedEmailsAdminVisibility = ["loggedin users", "group_only"];
+      const allowedCloseRelativeVisibility = ["loggedin users", "group_only"];
 
-      if (!allowedEmailsAdminVisibility.includes(visibility)) {
+      if (!allowedCloseRelativeVisibility.includes(visibility)) {
         visibility = "";
       }
     }
@@ -3971,10 +4009,39 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     const conditions = [];
     const values = [];
 
+    // ========================================================
+    // VISIBILITY SECURITY
+    //
+    // FULL ADMIN:
+    //   sees everything
+    //
+    // CLOSE RELATIVE:
+    //   loggedin users
+    //   group_only from ANY group
+    //   own posts
+    //   NOT admin_only
+    //
+    // NORMAL USER:
+    //   loggedin users
+    //   own posts
+    //   group_only from own group
+    // ========================================================
+
     if (isAdmin) {
       // FULL ADMIN sees everything.
       // No security condition needed.
-    } else if (userIsEmailsAdmin) {
+    } else if (userIsCloseRelative) {
+      // ------------------------------------------------------
+      // CLOSE RELATIVE
+      // ------------------------------------------------------
+      //
+      // No group_id restriction.
+      //
+      // Can see group_only posts from ANY group.
+      //
+      // admin_only is excluded.
+      // ------------------------------------------------------
+
       const userIdParam = values.length + 1;
 
       values.push(userId);
@@ -4016,7 +4083,23 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       `);
     }
 
-    if ((isAdmin || userIsEmailsAdmin) && visibility) {
+    // ========================================================
+    // VISIBILITY FILTER
+    //
+    // ADMIN:
+    //   loggedin users
+    //   group_only
+    //   admin_only
+    //
+    // CLOSE RELATIVE:
+    //   loggedin users
+    //   group_only
+    //
+    // NORMAL:
+    //   cannot use this admin filter
+    // ========================================================
+
+    if ((isAdmin || userIsCloseRelative) && visibility) {
       values.push(visibility);
 
       conditions.push(`p.visibility = $${values.length}`);
@@ -4097,11 +4180,22 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
 
     const totalPosts = Number(totalResult.rows[0]?.total) || 0;
 
+    // ========================================================
+    // VISIBILITY BREAKDOWN
+    //
+    // FULL ADMIN:
+    //   all three types
+    //
+    // CLOSE RELATIVE:
+    //   loggedin users + group_only
+    //   admin_only remains 0 / hidden
+    // ========================================================
+
     let everyonePosts = 0;
     let userAdminPosts = 0;
     let groupPosts = 0;
 
-    if (isAdmin || userIsEmailsAdmin) {
+    if (isAdmin || userIsCloseRelative) {
       const breakdownResult = await db.query(
         `
         SELECT
@@ -4133,7 +4227,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       groupPosts = Number(breakdownResult.rows[0]?.group_posts) || 0;
 
       // ------------------------------------------------------
-      // EMAILS_ADMIN must NEVER expose admin_only count.
+      // CLOSE RELATIVE must NEVER expose admin_only count.
       // ------------------------------------------------------
 
       if (isAdmin) {
@@ -4172,7 +4266,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
         params.set("dateTo", dateTo);
       }
 
-      if ((isAdmin || userIsEmailsAdmin) && visibility) {
+      if ((isAdmin || userIsCloseRelative) && visibility) {
         params.set("visibility", visibility);
       }
 
@@ -4191,31 +4285,32 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
 
     const searchResult = await db.query(
       `
-        SELECT
-          p.id,
-          p.user_id,
-          p.content,
-          p.color,
-          p.visibility,
-          p.public_enabled,
-          p.created_at,
-          p.updated_at,
-          u.email
+      SELECT
+        p.id,
+        p.user_id,
+        p.content,
+        p.color,
+        p.visibility,
+        p.public_enabled,
+         p.public_reactions_enabled,
+        p.created_at,
+        p.updated_at,
+        u.email
 
-        FROM social_posts p
+      FROM social_posts p
 
-        JOIN my_user u
-          ON u.id = p.user_id
+      JOIN my_user u
+        ON u.id = p.user_id
 
-        ${whereClause}
+      ${whereClause}
 
-        ORDER BY
-          p.created_at DESC,
-          p.id DESC
+      ORDER BY
+        p.created_at DESC,
+        p.id DESC
 
-        LIMIT $${limitParam}
-        OFFSET $${offsetParam}
-        `,
+      LIMIT $${limitParam}
+      OFFSET $${offsetParam}
+      `,
       [...values, limit, offset],
     );
 
@@ -4237,6 +4332,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       visibility: row.visibility,
 
       publicEnabled: row.public_enabled,
+      publicReactionsEnabled: row.public_reactions_enabled,
 
       createdAt: row.created_at,
 
@@ -4247,7 +4343,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     // RENDER
     // ========================================================
 
-    res.render("social-search", {
+    return res.render("social-search", {
       defaultDate: getToday(),
 
       posts,
@@ -4256,11 +4352,12 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
 
       currentUserEmail: userEmail,
 
+      userRole,
+
       isAdmin,
 
-      // IMPORTANT:
-      // EJS can use this if needed.
-      isEmailsAdmin: userIsEmailsAdmin,
+      // closerelative replaces isEmailsAdmin
+      isCloseRelative: userIsCloseRelative,
 
       // Search
       q,
@@ -4287,7 +4384,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
   } catch (err) {
     console.error("Social search error:", err);
 
-    res.status(500).send("Unable to search social posts.");
+    return res.status(500).send("Unable to search social posts.");
   }
 });
 // ============================================================
@@ -4666,7 +4763,545 @@ app.get("/social/exchange", async (req, res) => {
 });
 
 //
+//allow public react
+//allow public react
+app.post(
+  "/social/post/enable-public-reactions/:postId",
+  ensureAuthenticated,
+  async (req, res) => {
+    try {
+      const userId = req.user?.id || null;
 
+      const roleResult = await db.query(
+        `
+        SELECT role
+        FROM my_user
+        WHERE id = $1
+        `,
+        [userId],
+      );
+
+      const userRole = roleResult.rows[0]?.role ?? null;
+
+      const isAdmin = userRole === "admin" || userRole === "admin1";
+
+      if (!isAdmin) {
+        return res.status(403).send("Admin access required.");
+      }
+
+      const postId = parseInt(req.params.postId, 10);
+
+      if (!Number.isInteger(postId)) {
+        return res.status(400).send("Invalid post ID.");
+      }
+
+      const result = await db.query(
+        `
+        UPDATE social_posts
+        SET public_reactions_enabled = TRUE
+        WHERE id = $1
+        RETURNING id, public_reactions_enabled
+        `,
+        [postId],
+      );
+
+      if (!result.rowCount) {
+        return res.status(404).send("Post not found.");
+      }
+
+      return res.redirect("/social/search");
+    } catch (err) {
+      console.error("ENABLE PUBLIC REACTIONS ERROR:", err);
+
+      return res.status(500).send("Unable to enable public reactions.");
+    }
+  },
+);
+
+//
+app.post(
+  "/social/post/disable-public-reactions/:postId",
+  ensureAuthenticated,
+  async (req, res) => {
+    try {
+      const userId = req.user?.id || null;
+
+      const roleResult = await db.query(
+        `
+        SELECT role
+        FROM my_user
+        WHERE id = $1
+        `,
+        [userId],
+      );
+
+      const userRole = roleResult.rows[0]?.role ?? null;
+
+      const isAdmin = userRole === "admin" || userRole === "admin1";
+
+      if (!isAdmin) {
+        return res.status(403).send("Admin access required.");
+      }
+
+      const postId = parseInt(req.params.postId, 10);
+
+      if (!Number.isInteger(postId)) {
+        return res.status(400).send("Invalid post ID.");
+      }
+
+      const result = await db.query(
+        `
+        UPDATE social_posts
+        SET public_reactions_enabled = FALSE
+        WHERE id = $1
+        RETURNING id, public_reactions_enabled
+        `,
+        [postId],
+      );
+
+      if (!result.rowCount) {
+        return res.status(404).send("Post not found.");
+      }
+
+      return res.redirect("/social/search");
+    } catch (err) {
+      console.error("DISABLE PUBLIC REACTIONS ERROR:", err);
+
+      return res.status(500).send("Unable to disable public reactions.");
+    }
+  },
+);
+
+//
+// ============================================================
+// PUBLIC REACTION PAGE
+// NON-LOGGED-IN USERS
+// ============================================================
+
+// ============================================================
+// PUBLIC POST REACTION PAGE
+// PUBLIC / NON-LOGGED-IN USERS
+// PAGINATED
+// ============================================================
+
+// ============================================================
+// PUBLIC POST REACTION PAGE
+// PUBLIC / NON-LOGGED-IN USERS
+// PAGINATED
+// ============================================================
+
+app.get("/public/post/react", async (req, res) => {
+  try {
+    // ==========================================================
+    // PUBLIC VISITOR ID
+    // ==========================================================
+
+    let publicVisitorId = req.cookies.publicVisitorId;
+
+    if (!publicVisitorId) {
+      publicVisitorId = crypto.randomUUID();
+
+      res.cookie("publicVisitorId", publicVisitorId, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 1000 * 60 * 60 * 24 * 365,
+      });
+    }
+
+    // ==========================================================
+    // PAGINATION
+    // ==========================================================
+
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+
+    const limit = 2;
+
+    // ==========================================================
+    // TOTAL PUBLIC + REACTION-ENABLED POSTS
+    // ==========================================================
+
+    const countResult = await db.query(`
+      SELECT COUNT(*)::INTEGER AS total
+      FROM social_posts
+      WHERE
+        public_enabled = TRUE
+        AND public_reactions_enabled = TRUE
+    `);
+
+    const totalPosts = Number(countResult.rows[0]?.total) || 0;
+
+    const totalPages = Math.max(Math.ceil(totalPosts / limit), 1);
+
+    // ==========================================================
+    // PREVENT PAGE FROM GOING PAST LAST PAGE
+    // ==========================================================
+
+    const currentPage = Math.min(page, totalPages);
+
+    const offset = (currentPage - 1) * limit;
+
+    // ==========================================================
+    // POSTS
+    // ONLY PUBLIC + REACTION ENABLED
+    // ==========================================================
+
+    const postResult = await db.query(
+      `
+      SELECT
+        p.id,
+        p.user_id,
+        p.content,
+        p.color,
+        p.visibility,
+        p.public_enabled,
+        p.public_reactions_enabled,
+        p.created_at,
+        p.updated_at,
+        u.email
+
+      FROM social_posts p
+
+      JOIN my_user u
+        ON u.id = p.user_id
+
+      WHERE
+        p.public_enabled = TRUE
+        AND p.public_reactions_enabled = TRUE
+
+      ORDER BY
+        p.created_at DESC,
+        p.id DESC
+
+      LIMIT $1
+      OFFSET $2
+      `,
+      [limit, offset],
+    );
+
+    // ==========================================================
+    // POST IDS
+    // ==========================================================
+
+    const postIds = postResult.rows.map((row) => row.id);
+
+    // ==========================================================
+    // PUBLIC REACTION COUNTS
+    //
+    // IMPORTANT:
+    // Uses social_public_reactions.
+    //
+    // Does NOT use social_reactions.
+    // ==========================================================
+
+    let reactionsResult = {
+      rows: [],
+    };
+
+    if (postIds.length > 0) {
+      reactionsResult = await db.query(
+        `
+        SELECT
+          target_id,
+          reaction_type,
+          COUNT(*)::INTEGER AS count
+
+        FROM social_public_reactions
+
+        WHERE
+          target_type = 'post'
+          AND target_id = ANY($1::bigint[])
+
+        GROUP BY
+          target_id,
+          reaction_type
+        `,
+        [postIds],
+      );
+    }
+
+    // ==========================================================
+    // REACTION COUNTS LOOKUP
+    // ==========================================================
+
+    const reactionCounts = {};
+
+    for (const row of reactionsResult.rows) {
+      const key = String(row.target_id);
+
+      if (!reactionCounts[key]) {
+        reactionCounts[key] = {};
+      }
+
+      reactionCounts[key][row.reaction_type] = Number(row.count);
+    }
+
+    // ==========================================================
+    // REACTION HELPER
+    // ==========================================================
+
+    function getPostReactions(postId) {
+      const key = String(postId);
+
+      return {
+        like: reactionCounts[key]?.like || 0,
+        dislike: reactionCounts[key]?.dislike || 0,
+        heart: reactionCounts[key]?.heart || 0,
+        horse: reactionCounts[key]?.horse || 0,
+        rose: reactionCounts[key]?.rose || 0,
+        fly: reactionCounts[key]?.fly || 0,
+        call: reactionCounts[key]?.call || 0,
+        website: reactionCounts[key]?.website || 0,
+        email: reactionCounts[key]?.email || 0,
+        smile: reactionCounts[key]?.smile || 0,
+        bell: reactionCounts[key]?.bell || 0,
+        trophy: reactionCounts[key]?.trophy || 0,
+        victory: reactionCounts[key]?.victory || 0,
+      };
+    }
+
+    // ==========================================================
+    // MEDIA
+    // ONLY LOAD MEDIA FOR CURRENT PAGE POSTS
+    // ==========================================================
+
+    let mediaResult = {
+      rows: [],
+    };
+
+    if (postIds.length > 0) {
+      mediaResult = await db.query(
+        `
+        SELECT
+          id,
+          post_id,
+          file_url,
+          file_name,
+          mime_type,
+          file_size,
+          media_text,
+          created_at
+
+        FROM social_post_media
+
+        WHERE
+          post_id = ANY($1::bigint[])
+
+        ORDER BY
+          created_at ASC,
+          id ASC
+        `,
+        [postIds],
+      );
+    }
+
+    // ==========================================================
+    // MEDIA LOOKUP
+    // ==========================================================
+
+    const mediaByPost = {};
+
+    for (const row of mediaResult.rows) {
+      if (!mediaByPost[row.post_id]) {
+        mediaByPost[row.post_id] = [];
+      }
+
+      mediaByPost[row.post_id].push({
+        id: row.id,
+        postId: row.post_id,
+        fileUrl: row.file_url,
+        fileName: row.file_name,
+        mimeType: row.mime_type,
+        fileSize: row.file_size,
+        mediaText: row.media_text,
+        createdAt: row.created_at,
+      });
+    }
+
+    // ==========================================================
+    // BUILD POSTS
+    // ==========================================================
+
+    const posts = postResult.rows.map((row) => ({
+      id: row.id,
+      userId: row.user_id,
+      email: row.email,
+
+      content: row.content,
+      color: row.color,
+      visibility: row.visibility,
+
+      publicEnabled: row.public_enabled,
+      publicReactionsEnabled: row.public_reactions_enabled,
+
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+
+      media: mediaByPost[row.id] || [],
+
+      reactions: getPostReactions(row.id),
+    }));
+
+    // ==========================================================
+    // PAGINATION
+    // ==========================================================
+
+    const pagination = {
+      page: currentPage,
+      limit,
+
+      totalPosts,
+      totalPages,
+
+      hasPrevious: currentPage > 1,
+      hasNext: currentPage < totalPages,
+
+      previousPage: currentPage > 1 ? currentPage - 1 : null,
+
+      nextPage: currentPage < totalPages ? currentPage + 1 : null,
+    };
+
+    // ==========================================================
+    // RENDER
+    // ==========================================================
+
+    return res.render("social-public-react", {
+      defaultDate: getToday(),
+
+      // Keep your existing EJS variable name.
+      posts,
+
+      pagination,
+
+      // Available for the reaction POST route if needed
+      // by the rendered page/client logic.
+      publicVisitorId,
+    });
+  } catch (err) {
+    console.error("PUBLIC REACTION PAGE ERROR:", err);
+
+    return res.status(500).send("Unable to load public reaction page.");
+  }
+});
+//
+app.post("/public/post/react", async (req, res) => {
+  try {
+    // ========================================================
+    // PUBLIC VISITOR ID
+    // ========================================================
+
+    let publicVisitorId = req.cookies.publicVisitorId;
+
+    if (!publicVisitorId) {
+      publicVisitorId = crypto.randomUUID();
+
+      res.cookie("publicVisitorId", publicVisitorId, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 1000 * 60 * 60 * 24 * 365,
+      });
+    }
+
+    // ========================================================
+    // INPUT
+    // ========================================================
+
+    const postId = parseInt(req.body.postId, 10);
+    const reactionType = String(req.body.reactionType || "").trim();
+
+    if (!Number.isInteger(postId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid post ID.",
+      });
+    }
+
+    const allowedReactions = [
+      "like",
+      "dislike",
+      "heart",
+      "horse",
+      "rose",
+      "fly",
+      "call",
+      "website",
+      "email",
+      "smile",
+      "bell",
+      "trophy",
+      "victory",
+    ];
+
+    if (!allowedReactions.includes(reactionType)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid reaction type.",
+      });
+    }
+
+    // ========================================================
+    // VERIFY POST
+    // ========================================================
+
+    const postResult = await db.query(
+      `
+      SELECT id
+      FROM social_posts
+      WHERE
+        id = $1
+        AND public_enabled = TRUE
+        AND public_reactions_enabled = TRUE
+      `,
+      [postId],
+    );
+
+    if (!postResult.rowCount) {
+      return res.status(404).json({
+        success: false,
+        message: "Post is not available for public reactions.",
+      });
+    }
+
+    // ========================================================
+    // INSERT OR CHANGE REACTION
+    // ========================================================
+
+    await db.query(
+      `
+      INSERT INTO social_public_reactions (
+        public_visitor_id,
+        target_type,
+        target_id,
+        reaction_type
+      )
+      VALUES ($1, 'post', $2, $3)
+
+      ON CONFLICT (
+        public_visitor_id,
+        target_type,
+        target_id
+      )
+
+      DO UPDATE SET
+        reaction_type = EXCLUDED.reaction_type,
+        updated_at = NOW()
+      `,
+      [publicVisitorId, postId, reactionType],
+    );
+
+    return res.json({
+      success: true,
+    });
+  } catch (err) {
+    console.error("PUBLIC REACTION SAVE ERROR:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to save reaction.",
+    });
+  }
+});
 //
 
 //social make public

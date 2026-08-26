@@ -1,0 +1,399 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+ <form>
+  <label for="date">Date:</label>
+  <input
+    type="date"
+    id="date"
+    name="date"
+    value="<%= defaultDate %>"
+  />
+</form>
+
+<h2 id="hm">Hoa Mai</h2>
+ 
+ <br>
+
+<section class="social-public-page py-5 bg-light">
+
+  <div class="container social-public-container">
+
+    <% if (posts && posts.length) { %>
+
+      <% posts.forEach((post, index) => { %>
+
+        <article
+          id="post-<%= post.id %>"
+          class="social-post social-public-post"
+          style="--social-post-color: <%= post.color || '#ffffff' %>;"
+        >
+
+          <div class="social-post-header">
+
+            <div class="social-user">
+
+              <div class="social-avatar">
+                <%= (post.email || "U").charAt(0).toUpperCase() %>
+              </div>
+
+              <div class="social-user-info">
+
+                <div class="social-user-name">
+                  <%= post.email || "User" %>
+                </div>
+
+                <div class="social-date">
+
+                  <%= post.createdAt
+                    ? new Date(post.createdAt).toLocaleString()
+                    : ""
+                  %>
+
+                  <% if (post.visibility === "admin_only") { %>
+                    · 🔒 Only me + Admin
+                  <% } %>
+
+                  <% if (
+                    post.updatedAt &&
+                    post.createdAt &&
+                    new Date(post.updatedAt).getTime() !==
+                    new Date(post.createdAt).getTime()
+                  ) { %>
+                    · edited
+                  <% } %>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <% if (post.content) { %>
+
+            <div class="social-post-content">
+              <%= post.content %>
+            </div>
+
+          <% } %>
+
+          <% if (post.media && post.media.length > 0) { %>
+
+            <div class="social-post-media">
+
+              <% post.media.forEach((file) => { %>
+
+                <div class="social-post-media-item">
+
+                  <% if (
+                    file.mimeType &&
+                    file.mimeType.startsWith("image/")
+                  ) { %>
+
+                    <img
+                      src="<%= file.fileUrl %>"
+                      alt="<%= file.fileName || 'Post image' %>"
+                      class="social-post-image"
+                      loading="lazy"
+                    >
+
+                  <% } else if (
+                    file.mimeType &&
+                    file.mimeType.startsWith("video/")
+                  ) { %>
+
+                    <video
+                      class="social-post-video"
+                      controls
+                      controlsList="nodownload noplaybackrate"
+                      disablePictureInPicture
+                      preload="metadata"
+                      playsinline
+                      webkit-playsinline
+                      poster="<%= file.thumbnailUrl || '' %>"
+                    >
+                      <source
+                        src="<%= file.fileUrl %>"
+                        type="<%= file.mimeType %>"
+                      >
+
+                      Your browser does not support video playback.
+                    </video>
+
+                  <% } else if (
+                    file.mimeType === "application/pdf"
+                  ) { %>
+
+                    <a
+                      href="<%= file.fileUrl %>"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="social-public-pdf"
+                    >
+                      📄
+                      <%= file.fileName || "View PDF" %>
+                    </a>
+
+                  <% } else { %>
+
+                    <a
+                      href="<%= file.fileUrl %>"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      📎
+                      <%= file.fileName || "Attached file" %>
+                    </a>
+
+                  <% } %>
+
+                  <% if (file.mediaText) { %>
+
+                    <div class="social-post-media-text">
+                      <%= file.mediaText %>
+                    </div>
+
+                  <% } %>
+
+                </div>
+
+              <% }) %>
+
+            </div>
+
+          <% } %>
+<!---->
+<!---->
+          <div
+  class="social-public-reactions"
+  data-post-id="<%= post.id %>"
+>
+  <button type="button"
+          class="social-public-reaction-btn"
+          data-reaction="like"
+          title="Like">
+    <span class="reaction-icon">👍</span>
+    <span class="reaction-count"><%= post.reactions?.like || 0 %></span>
+  </button>
+
+  <button type="button"
+          class="social-public-reaction-btn"
+          data-reaction="dislike"
+          title="Dislike">
+    <span class="reaction-icon">👎</span>
+    <span class="reaction-count"><%= post.reactions?.dislike || 0 %></span>
+  </button>
+
+  <button type="button"
+          class="social-public-reaction-btn"
+          data-reaction="heart"
+          title="Heart">
+    <span class="reaction-icon">❤️</span>
+    <span class="reaction-count"><%= post.reactions?.heart || 0 %></span>
+  </button>
+
+  <button type="button"
+          class="social-public-reaction-btn"
+          data-reaction="horse"
+          title="Horse">
+    <span class="reaction-icon">🐴</span>
+    <span class="reaction-count"><%= post.reactions?.horse || 0 %></span>
+  </button>
+
+  <button type="button"
+          class="social-public-reaction-btn"
+          data-reaction="rose"
+          title="Rose">
+    <span class="reaction-icon">🌹</span>
+    <span class="reaction-count"><%= post.reactions?.rose || 0 %></span>
+  </button>
+
+  <button type="button"
+          class="social-public-reaction-btn"
+          data-reaction="fly"
+          title="Fly">
+    <span class="reaction-icon">🪰</span>
+    <span class="reaction-count"><%= post.reactions?.fly || 0 %></span>
+  </button>
+
+  <button type="button"
+          class="social-public-reaction-btn"
+          data-reaction="call"
+          title="Call">
+    <span class="reaction-icon">📞</span>
+    <span class="reaction-count"><%= post.reactions?.call || 0 %></span>
+  </button>
+
+  <button type="button"
+          class="social-public-reaction-btn"
+          data-reaction="website"
+          title="Website">
+    <span class="reaction-icon">🌐</span>
+    <span class="reaction-count"><%= post.reactions?.website || 0 %></span>
+  </button>
+
+  <button type="button"
+          class="social-public-reaction-btn"
+          data-reaction="email"
+          title="Email">
+    <span class="reaction-icon">✉️</span>
+    <span class="reaction-count"><%= post.reactions?.email || 0 %></span>
+  </button>
+
+  <button type="button"
+          class="social-public-reaction-btn"
+          data-reaction="smile"
+          title="Smile">
+    <span class="reaction-icon">🙂</span>
+    <span class="reaction-count"><%= post.reactions?.smile || 0 %></span>
+  </button>
+
+  <button type="button"
+          class="social-public-reaction-btn"
+          data-reaction="bell"
+          title="Bell">
+    <span class="reaction-icon">🔔</span>
+    <span class="reaction-count"><%= post.reactions?.bell || 0 %></span>
+  </button>
+
+  <button type="button"
+          class="social-public-reaction-btn"
+          data-reaction="trophy"
+          title="Trophy">
+    <span class="reaction-icon">🏆</span>
+    <span class="reaction-count"><%= post.reactions?.trophy || 0 %></span>
+  </button>
+
+  <button type="button"
+          class="social-public-reaction-btn"
+          data-reaction="victory"
+          title="Victory">
+    <span class="reaction-icon">✌️</span>
+    <span class="reaction-count"><%= post.reactions?.victory || 0 %></span>
+  </button>
+</div>
+
+<!---->
+<!---->
+        </article>
+
+        <% if (index < posts.length - 1) { %>
+          <hr>
+        <% } %>
+
+      <% }) %>
+
+    <% } else { %>
+
+      <p class="social-public-empty">
+        No public posts available for reactions.
+      </p>
+
+    <% } %>
+
+  </div>
+
+</section>
+
+
+
+<!-- =========================================================
+     PAGINATION
+========================================================== -->
+
+<section class="py-5 bg-light border border-black mt-4 mb-4">
+
+  <div class="public-post-pagination">
+
+    <!-- PREVIOUS -->
+
+    <% if (pagination && pagination.hasPrevious) { %>
+
+      <a
+        href="/public/post/react?page=<%= pagination.previousPage %>"
+        class="public-post-pagination__nav"
+      >
+        ← Previous
+      </a>
+
+    <% } else { %>
+
+      <span
+        class="public-post-pagination__nav public-post-pagination__disabled"
+      >
+        ← Previous
+      </span>
+
+    <% } %>
+
+
+    <!-- PAGE NUMBERS -->
+
+    <% if (pagination && pagination.totalPages > 0) { %>
+
+      <% for (
+        let i = 1;
+        i <= pagination.totalPages;
+        i++
+      ) { %>
+
+        <a
+          href="/public/post/react?page=<%= i %>"
+          class="public-post-pagination__page <%= i === pagination.page
+            ? 'public-post-pagination__active'
+            : ''
+          %>"
+        >
+          <%= i %>
+        </a>
+
+      <% } %>
+
+    <% } else { %>
+
+      <span class="public-post-pagination__page public-post-pagination__active">
+        1
+      </span>
+
+    <% } %>
+
+
+    <!-- NEXT -->
+
+    <% if (pagination && pagination.hasNext) { %>
+
+      <a
+        href="/public/post/react?page=<%= pagination.nextPage %>"
+        class="public-post-pagination__nav"
+      >
+        Next →
+      </a>
+
+    <% } else { %>
+
+      <span
+        class="public-post-pagination__nav public-post-pagination__disabled"
+      >
+        Next →
+      </span>
+
+    <% } %>
+
+  </div>
+
+</section>
+
+
+  <!---->
+  
+
+  <!--Refer to index.ejs how to include header and footer.ejs-->
+</main>
+<script src="/js/socialpublicreact.js"></script> 
+
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->
+  
