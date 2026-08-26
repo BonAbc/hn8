@@ -108,19 +108,6 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-//end change to htttps
-// function name plugged into app.get
-//function getToday() {
-// return new Date().toISOString().split("T")[0];
-//}
-//function getToday() {
-// const today = new Date();
-//  const year = today.getFullYear();
-//  const month = String(today.getMonth() + 1).padStart(2, "0");
-// const day = String(today.getDate()).padStart(2, "0");
-// return `${year}-${month}-${day}`;
-//}
-
 function getToday() {
   return DateTime.now().setZone("America/Chicago").toFormat("yyyy-MM-dd");
 }
@@ -200,6 +187,19 @@ const authLimiter = rateLimit({
 });
 
 app.use("/login", authLimiter);
+//
+const connectReactionLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 15, // 15 reaction requests per IP
+  message: {
+    success: false,
+    message: "Too many reaction requests. Please try again later.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+//
 
 app.use(
   helmet({
@@ -4920,7 +4920,7 @@ app.get("/public/post/connect", async (req, res) => {
   }
 });
 //
-app.post("/public/post/connect", async (req, res) => {
+app.post("/public/post/connect", connectReactionLimiter, async (req, res) => {
   try {
     // ========================================================
     // PUBLIC VISITOR ID
