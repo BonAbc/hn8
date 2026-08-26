@@ -4624,6 +4624,7 @@ app.get("/social/exchange", async (req, res) => {
           mime_type,
           file_size,
           media_text,
+           thumbnail_url,
           created_at
 
         FROM social_post_media
@@ -4651,6 +4652,7 @@ app.get("/social/exchange", async (req, res) => {
           mimeType: row.mime_type,
           fileSize: row.file_size,
           mediaText: row.media_text,
+          thumbnailUrl: row.thumbnail_url,
           createdAt: row.created_at,
         });
       }
