@@ -271,10 +271,17 @@
   </button>
   <button type="button"
           class="social-public-reaction-btn"
-          data-reaction="victory"
-          title="Victory">
+          data-reaction="checkmark"
+          title="Checkmark">
     <span class="reaction-icon">✔</span>
     <span class="reaction-count"><%= post.reactions?.checkmark || 0 %></span>
+  </button>
+   <button type="button"
+          class="social-public-reaction-btn"
+          data-reaction="buom_xinh"
+          title="Buom Xinh">
+    <span class="reaction-icon">🦋</span>
+    <span class="reaction-count"><%= post.reactions?.buom Xinh || 0 %></span>
   </button>
 </div>
 

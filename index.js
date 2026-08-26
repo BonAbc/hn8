@@ -4845,6 +4845,7 @@ app.get("/public/post/connect", async (req, res) => {
         trophy: reactionCounts[key]?.trophy || 0,
         victory: reactionCounts[key]?.victory || 0,
         checkmark: reactionCounts[key]?.checkmark || 0,
+        buom_xinh: reactionCounts[key]?.buom_xinh || 0,
       };
     }
 
@@ -5019,6 +5020,7 @@ app.post("/public/post/connect", async (req, res) => {
       "trophy",
       "victory",
       "checkmark",
+      "buom_xinh",
     ];
 
     if (!allowedReactions.includes(reactionType)) {
@@ -5086,7 +5088,7 @@ app.post("/public/post/connect", async (req, res) => {
     });
   }
 });
-
+//
 function canDownloadSocialMedia(userEmail) {
   const downloadAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
     .split(",")
