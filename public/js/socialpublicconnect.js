@@ -1,9 +1,9 @@
 // ============================================================
-// SOCIAL PUBLIC REACT
+// SOCIAL PUBLIC CONNECT
 // Front-end JavaScript
 //
 // Used by:
-//     social-public-react.ejs
+//     social-public-connect.ejs
 //
 // Public visitors do NOT need to log in.
 //
@@ -23,7 +23,7 @@
 // SET POST IMAGE RATIO
 // ============================================================
 
-function socialPublicReactSetPostImageRatio(post) {
+function socialPublicConnectSetPostImageRatio(post) {
   if (!post) {
     return;
   }
@@ -34,31 +34,15 @@ function socialPublicReactSetPostImageRatio(post) {
     return;
   }
 
-  // ----------------------------------------------------------
-  // Get images belonging ONLY to this post
-  // ----------------------------------------------------------
-
   const images = Array.from(
     mediaContainer.querySelectorAll(".social-post-image"),
   );
-
-  // ----------------------------------------------------------
-  // One image
-  //
-  // Leave it alone.
-  //
-  // This preserves the normal social.ejs behavior.
-  // ----------------------------------------------------------
 
   if (images.length <= 1) {
     mediaContainer.style.removeProperty("--social-average-image-ratio");
 
     return;
   }
-
-  // ----------------------------------------------------------
-  // Get valid natural image ratios
-  // ----------------------------------------------------------
 
   const ratios = images
     .filter((image) => image.naturalWidth > 0 && image.naturalHeight > 0)
@@ -68,16 +52,8 @@ function socialPublicReactSetPostImageRatio(post) {
     return;
   }
 
-  // ----------------------------------------------------------
-  // Average ratio
-  // ----------------------------------------------------------
-
   const averageRatio =
     ratios.reduce((total, ratio) => total + ratio, 0) / ratios.length;
-
-  // ----------------------------------------------------------
-  // Store ratio ONLY on this post's media container
-  // ----------------------------------------------------------
 
   mediaContainer.style.setProperty(
     "--social-average-image-ratio",
@@ -89,7 +65,7 @@ function socialPublicReactSetPostImageRatio(post) {
 // INITIALIZE ONE POST
 // ============================================================
 
-function socialPublicReactInitializePost(post) {
+function socialPublicConnectInitializePost(post) {
   if (!post) {
     return;
   }
@@ -101,24 +77,16 @@ function socialPublicReactInitializePost(post) {
   }
 
   images.forEach((image) => {
-    // --------------------------------------------------------
-    // Image already loaded
-    // --------------------------------------------------------
-
     if (image.complete) {
-      socialPublicReactSetPostImageRatio(post);
+      socialPublicConnectSetPostImageRatio(post);
 
       return;
     }
 
-    // --------------------------------------------------------
-    // Wait for image
-    // --------------------------------------------------------
-
     image.addEventListener(
       "load",
       () => {
-        socialPublicReactSetPostImageRatio(post);
+        socialPublicConnectSetPostImageRatio(post);
       },
       {
         once: true,
@@ -128,7 +96,7 @@ function socialPublicReactInitializePost(post) {
 }
 
 // ============================================================
-// PUBLIC REACTION
+// PUBLIC CONNECT REACTION
 //
 // Public visitors do NOT need to log in.
 //
@@ -149,13 +117,13 @@ function socialPublicReactInitializePost(post) {
 //     POST /public/post/connect
 // ============================================================
 
-async function socialPublicReact(button) {
+async function socialPublicConnect(button) {
   if (!button) {
     return;
   }
 
   // ----------------------------------------------------------
-  // Find reaction container
+  // Find connect/reaction container
   // ----------------------------------------------------------
 
   const reactionContainer = button.closest(".social-public-reactions");
@@ -181,7 +149,7 @@ async function socialPublicReact(button) {
   // ----------------------------------------------------------
 
   if (!postId || !reactionType) {
-    console.error("PUBLIC REACTION: missing postId or reactionType", {
+    console.error("PUBLIC CONNECT: missing postId or reactionType", {
       postId,
       reactionType,
     });
@@ -190,7 +158,7 @@ async function socialPublicReact(button) {
   }
 
   // ----------------------------------------------------------
-  // Prevent duplicate clicks while request is running
+  // Prevent duplicate clicks
   // ----------------------------------------------------------
 
   if (button.disabled) {
@@ -236,7 +204,7 @@ async function socialPublicReact(button) {
     try {
       data = await response.json();
     } catch (jsonError) {
-      console.error("PUBLIC REACTION: invalid server response", jsonError);
+      console.error("PUBLIC CONNECT: invalid server response", jsonError);
     }
 
     // --------------------------------------------------------
@@ -252,13 +220,12 @@ async function socialPublicReact(button) {
     // --------------------------------------------------------
     // Successful reaction
     //
-    // Reload page so reaction counts come directly
-    // from PostgreSQL.
+    // Reload page so counts come from PostgreSQL.
     // --------------------------------------------------------
 
     window.location.reload();
   } catch (error) {
-    console.error("PUBLIC REACTION ERROR:", error);
+    console.error("PUBLIC CONNECT ERROR:", error);
 
     alert(error.message || "Unable to save reaction.");
 
@@ -269,32 +236,20 @@ async function socialPublicReact(button) {
 }
 
 // ============================================================
-// PUBLIC REACTION CLICK HANDLER
+// PUBLIC CONNECT CLICK HANDLER
 //
 // Event delegation.
 //
 // IMPORTANT:
-// This handler is initialized only ONCE.
-//
-// This prevents multiple document click listeners from
-// causing multiple reaction requests when the initialization
-// function is accidentally called more than once.
+// Only one document listener is registered.
 // ============================================================
 
-function socialPublicReactInitializeReactions() {
-  // ----------------------------------------------------------
-  // Prevent duplicate event listeners
-  // ----------------------------------------------------------
-
-  if (window.socialPublicReactClickHandlerInitialized) {
+function socialPublicConnectInitializeReactions() {
+  if (window.socialPublicConnectClickHandlerInitialized) {
     return;
   }
 
-  window.socialPublicReactClickHandlerInitialized = true;
-
-  // ----------------------------------------------------------
-  // One delegated click listener
-  // ----------------------------------------------------------
+  window.socialPublicConnectClickHandlerInitialized = true;
 
   document.addEventListener("click", (event) => {
     const button = event.target.closest(".social-public-reaction-btn");
@@ -303,50 +258,30 @@ function socialPublicReactInitializeReactions() {
       return;
     }
 
-    // ------------------------------------------------------
-    // Prevent default button behavior
-    // ------------------------------------------------------
-
     event.preventDefault();
-
-    // ------------------------------------------------------
-    // Ignore another click while processing
-    // ------------------------------------------------------
 
     if (button.disabled) {
       return;
     }
 
-    // ------------------------------------------------------
-    // Process reaction
-    // ------------------------------------------------------
-
-    socialPublicReact(button);
+    socialPublicConnect(button);
   });
 }
 
 // ============================================================
-// INITIALIZE PUBLIC REACTION PAGE
+// INITIALIZE PUBLIC CONNECT PAGE
 // ============================================================
 
-function socialPublicReactInitialize() {
-  // ----------------------------------------------------------
-  // Initialize posts / image ratios
-  // ----------------------------------------------------------
-
+function socialPublicConnectInitialize() {
   const posts = document.querySelectorAll(
     ".social-public-page .social-public-post",
   );
 
   posts.forEach((post) => {
-    socialPublicReactInitializePost(post);
+    socialPublicConnectInitializePost(post);
   });
 
-  // ----------------------------------------------------------
-  // Initialize public reaction buttons
-  // ----------------------------------------------------------
-
-  socialPublicReactInitializeReactions();
+  socialPublicConnectInitializeReactions();
 }
 
 // ============================================================
@@ -354,9 +289,9 @@ function socialPublicReactInitialize() {
 // ============================================================
 
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", socialPublicReactInitialize, {
+  document.addEventListener("DOMContentLoaded", socialPublicConnectInitialize, {
     once: true,
   });
 } else {
-  socialPublicReactInitialize();
+  socialPublicConnectInitialize();
 }
