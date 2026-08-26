@@ -4746,19 +4746,24 @@ app.post(
       const isAdmin =
         !!normalizedUserEmail && adminEmails.includes(normalizedUserEmail);
 
-      // ========================================================
       // SPECIAL ADMIN CHECK
       // ========================================================
 
-      const userIsSpecialAdmin = isSpecialAdmin(userEmail);
+      const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
 
+      const isSpecialAdmin =
+        !!normalizedUserEmail &&
+        specialAdminEmails.includes(normalizedUserEmail);
       // ========================================================
       // ADMIN OR SPECIAL ADMIN ONLY
       //
       // EMAIL ADMIN IS NOT USED
       // ========================================================
 
-      if (!isAdmin && !userIsSpecialAdmin) {
+      if (!isAdmin && !isSpecialAdmin) {
         return res.status(403).send("Admin access required.");
       }
 
@@ -4821,7 +4826,14 @@ app.post(
       // SPECIAL ADMIN CHECK
       // ========================================================
 
-      const userIsSpecialAdmin = isSpecialAdmin(userEmail);
+      const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+
+      const isSpecialAdmin =
+        !!normalizedUserEmail &&
+        specialAdminEmails.includes(normalizedUserEmail);
 
       // ========================================================
       // ADMIN OR SPECIAL ADMIN ONLY
@@ -4829,7 +4841,7 @@ app.post(
       // EMAIL ADMIN IS NOT USED
       // ========================================================
 
-      if (!isAdmin && !userIsSpecialAdmin) {
+      if (!isAdmin && !isSpecialAdmin) {
         return res.status(403).send("Admin access required.");
       }
 
