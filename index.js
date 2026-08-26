@@ -3829,27 +3829,6 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     console.log("SOCIAL SEARCH req.user =", req.user);
 
     // ========================================================
-    // CURRENT USER ROLE
-    // ========================================================
-
-    let userRole = null;
-
-    if (userId) {
-      const roleResult = await db.query(
-        `
-        SELECT role
-        FROM my_user
-        WHERE id = $1
-        `,
-        [userId],
-      );
-
-      userRole = roleResult.rows[0]?.role ?? null;
-    }
-
-    console.log("SOCIAL SEARCH userRole =", userRole);
-
-    // ========================================================
     // CURRENT USER GROUP
     // ========================================================
 
@@ -3871,25 +3850,29 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     console.log("SOCIAL SEARCH userGroupId =", userGroupId);
 
     // ========================================================
-    // ADMIN CHECK
+    // FULL ADMIN CHECK
+    // ADMIN_EMAILS
     //
-    // admin  = full admin
-    // admin1 = full admin
+    // Sees EVERYTHING
     // ========================================================
 
-    const isAdmin = userRole === "admin" || userRole === "admin1";
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
 
-    // ========================================================
-    // CLOSE RELATIVE CHECK
-    //
-    // closerelative replaces isEmailsAdmin
-    // ========================================================
+    const normalizedUserEmail = String(userEmail || "")
+      .trim()
+      .toLowerCase();
 
-    const userIsCloseRelative = userRole === "closerelative";
+    const isAdmin =
+      !!normalizedUserEmail && adminEmails.includes(normalizedUserEmail);
 
-    console.log("SOCIAL SEARCH userRole =", userRole);
+    const userIsEmailsAdmin = isEmailsAdmin(userEmail);
+
+    console.log("SOCIAL SEARCH userEmail =", userEmail);
     console.log("SOCIAL SEARCH isAdmin =", isAdmin);
-    console.log("SOCIAL SEARCH isCloseRelative =", userIsCloseRelative);
+    console.log("SOCIAL SEARCH isEmailsAdmin =", userIsEmailsAdmin);
 
     // ========================================================
     // SEARCH INPUT
@@ -3913,12 +3896,12 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     // FULL ADMIN:
     //   can filter all visibility types
     //
-    // CLOSE RELATIVE:
+    // EMAILS ADMIN:
     //   can filter:
     //      loggedin users
     //      group_only
     //
-    //   cannot see/filter admin_only
+    //   cannot filter admin_only
     //
     // NORMAL USER:
     //   no admin visibility filter
@@ -3932,12 +3915,12 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       if (!allowedVisibility.includes(visibility)) {
         visibility = "";
       }
-    } else if (userIsCloseRelative) {
+    } else if (userIsEmailsAdmin) {
       visibility = (req.query.visibility || "").trim();
 
-      const allowedCloseRelativeVisibility = ["loggedin users", "group_only"];
+      const allowedEmailsAdminVisibility = ["loggedin users", "group_only"];
 
-      if (!allowedCloseRelativeVisibility.includes(visibility)) {
+      if (!allowedEmailsAdminVisibility.includes(visibility)) {
         visibility = "";
       }
     }
@@ -4015,9 +3998,9 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     // FULL ADMIN:
     //   sees everything
     //
-    // CLOSE RELATIVE:
+    // EMAILS ADMIN:
     //   loggedin users
-    //   group_only from ANY group
+    //   group_only
     //   own posts
     //   NOT admin_only
     //
@@ -4030,18 +4013,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     if (isAdmin) {
       // FULL ADMIN sees everything.
       // No security condition needed.
-    } else if (userIsCloseRelative) {
-      // ------------------------------------------------------
-      // CLOSE RELATIVE
-      // ------------------------------------------------------
-      //
-      // No group_id restriction.
-      //
-      // Can see group_only posts from ANY group.
-      //
-      // admin_only is excluded.
-      // ------------------------------------------------------
-
+    } else if (userIsEmailsAdmin) {
       const userIdParam = values.length + 1;
 
       values.push(userId);
@@ -4085,21 +4057,9 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
 
     // ========================================================
     // VISIBILITY FILTER
-    //
-    // ADMIN:
-    //   loggedin users
-    //   group_only
-    //   admin_only
-    //
-    // CLOSE RELATIVE:
-    //   loggedin users
-    //   group_only
-    //
-    // NORMAL:
-    //   cannot use this admin filter
     // ========================================================
 
-    if ((isAdmin || userIsCloseRelative) && visibility) {
+    if ((isAdmin || userIsEmailsAdmin) && visibility) {
       values.push(visibility);
 
       conditions.push(`p.visibility = $${values.length}`);
@@ -4156,7 +4116,6 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       : "";
 
     console.log("SOCIAL SEARCH whereClause =", whereClause);
-
     console.log("SOCIAL SEARCH values =", values);
 
     // ========================================================
@@ -4186,7 +4145,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     // FULL ADMIN:
     //   all three types
     //
-    // CLOSE RELATIVE:
+    // EMAILS ADMIN:
     //   loggedin users + group_only
     //   admin_only remains 0 / hidden
     // ========================================================
@@ -4195,7 +4154,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     let userAdminPosts = 0;
     let groupPosts = 0;
 
-    if (isAdmin || userIsCloseRelative) {
+    if (isAdmin || userIsEmailsAdmin) {
       const breakdownResult = await db.query(
         `
         SELECT
@@ -4227,7 +4186,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       groupPosts = Number(breakdownResult.rows[0]?.group_posts) || 0;
 
       // ------------------------------------------------------
-      // CLOSE RELATIVE must NEVER expose admin_only count.
+      // EMAILS_ADMIN must NEVER expose admin_only count.
       // ------------------------------------------------------
 
       if (isAdmin) {
@@ -4266,7 +4225,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
         params.set("dateTo", dateTo);
       }
 
-      if ((isAdmin || userIsCloseRelative) && visibility) {
+      if ((isAdmin || userIsEmailsAdmin) && visibility) {
         params.set("visibility", visibility);
       }
 
@@ -4280,7 +4239,6 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     // ========================================================
 
     const limitParam = values.length + 1;
-
     const offsetParam = values.length + 2;
 
     const searchResult = await db.query(
@@ -4292,7 +4250,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
         p.color,
         p.visibility,
         p.public_enabled,
-         p.public_reactions_enabled,
+        p.public_reactions_enabled,
         p.created_at,
         p.updated_at,
         u.email
@@ -4332,6 +4290,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       visibility: row.visibility,
 
       publicEnabled: row.public_enabled,
+
       publicReactionsEnabled: row.public_reactions_enabled,
 
       createdAt: row.created_at,
@@ -4352,12 +4311,9 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
 
       currentUserEmail: userEmail,
 
-      userRole,
-
       isAdmin,
 
-      // closerelative replaces isEmailsAdmin
-      isCloseRelative: userIsCloseRelative,
+      isEmailsAdmin: userIsEmailsAdmin,
 
       // Search
       q,
@@ -4387,6 +4343,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     return res.status(500).send("Unable to search social posts.");
   }
 });
+
 // ============================================================
 // SOCIAL SEARCH
 //
