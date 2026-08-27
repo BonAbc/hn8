@@ -48,9 +48,14 @@
                 <div class="social-date">
 
                   <%= post.createdAt
-                    ? new Date(post.createdAt).toLocaleString()
-                    : ""
-                  %>
+  ? new Date(post.createdAt).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    })
+  : ""
+%>
+
 
                   <% if (post.visibility === "admin_only") { %>
                     · 🔒 Only me + Admin

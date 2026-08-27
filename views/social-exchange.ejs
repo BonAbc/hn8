@@ -51,7 +51,14 @@
 
                 <div class="social-date">
 
-  <%= post.createdAt || "" %>
+ <%= post.createdAt
+  ? new Date(post.createdAt).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    })
+  : ""
+%>
 
   <% if (post.visibility === "loggedin users") { %>
     · 👨‍👩‍👧‍👧👩‍👩‍👧‍👦 All Loggedin Users 👨‍👩‍👧‍👧👩‍👩‍👧‍👦
@@ -381,4 +388,4 @@
 <script src="/js/socialpublic.js"></script>
 
 <%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->
- 
+  
