@@ -419,9 +419,19 @@ app.get("/logout", (req, res, next) => {
 passport.use(
   new Strategy(async function verify(username, password, cb) {
     try {
-      const result = await db.query("SELECT * FROM my_user WHERE email = $1", [
-        username,
-      ]);
+      const result = await db.query(
+        `
+        SELECT
+          id,
+          email,
+          pw,
+          is_active,
+          two_factor_enabled
+        FROM my_user
+        WHERE email = $1
+        `,
+        [username],
+      );
 
       if (result.rows.length === 0) {
         return cb(null, false, {
@@ -438,14 +448,13 @@ passport.use(
       }
 
       if (!user.pw) {
-        console.warn("User authentication failed: password  missing");
+        console.warn("User authentication failed: password missing");
 
         return cb(null, false, {
           message: "Invalid username or password.",
         });
       }
 
-      //
       const match = await bcrypt.compare(password, user.pw);
 
       if (!match) {
@@ -463,6 +472,7 @@ passport.use(
     }
   }),
 );
+
 //
 passport.serializeUser((user, cb) => {
   cb(null, user.id);
@@ -472,7 +482,11 @@ passport.deserializeUser(async (id, cb) => {
   try {
     const result = await db.query(
       `
-      SELECT *
+      SELECT
+        id,
+        email,
+        is_active,
+        two_factor_enabled
       FROM my_user
       WHERE id = $1
       `,
@@ -488,6 +502,7 @@ passport.deserializeUser(async (id, cb) => {
     return cb(err);
   }
 });
+
 //
 app.post("/login", (req, res, next) => {
   const requestId =
