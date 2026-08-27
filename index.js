@@ -424,8 +424,6 @@ passport.use(
       ]);
 
       if (result.rows.length === 0) {
-        console.log("❌ USER NOT FOUND");
-
         return cb(null, false, {
           message: "Invalid username or password.",
         });
@@ -434,8 +432,6 @@ passport.use(
       const user = result.rows[0];
 
       if (!user.is_active) {
-        console.log("❌ ACCOUNT INACTIVE");
-
         return cb(null, false, {
           message: "Your account is inactive. Please contact admin.",
         });
@@ -459,8 +455,6 @@ passport.use(
           message: "Invalid username or password.",
         });
       }
-
-      console.log("User authenticated:", user.id);
 
       return cb(null, user);
     } catch (err) {
@@ -506,8 +500,6 @@ app.post("/login", (req, res, next) => {
     }
 
     if (!user) {
-      console.log("❌ INVALID LOGIN:", requestId);
-
       req.flash("error", info?.message || "Invalid username or password.");
 
       return res.redirect("/login");
@@ -518,8 +510,6 @@ app.post("/login", (req, res, next) => {
     // ==========================================
 
     if (!user.two_factor_enabled) {
-      console.log("🚀 FIRST-TIME 2FA");
-
       req.session.pendingSetupUser = user.id;
       req.session.pending2FAUser = null;
       req.session.isAdmin = adminEmails.includes(user.email);
@@ -2142,15 +2132,6 @@ app.post(
         });
       }
 
-      console.log("========================================");
-      console.log("CREATE SOCIAL POST");
-
-      console.log("========================================");
-
-      // ======================================================
-      // ADMIN CHECK
-      // ======================================================
-
       const adminEmails = (process.env.ADMIN_EMAILS || "")
         .split(",")
         .map((email) => email.trim().toLowerCase())
@@ -2308,12 +2289,6 @@ app.post(
             `,
             [specialAdmin.id, userId, postId, "A new social post was created."],
           );
-
-          console.log("SOCIAL NOTIFICATION CREATED:", {
-            recipientUserId: specialAdmin.id,
-            actorUserId: userId,
-            postId,
-          });
         }
       }
 
@@ -2355,12 +2330,6 @@ app.post(
 
         if (file.mimetype === "video/mp4" || file.mimetype === "video/webm") {
           const thumbnailFilename = `${file.filename}.jpg`;
-
-          console.log("========================================");
-          console.log("GENERATING VIDEO THUMBNAIL");
-          console.log("Video:", file.path);
-          console.log("Thumbnail:", thumbnailFilename);
-          console.log("========================================");
 
           try {
             await new Promise((resolve, reject) => {
@@ -2423,24 +2392,11 @@ app.post(
         });
       }
 
-      // ======================================================
-      // COMMIT
-      // ======================================================
-
       await client.query("COMMIT");
-
-      // ======================================================
-      // SUCCESS
-      // ======================================================
 
       const postUrl = `/social/post?postId=${encodeURIComponent(
         String(postId),
       )}`;
-
-      console.log("========================================");
-      console.log("POST CREATED SUCCESSFULLY");
-
-      console.log("========================================");
 
       return res.status(200).json({
         success: true,
@@ -2721,12 +2677,6 @@ app.post("/social/post/delete", ensureAuthenticated, async (req, res) => {
     const isAdmin =
       !!userEmail && adminEmails.includes(userEmail.toLowerCase());
 
-    console.log("DELETE POST postId =", postId);
-
-    // ========================================================
-    // VALIDATION
-    // ========================================================
-
     if (!userId) {
       client.release();
 
@@ -2738,10 +2688,6 @@ app.post("/social/post/delete", ensureAuthenticated, async (req, res) => {
 
       return res.status(400).send("Post ID is required.");
     }
-
-    // ========================================================
-    // BEGIN TRANSACTION
-    // ========================================================
 
     await client.query("BEGIN");
 
@@ -2960,11 +2906,6 @@ app.post("/social/comment/edit", ensureAuthenticated, async (req, res) => {
     const commentId = req.body.id;
     const content = (req.body.content || "").trim();
 
-    console.log("========================================");
-    console.log("SOCIAL COMMENT EDIT");
-
-    console.log("content:", content);
-
     if (!userId) {
       return res.status(401).send("Please log in.");
     }
@@ -2994,8 +2935,6 @@ app.post("/social/comment/edit", ensureAuthenticated, async (req, res) => {
       `,
       [parsedCommentId],
     );
-
-    console.log("COMMENT LOOKUP:", commentResult.rows);
 
     if (!commentResult.rowCount) {
       return res.status(404).send("Comment not found.");
@@ -3151,11 +3090,6 @@ app.post("/social/comment/delete", ensureAuthenticated, async (req, res) => {
 
 app.post("/social/comment/reply", ensureAuthenticated, async (req, res) => {
   try {
-    console.log("========================================");
-    console.log("SOCIAL REPLY REQUEST");
-
-    console.log("========================================");
-
     const userId = req.user?.id;
 
     const commentId = req.body?.commentId;
@@ -3277,11 +3211,6 @@ app.post("/social/comment/reply", ensureAuthenticated, async (req, res) => {
 
     return res.redirect(`/social/post?postId=${commentResult.rows[0].post_id}`);
   } catch (err) {
-    console.error("========================================");
-    console.error("REPLY ERROR");
-    console.error(err);
-    console.error("========================================");
-
     return res.status(500).send("Unable to add reply.");
   }
 });
@@ -3291,12 +3220,6 @@ app.post("/social/reply/edit", ensureAuthenticated, async (req, res) => {
     const userId = req.user?.id;
     const replyId = req.body.id;
     const content = (req.body.content || "").trim();
-
-    console.log("========================================");
-
-    // ----------------------------------------------------------
-    // LOGIN
-    // ----------------------------------------------------------
 
     if (!userId) {
       return res.status(401).send("Please log in.");
@@ -3335,15 +3258,11 @@ app.post("/social/reply/edit", ensureAuthenticated, async (req, res) => {
       [content, parsedReplyId, userId],
     );
 
-    console.log("EDIT RESULT:", result.rows);
-
     if (!result.rowCount) {
       return res.status(403).send("You cannot edit this reply.");
     }
 
     const postId = Number(result.rows[0].post_id);
-
-    console.log("EDIT POST ID:", postId);
 
     if (!Number.isInteger(postId) || postId <= 0) {
       console.error(
@@ -3628,10 +3547,6 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     const userEmail = req.user?.email || null;
 
     console.log("SOCIAL SEARCH req.user =", req.user);
-
-    // ========================================================
-    // CURRENT USER GROUP
-    // ========================================================
 
     let userGroupId = null;
 
@@ -5177,14 +5092,6 @@ app.get("/social-admin-downloads", ensureAuthenticated, async (req, res) => {
         createdAt: row.media_created_at,
       });
     }
-
-    console.log("DOWNLOAD PAGINATION:", {
-      page,
-      perPage,
-      totalPosts,
-      totalPages,
-    });
-    //
 
     return res.render("social-admin-downloads", {
       defaultDate: getToday(),

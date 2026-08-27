@@ -2,20 +2,6 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-// ======================================================
-// RENDER PERSISTENT DISK
-// ======================================================
-//
-// Render Disk Mount Path:
-//
-// /uploads
-//
-// Therefore social files are stored at:
-//
-// /uploads/social
-//
-// ======================================================
-
 const uploadDir = "/uploads/social";
 
 if (!fs.existsSync(uploadDir)) {

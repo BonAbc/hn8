@@ -30,8 +30,7 @@ export default function webtraffic(db, io) {
             `,
       [ip, country, city, timezone, req.originalUrl],
     );
-    // after saving in database then webtraffic.ejs receive that signal
-    // new-visitor is event name from Server socket.io io.emit
+
     io.emit("new-visitor", {
       ip,
       country,
@@ -44,6 +43,3 @@ export default function webtraffic(db, io) {
     next();
   };
 }
-// in middleware: next(): continue io.emit complete processing, without it, the request stops.
-// when click request > backend > send to Middleware > save data > send to ejs.
-// That is how it works.
