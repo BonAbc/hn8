@@ -1,28 +1,3 @@
-// ============================================================
-// SOCIAL PUBLIC CONNECT
-// Front-end JavaScript
-//
-// Used by:
-//     social-public-connect.ejs
-//
-// Public visitors do NOT need to log in.
-//
-// Visitor identity is handled by the backend using:
-//     publicVisitorId
-//
-// Public reactions are stored separately in:
-//     social_public_reactions
-//
-// CONNECT ENDPOINT:
-//     POST /public/post/connect
-//
-// Existing logged-in social reactions remain untouched.
-// ============================================================
-
-// ============================================================
-// SET POST IMAGE RATIO
-// ============================================================
-
 function socialPublicConnectSetPostImageRatio(post) {
   if (!post) {
     return;
@@ -61,10 +36,6 @@ function socialPublicConnectSetPostImageRatio(post) {
   );
 }
 
-// ============================================================
-// INITIALIZE ONE POST
-// ============================================================
-
 function socialPublicConnectInitializePost(post) {
   if (!post) {
     return;
@@ -95,36 +66,10 @@ function socialPublicConnectInitializePost(post) {
   });
 }
 
-// ============================================================
-// PUBLIC CONNECT REACTION
-//
-// Public visitors do NOT need to log in.
-//
-// Backend identifies visitor with:
-//
-//     publicVisitorId
-//
-// Reaction is saved into:
-//
-//     social_public_reactions
-//
-// NOT:
-//
-//     social_reactions
-//
-// CONNECT ENDPOINT:
-//
-//     POST /public/post/connect
-// ============================================================
-
 async function socialPublicConnect(button) {
   if (!button) {
     return;
   }
-
-  // ----------------------------------------------------------
-  // Find connect/reaction container
-  // ----------------------------------------------------------
 
   const reactionContainer = button.closest(".social-public-reactions");
 
@@ -132,21 +77,9 @@ async function socialPublicConnect(button) {
     return;
   }
 
-  // ----------------------------------------------------------
-  // Get post ID
-  // ----------------------------------------------------------
-
   const postId = reactionContainer.dataset.postId;
 
-  // ----------------------------------------------------------
-  // Get reaction type
-  // ----------------------------------------------------------
-
   const reactionType = button.dataset.reaction;
-
-  // ----------------------------------------------------------
-  // Validate
-  // ----------------------------------------------------------
 
   if (!postId || !reactionType) {
     console.error("PUBLIC CONNECT: missing postId or reactionType", {
@@ -157,29 +90,15 @@ async function socialPublicConnect(button) {
     return;
   }
 
-  // ----------------------------------------------------------
-  // Prevent duplicate clicks
-  // ----------------------------------------------------------
-
   if (button.disabled) {
     return;
   }
 
   button.disabled = true;
 
-  // ----------------------------------------------------------
-  // Visual loading state
-  // ----------------------------------------------------------
-
   button.classList.add("social-public-reaction-loading");
 
   try {
-    // --------------------------------------------------------
-    // SAVE PUBLIC REACTION
-    //
-    // CONNECT ENDPOINT
-    // --------------------------------------------------------
-
     const response = await fetch("/public/post/connect", {
       method: "POST",
 
@@ -195,10 +114,6 @@ async function socialPublicConnect(button) {
       }),
     });
 
-    // --------------------------------------------------------
-    // Read response safely
-    // --------------------------------------------------------
-
     let data = null;
 
     try {
@@ -207,21 +122,11 @@ async function socialPublicConnect(button) {
       console.error("PUBLIC CONNECT: invalid server response", jsonError);
     }
 
-    // --------------------------------------------------------
-    // Server error
-    // --------------------------------------------------------
-
     if (!response.ok || !data?.success) {
       throw new Error(
         data?.error || `Unable to save reaction (${response.status}).`,
       );
     }
-
-    // --------------------------------------------------------
-    // Successful reaction
-    //
-    // Reload page so counts come from PostgreSQL.
-    // --------------------------------------------------------
 
     window.location.reload();
   } catch (error) {
@@ -234,15 +139,6 @@ async function socialPublicConnect(button) {
     button.classList.remove("social-public-reaction-loading");
   }
 }
-
-// ============================================================
-// PUBLIC CONNECT CLICK HANDLER
-//
-// Event delegation.
-//
-// IMPORTANT:
-// Only one document listener is registered.
-// ============================================================
 
 function socialPublicConnectInitializeReactions() {
   if (window.socialPublicConnectClickHandlerInitialized) {
@@ -268,10 +164,6 @@ function socialPublicConnectInitializeReactions() {
   });
 }
 
-// ============================================================
-// INITIALIZE PUBLIC CONNECT PAGE
-// ============================================================
-
 function socialPublicConnectInitialize() {
   const posts = document.querySelectorAll(
     ".social-public-page .social-public-post",
@@ -283,10 +175,6 @@ function socialPublicConnectInitialize() {
 
   socialPublicConnectInitializeReactions();
 }
-
-// ============================================================
-// DOM READY
-// ============================================================
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", socialPublicConnectInitialize, {

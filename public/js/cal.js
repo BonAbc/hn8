@@ -1,5 +1,3 @@
-// Format num1 and num2 inputs on blur (show 1,000.00 style)
-// Format num1 and num2 inputs on blur (show 1,000.00 style)
 ["num1", "num2"].forEach((id) => {
   const input = document.getElementById(id);
 
@@ -15,11 +13,9 @@
     }
   });
 
-  // Shrink font dynamically as user types
   input.addEventListener("input", () => shrinkFont(input));
 });
 
-// Shrink font function for very large numbers
 function shrinkFont(input) {
   const length = input.value.replace(/,/g, "").length;
 
@@ -33,10 +29,10 @@ document.getElementById("calculateBtn").addEventListener("click", calculate);
 
 function calculate() {
   const num1 = parseFloat(
-    document.getElementById("num1").value.replace(/,/g, "")
+    document.getElementById("num1").value.replace(/,/g, ""),
   );
   const num2 = parseFloat(
-    document.getElementById("num2").value.replace(/,/g, "")
+    document.getElementById("num2").value.replace(/,/g, ""),
   );
   const operator = document.getElementById("operator").value;
   const resultInput = document.getElementById("result");
@@ -76,10 +72,9 @@ function calculate() {
   }
 
   resultInput.value = result;
-  shrinkFont(resultInput); // shrink result if too long
+  shrinkFont(resultInput);
 }
 
-// Reset button
 document.getElementById("resetBtn").addEventListener("click", () => {
   ["num1", "num2", "result"].forEach((id) => {
     const input = document.getElementById(id);
@@ -87,5 +82,5 @@ document.getElementById("resetBtn").addEventListener("click", () => {
     input.style.fontSize = "16px"; // reset font size
   });
 
-  document.getElementById("operator").value = ""; // reset operator
+  document.getElementById("operator").value = "";
 });

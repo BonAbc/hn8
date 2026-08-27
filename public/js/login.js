@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // --- Password visibility toggle ---
   const togglePassword = document.getElementById("togglePassword");
   const passwordField = document.getElementById("password");
   if (togglePassword && passwordField) {
@@ -16,7 +15,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // --- Clear flash messages on input ---
   const inputs = document.querySelectorAll("#username, #password");
   function clearFlashMessages() {
     const messages = document.querySelectorAll(".flash-message");

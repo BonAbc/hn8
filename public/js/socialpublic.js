@@ -1,11 +1,3 @@
-// ============================================================
-// SOCIAL PUBLIC
-// ============================================================
-
-// ============================================================
-// CALCULATE IMAGE RATIO FOR ONE POST
-// ============================================================
-
 function socialPublicSetPostImageRatio(post) {
   if (!post) {
     return;
@@ -17,31 +9,15 @@ function socialPublicSetPostImageRatio(post) {
     return;
   }
 
-  // ----------------------------------------------------------
-  // Get images belonging ONLY to this post
-  // ----------------------------------------------------------
-
   const images = Array.from(
     mediaContainer.querySelectorAll(".social-post-image"),
   );
-
-  // ----------------------------------------------------------
-  // One image
-  //
-  // Leave it alone.
-  //
-  // This preserves the normal social.ejs behavior.
-  // ----------------------------------------------------------
 
   if (images.length <= 1) {
     mediaContainer.style.removeProperty("--social-average-image-ratio");
 
     return;
   }
-
-  // ----------------------------------------------------------
-  // Get valid natural image ratios
-  // ----------------------------------------------------------
 
   const ratios = images
     .filter((image) => image.naturalWidth > 0 && image.naturalHeight > 0)
@@ -51,26 +27,14 @@ function socialPublicSetPostImageRatio(post) {
     return;
   }
 
-  // ----------------------------------------------------------
-  // Average ratio
-  // ----------------------------------------------------------
-
   const averageRatio =
     ratios.reduce((total, ratio) => total + ratio, 0) / ratios.length;
-
-  // ----------------------------------------------------------
-  // Store ratio ONLY on this post's media container
-  // ----------------------------------------------------------
 
   mediaContainer.style.setProperty(
     "--social-average-image-ratio",
     averageRatio,
   );
 }
-
-// ============================================================
-// INITIALIZE ONE POST
-// ============================================================
 
 function socialPublicInitializePost(post) {
   if (!post) {
@@ -84,19 +48,11 @@ function socialPublicInitializePost(post) {
   }
 
   images.forEach((image) => {
-    // --------------------------------------------------------
-    // Image already loaded
-    // --------------------------------------------------------
-
     if (image.complete) {
       socialPublicSetPostImageRatio(post);
 
       return;
     }
-
-    // --------------------------------------------------------
-    // Wait for image
-    // --------------------------------------------------------
 
     image.addEventListener(
       "load",
@@ -110,10 +66,6 @@ function socialPublicInitializePost(post) {
   });
 }
 
-// ============================================================
-// INITIALIZE PUBLIC FEED
-// ============================================================
-
 function socialPublicInitialize() {
   const posts = document.querySelectorAll(
     ".social-public-page .social-public-post",
@@ -123,10 +75,6 @@ function socialPublicInitialize() {
     socialPublicInitializePost(post);
   });
 }
-
-// ============================================================
-// DOM READY
-// ============================================================
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", socialPublicInitialize, {

@@ -1,4 +1,3 @@
-// -----------------------------
 function roundAndFormat(value) {
   if (isNaN(value) || value === "") return "";
   let rounded = Math.round(parseFloat(value));
@@ -13,11 +12,8 @@ function getRoundedValue(input) {
   return isNaN(val) ? 0 : Math.round(val);
 }
 
-// -----------------------------
-// Format inputs on blur
-// -----------------------------
 const numericInputs = document.querySelectorAll(
-  "#sap1, #sap2, #sap3, #input1, #input2, #input3, #input4, #input5, #input6"
+  "#sap1, #sap2, #sap3, #input1, #input2, #input3, #input4, #input5, #input6",
 );
 
 numericInputs.forEach((input) => {
@@ -32,34 +28,25 @@ numericInputs.forEach((input) => {
   });
 });
 
-// -----------------------------
-// Element References
-// -----------------------------
-const sap1 = document.getElementById("sap1"); // Gross Income
-const sap2 = document.getElementById("sap2"); // Total Deduction
-const sap3 = document.getElementById("sap3"); // Taxable Income
+const sap1 = document.getElementById("sap1");
+const sap2 = document.getElementById("sap2");
+const sap3 = document.getElementById("sap3");
 
-const stateSelect = document.getElementById("st"); // State dropdown
-const filingSelect = document.getElementById("fs"); // Filing Status dropdown
-//Line 104 in ejs fs
-// State Section
+const stateSelect = document.getElementById("st");
+const filingSelect = document.getElementById("fs");
+
 const stateTaxInput = document.getElementById("input4");
 const stateWithheldInput = document.getElementById("input5");
 const stateRefundInput = document.getElementById("input6");
 
-// Federal Section
 const fedTaxInput = document.getElementById("input1");
 const fedWithheldInput = document.getElementById("input2");
 const fedRefundInput = document.getElementById("input3");
 
-// Buttons
 const stateBtn = document.getElementById("stateBtn");
 const federalBtn = document.getElementById("federalBtn");
 const clearBtn = document.querySelector('button[type="reset"]');
 
-// -----------------------------
-// Calculate Taxable Income
-// -----------------------------
 function updateResult() {
   const gross = getRoundedValue(sap1);
   const deduction = getRoundedValue(sap2);
@@ -71,9 +58,6 @@ function updateResult() {
 sap1.addEventListener("input", updateResult);
 sap2.addEventListener("input", updateResult);
 
-// -----------------------------
-// STATE TAX CALCULATION
-// -----------------------------
 function calculateStateTax() {
   const taxableIncome = updateResult();
   const selectedState = stateSelect.value;
@@ -109,9 +93,6 @@ stateBtn.addEventListener("click", (e) => {
   calculateStateTax();
 });
 
-// -----------------------------
-// FEDERAL TAX CALCULATION
-// -----------------------------
 function calculateFederalTax() {
   const taxableIncome = updateResult();
   const filingStatus = filingSelect.value; // "S" or "M"
@@ -152,7 +133,7 @@ function calculateFederalTax() {
 
     if (taxableIncome <= bracket.limit) {
       federalTax = Math.round(
-        bracket.base + (taxableIncome - lowerLimit) * bracket.rate
+        bracket.base + (taxableIncome - lowerLimit) * bracket.rate,
       );
       break;
     }
@@ -176,9 +157,6 @@ federalBtn.addEventListener("click", (e) => {
   calculateFederalTax();
 });
 
-// -----------------------------
-// CLEAR ALL INPUTS
-// -----------------------------
 clearBtn.addEventListener("click", (e) => {
   e.preventDefault();
 

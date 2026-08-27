@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // Setup toggle for New Password
   const newPasswordToggle = document.getElementById("togglPassword");
   const newPasswordInput = document.getElementById("newPassword");
 
@@ -17,7 +16,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Setup toggle for Confirm Password
   const confirmPasswordToggle = document.getElementById("togglePassword");
   const confirmPasswordInput = document.getElementById("confirmPassword");
 
@@ -35,7 +33,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
-//clear old message
+
 document.addEventListener("DOMContentLoaded", () => {
   const inputs = document.querySelectorAll("input");
   const messageBox = document.getElementById("message");
@@ -44,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
     input.addEventListener("input", () => {
       if (messageBox) {
         messageBox.textContent = "";
-        messageBox.style.display = "none"; // hide the message box
+        messageBox.style.display = "none";
       }
     });
   });

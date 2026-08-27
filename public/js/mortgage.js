@@ -1,62 +1,3 @@
-//
-//
-// Function to format input to 2 decimal places
-//function formatToTwoDecimals(event) {
-//  const input = event.target;
-//  const value = parseFloat(input.value);
-//if (!isNaN(value)) {
-// input.value = value.toFixed(2);
-//// }
-//}
-
-//idsToFormat.forEach((id) => {
-// const el = document.getElementById(id);
-// if (el) {
-//   el.addEventListener("blur", formatToTwoDecimals);
-// }
-// });
-//});
-//
-//
-
-//
-
-//function subtract() {
-// const num1 = parseFloat(document.getElementById("num1").value);
-// const num2 = parseFloat(document.getElementById("num2").value);
-// const resultInput = document.getElementById("num3");
-
-// if (isNaN(num1) || isNaN(num2)) {
-//   resultInput.value = "Invalid input";
-//   return;
-//  }
-
-// const result = num1 - num2;
-//resultInput.value = result;
-//}
-
-//
-
-// Step 2: Get Interest Rate and Loan Term
-//  const annualRate = parseFloat(document.getElementById("num4").value); // %
-//5.6% > 5.6 > go to line 52
-// const loanTermYears = parseFloat(document.getElementById("num5").value); // years
-
-// || or
-
-//isNaN(annualRate)	Checks if the interest rate is Not a Number (e.g., empty or invalid input like "abc").
-//isNaN(loanTermYears)	Same check for the loan term (e.g., left blank or invalid).
-//annualRate <= 0	Disallows zero or negative interest rates.
-//loanTermYears <= 0	Disallows zero or negative loan durations.
-
-// Convert annual interest rate to monthly and loan term to months
-// const monthlyRate = annualRate / 100 / 12;
-// const totalPayments = loanTermYears * 12;
-//   <!-- Calculate Button -->
-//   <div class="calc-block">
-//  <button onclick="calculate()">Calculate</button> : onclick="calculate()": FUnction in Line 36
-// </div>
-// Format a number to 2 decimal places with commas
 function formatOutput(value) {
   if (isNaN(value)) return "";
   return new Intl.NumberFormat("en-US", {
@@ -76,7 +17,7 @@ function cleanNumber(value) {
 function calculateMonthlyPayment(
   loanAmount,
   annualInterestRate,
-  loanTermYears
+  loanTermYears,
 ) {
   const monthlyRate = annualInterestRate / 100 / 12;
   const totalPayments = loanTermYears * 12;
@@ -89,7 +30,6 @@ function calculateMonthlyPayment(
   );
 }
 
-// Format inputs with commas/decimals when blurred
 function formatWithCommasAndDecimals(event) {
   const input = event.target;
   const raw = input.value.replace(/,/g, "");
@@ -99,7 +39,6 @@ function formatWithCommasAndDecimals(event) {
   }
 }
 
-// Clear all input fields and reset dropdown
 function clearAllFields() {
   const ids = [
     "num1",
@@ -123,7 +62,6 @@ function clearAllFields() {
   if (operator) operator.selectedIndex = 0;
 }
 
-// Perform calculation based on selected operator: Begin
 function calculate() {
   const operator = document.getElementById("operator").value;
   const resultInput = document.getElementById("result");
@@ -180,7 +118,7 @@ function calculate() {
           //Line 76
           loanAmount, //Line 151
           interestRate, // Line 138
-          loanTermYears // Lin 139
+          loanTermYears, // Lin 139
           // pass 3 parameters , function: monthlyPayment
         );
         paymentField.value = formatOutput(monthlyPayment);
@@ -191,7 +129,7 @@ function calculate() {
     } else {
       paymentField.value = "";
       alert(
-        "Please provide either Purchase Price & Down Payment or a Loan Amount."
+        "Please provide either Purchase Price & Down Payment or a Loan Amount.",
       );
     }
 
@@ -216,7 +154,7 @@ function calculate() {
       monthlyPayment = calculateMonthlyPayment(
         loanAmount,
         interestRate,
-        loanTermYears
+        loanTermYears,
       );
       paymentField.value = formatOutput(monthlyPayment);
     } else {
@@ -238,8 +176,6 @@ function calculate() {
   resultInput.value = "Please select a valid operation"; //Message shown in the result field
 }
 
-// Perform calculation based on selected operator: End
-// Setup event listeners after page loads
 window.addEventListener("DOMContentLoaded", () => {
   // Format specific fields on blur
   const formatIds = ["num1", "num2", "num4", "num5", "num7", "num8", "num9"];
@@ -250,13 +186,11 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Calculate button: manually trigger calculation
   const calculateBtn = document.getElementById("calculateBtn");
   if (calculateBtn) {
     calculateBtn.addEventListener("click", calculate);
   }
 
-  // Reset button: clear all inputs
   const resetBtn = document.getElementById("resetBtn");
   if (resetBtn) {
     resetBtn.addEventListener("click", clearAllFields);

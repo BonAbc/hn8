@@ -28,35 +28,29 @@ function parseNumber(val) {
   return isNaN(num) ? null : num;
 }
 
-// Perform calculation
 function calcu() {
   const val1 = parseNumber(ac1.value) || 0;
   const val2 = parseNumber(ac2.value) || 0;
   const val4 = parseNumber(ac4.value) || 0;
 
-  // Only calculate if user has typed something
   ac3.value = ac1.value || ac2.value ? formatNumberUS(val1 - val2) : "";
   ac5.value =
     ac1.value || ac2.value || ac4.value
       ? formatNumberUS(val1 - val2 - val4)
       : "";
 
-  // Format inputs only if they have value
   [ac1, ac2, ac4].forEach((input) => {
     if (input.value) input.value = formatNumberUS(parseNumber(input.value));
   });
 }
 
-// Clear all inputs
 function cleaAll() {
   inputs.forEach((input) => (input.value = ""));
 }
 
-// Event listeners
 calBtn.addEventListener("click", calcu);
 cleanBtn.addEventListener("click", cleaAll);
 
-// Optional: format AC1, AC2, AC4 on blur
 [ac1, ac2, ac4].forEach((input) => {
   input.addEventListener("blur", () => {
     input.value = formatNumberUS(parseNumber(input.value));

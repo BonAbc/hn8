@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 //clear old message
-//clear old message
+
 document.addEventListener("DOMContentLoaded", () => {
   const emailInput = document.getElementById("username");
   const passwordInput = document.getElementById("password");

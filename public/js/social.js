@@ -1,6 +1,4 @@
-// ============================================================
-// SOCIAL COMMENT
-// ============================================================
+
 
 function socialFocusComment(postId) {
   const form = document.getElementById("social-comment-" + postId);
@@ -19,9 +17,7 @@ function socialFocusComment(postId) {
   });
 }
 
-// ============================================================
-// SOCIAL REPLY
-// ============================================================
+
 
 function socialShowReply(commentId, parentReplyId = null) {
   let form;
@@ -59,9 +55,7 @@ function socialShowReply(commentId, parentReplyId = null) {
   }
 }
 
-// ============================================================
-// SOCIAL EDIT POST
-// ============================================================
+
 
 function socialEditPost(postId) {
   const content = prompt("Edit your post:");
@@ -106,9 +100,7 @@ function socialEditPost(postId) {
   form.submit();
 }
 
-// ============================================================
-// SOCIAL SHARE
-// ============================================================
+
 
 document.addEventListener("click", async (event) => {
   const button = event.target.closest(".social-share-button");
@@ -189,9 +181,7 @@ document.addEventListener("click", async (event) => {
   }
 });
 
-// ============================================================
-// SOCIAL POST CREATE
-// ============================================================
+
 
 const socialPostCreateComposer = document.getElementById(
   "socialPostCreateComposer",
@@ -207,53 +197,25 @@ const socialPostFilesPreview = document.getElementById(
   "socialPostFilesPreview",
 );
 
-// IMPORTANT
-// Get the form directly.
-//
-// Your HTML has:
-//
-// <form
-//   id="socialCreatePostForm"
-//   action="/social/post/create"
-// >
-//
-// ============================================================
+
 
 const socialPostCreateForm = document.getElementById("socialCreatePostForm");
 
-// ============================================================
-// POST BUTTON
-//
-// We find the submit button automatically.
-// ============================================================
+
 
 const socialPostCreateButton = socialPostCreateForm?.querySelector(
   'button[type="submit"], input[type="submit"]',
 );
 
-// ============================================================
-// ATTACHMENTS
-//
-// Every attachment:
-//
-// {
-//   file: File,
-//   mediaText: "",
-//   objectUrl: null
-// }
-// ============================================================
+
 
 let socialPostAttachments = [];
 
-// ============================================================
-// POSTING STATE
-// ============================================================
+
 
 let socialPostIsSubmitting = false;
 
-// ============================================================
-// MAXIMUMS
-// ============================================================
+
 
 const SOCIAL_MAX_FILES = 10;
 
@@ -261,9 +223,7 @@ const SOCIAL_MAX_FILE_SIZE = 100 * 1024 * 1024;
 
 const SOCIAL_MAX_CONTENT_LENGTH = 5000;
 
-// ============================================================
-// ALLOWED FILE TYPES
-// ============================================================
+
 
 const SOCIAL_ALLOWED_TYPES = [
   "image/jpeg",
@@ -275,18 +235,14 @@ const SOCIAL_ALLOWED_TYPES = [
   "application/pdf",
 ];
 
-// ============================================================
-// ADD ATTACHMENT
-// ============================================================
+
 
 function socialAddPostAttachment(file) {
   if (!file) {
     return false;
   }
 
-  // ----------------------------------------------------------
-  // MAX FILE COUNT
-  // ----------------------------------------------------------
+  -
 
   if (socialPostAttachments.length >= SOCIAL_MAX_FILES) {
     alert(`You can upload a maximum of ${SOCIAL_MAX_FILES} files.`);
@@ -294,9 +250,7 @@ function socialAddPostAttachment(file) {
     return false;
   }
 
-  // ----------------------------------------------------------
-  // MAX FILE SIZE
-  // ----------------------------------------------------------
+  
 
   if (file.size > SOCIAL_MAX_FILE_SIZE) {
     alert(`${file.name} is too large. Maximum file size is 100 MB.`);
@@ -304,9 +258,7 @@ function socialAddPostAttachment(file) {
     return false;
   }
 
-  // ----------------------------------------------------------
-  // FILE TYPE
-  // ----------------------------------------------------------
+  
 
   if (!SOCIAL_ALLOWED_TYPES.includes(file.type)) {
     alert("Only JPG, PNG, WebP, GIF, MP4, WebM, and PDF files are allowed.");
@@ -314,9 +266,7 @@ function socialAddPostAttachment(file) {
     return false;
   }
 
-  // ----------------------------------------------------------
-  // ONLY ONE VIDEO
-  // ----------------------------------------------------------
+  
 
   if (file.type.startsWith("video/")) {
     const existingVideo = socialPostAttachments.some((attachment) =>
@@ -329,9 +279,7 @@ function socialAddPostAttachment(file) {
     }
   }
 
-  // ----------------------------------------------------------
-  // ADD
-  // ----------------------------------------------------------
+  
 
   console.log("ADDING ATTACHMENT:", {
     name: file.name,
@@ -350,9 +298,7 @@ function socialAddPostAttachment(file) {
   return true;
 }
 
-// ============================================================
-// SELECT FILES
-// ============================================================
+
 
 if (socialPostFilesInput) {
   socialPostFilesInput.addEventListener("change", () => {
@@ -369,16 +315,12 @@ if (socialPostFilesInput) {
       socialAddPostAttachment(file);
     }
 
-    // Clear the native file input.
-    // The actual File objects are already stored in
-    // socialPostAttachments.
+    
     socialPostFilesInput.value = "";
   });
 }
 
-// ============================================================
-// PASTE IMAGE INTO SOCIAL POST
-// ============================================================
+
 
 if (socialPostCreateComposer) {
   socialPostCreateComposer.addEventListener("paste", (event) => {
@@ -441,9 +383,7 @@ if (socialPostCreateComposer) {
   });
 }
 
-// ============================================================
-// RENDER ALL ATTACHMENTS
-// ============================================================
+
 
 function socialRenderPostAttachments() {
   if (!socialPostFilesPreview) {
@@ -453,9 +393,7 @@ function socialRenderPostAttachments() {
   socialPostFilesPreview.innerHTML = "";
 
   socialPostAttachments.forEach((attachment, index) => {
-    // ------------------------------------------------------
-    // MAIN WRAPPER
-    // ------------------------------------------------------
+    
 
     const wrapper = document.createElement("div");
 
@@ -463,9 +401,7 @@ function socialRenderPostAttachments() {
 
     wrapper.dataset.index = index;
 
-    // ------------------------------------------------------
-    // IMAGE PREVIEW
-    // ------------------------------------------------------
+    
 
     if (attachment.file.type.startsWith("image/")) {
       const image = document.createElement("img");
@@ -483,9 +419,7 @@ function socialRenderPostAttachments() {
       wrapper.appendChild(image);
     }
 
-    // ------------------------------------------------------
-    // VIDEO PREVIEW
-    // ------------------------------------------------------
+    
     else if (attachment.file.type.startsWith("video/")) {
       if (!attachment.objectUrl) {
         attachment.objectUrl = URL.createObjectURL(attachment.file);
@@ -508,9 +442,7 @@ function socialRenderPostAttachments() {
       wrapper.appendChild(video);
     }
 
-    // ------------------------------------------------------
-    // PDF PREVIEW
-    // ------------------------------------------------------
+    
     else if (attachment.file.type === "application/pdf") {
       const pdf = document.createElement("div");
 
@@ -521,9 +453,7 @@ function socialRenderPostAttachments() {
       wrapper.appendChild(pdf);
     }
 
-    // ------------------------------------------------------
-    // FILE NAME
-    // ------------------------------------------------------
+    
 
     const fileName = document.createElement("div");
 
@@ -533,9 +463,7 @@ function socialRenderPostAttachments() {
 
     wrapper.appendChild(fileName);
 
-    // ------------------------------------------------------
-    // FILE SIZE
-    // ------------------------------------------------------
+ 
 
     const fileSize = document.createElement("div");
 
@@ -545,9 +473,7 @@ function socialRenderPostAttachments() {
 
     wrapper.appendChild(fileSize);
 
-    // ------------------------------------------------------
-    // INDIVIDUAL MEDIA TEXT
-    // ------------------------------------------------------
+    
 
     const mediaText = document.createElement("textarea");
 
@@ -569,9 +495,7 @@ function socialRenderPostAttachments() {
 
     wrapper.appendChild(mediaText);
 
-    // ------------------------------------------------------
-    // REMOVE BUTTON
-    // ------------------------------------------------------
+    
 
     const removeButton = document.createElement("button");
 
@@ -595,17 +519,13 @@ function socialRenderPostAttachments() {
 
     wrapper.appendChild(removeButton);
 
-    // ------------------------------------------------------
-    // ADD TO PREVIEW
-    // ------------------------------------------------------
+    
 
     socialPostFilesPreview.appendChild(wrapper);
   });
 }
 
-// ============================================================
-// FILE SIZE
-// ============================================================
+
 
 function socialFormatFileSize(bytes) {
   if (!bytes) {
@@ -626,9 +546,7 @@ function socialFormatFileSize(bytes) {
   return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
 }
 
-// ============================================================
-// SET POST BUTTON STATE
-// ============================================================
+
 
 function socialSetPostButtonState(isPosting) {
   if (!socialPostCreateButton) {
@@ -658,9 +576,7 @@ function socialSetPostButtonState(isPosting) {
   }
 }
 
-// ============================================================
-// SUBMIT SOCIAL POST
-// ============================================================
+
 
 if (!socialPostCreateForm) {
   console.error("SOCIAL POST FORM NOT FOUND: #socialCreatePostForm");
@@ -670,9 +586,7 @@ if (!socialPostCreateForm) {
   socialPostCreateForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    // ------------------------------------------------------
-    // PREVENT DOUBLE SUBMIT
-    // ------------------------------------------------------
+    
 
     if (socialPostIsSubmitting) {
       console.log("POST ALREADY SUBMITTING");
@@ -693,9 +607,7 @@ if (!socialPostCreateForm) {
     console.log("================================");
 
     try {
-      // ----------------------------------------------------
-      // MAIN POST CONTENT
-      // ----------------------------------------------------
+     
 
       const content = socialPostCreateComposer?.innerText.trim() || "";
 
@@ -703,17 +615,13 @@ if (!socialPostCreateForm) {
         socialPostCreateContent.value = content;
       }
 
-      // ----------------------------------------------------
-      // CHECK EMPTY POST
-      // ----------------------------------------------------
+    
 
       if (!content && socialPostAttachments.length === 0) {
         throw new Error("Post cannot be empty.");
       }
 
-      // ----------------------------------------------------
-      // MAX POST CONTENT
-      // ----------------------------------------------------
+      
 
       if (content.length > SOCIAL_MAX_CONTENT_LENGTH) {
         throw new Error(
@@ -721,9 +629,7 @@ if (!socialPostCreateForm) {
         );
       }
 
-      // ----------------------------------------------------
-      // CHECK FILES AGAIN
-      // ----------------------------------------------------
+      
 
       for (const attachment of socialPostAttachments) {
         if (attachment.file.size > SOCIAL_MAX_FILE_SIZE) {
@@ -737,21 +643,15 @@ if (!socialPostCreateForm) {
         }
       }
 
-      // ----------------------------------------------------
-      // CREATE FORM DATA
-      // ----------------------------------------------------
+      
 
       const formData = new FormData();
 
-      // ----------------------------------------------------
-      // CONTENT
-      // ----------------------------------------------------
+      
 
       formData.append("content", content);
 
-      // ----------------------------------------------------
-      // VISIBILITY
-      // ----------------------------------------------------
+     
 
       const visibility = socialPostCreateForm.querySelector(
         'input[name="visibility"]:checked',
@@ -759,9 +659,7 @@ if (!socialPostCreateForm) {
 
       formData.append("visibility", visibility?.value || "loggedin users");
 
-      // ----------------------------------------------------
-      // FILES
-      // ----------------------------------------------------
+      
 
       socialPostAttachments.forEach((attachment, index) => {
         console.log("ADDING FILE TO FORM DATA:", {
@@ -773,16 +671,12 @@ if (!socialPostCreateForm) {
 
         formData.append("files", attachment.file, attachment.file.name);
 
-        // ------------------------------------------------
-        // MEDIA TEXT
-        // ------------------------------------------------
+        
 
         formData.append("media_text", attachment.mediaText || "");
       });
 
-      // ----------------------------------------------------
-      // DEBUG FORM DATA
-      // ----------------------------------------------------
+      
 
       console.log("FORM DATA CONTENT:", content);
 
@@ -801,9 +695,7 @@ if (!socialPostCreateForm) {
         }
       }
 
-      // ----------------------------------------------------
-      // SHOW UPLOAD MESSAGE
-      // ----------------------------------------------------
+      
 
       const hasVideo = socialPostAttachments.some((attachment) =>
         attachment.file.type.startsWith("video/"),
@@ -819,9 +711,7 @@ if (!socialPostCreateForm) {
         }
       }
 
-      // ----------------------------------------------------
-      // SEND TO EXPRESS WITH UPLOAD PROGRESS
-      // ----------------------------------------------------
+     
 
       console.log("SENDING POST TO:", socialPostCreateForm.action);
 
@@ -830,9 +720,7 @@ if (!socialPostCreateForm) {
 
         xhr.open("POST", socialPostCreateForm.action, true);
 
-        // -----------------------------------------------
-        // UPLOAD PROGRESS + TIME REMAINING
-        // -----------------------------------------------
+       
 
         const uploadStartTime = Date.now();
 
@@ -889,12 +777,12 @@ if (!socialPostCreateForm) {
           });
         });
 
-        // NETWORK ERROR
+        
         xhr.addEventListener("error", () => {
           reject(new Error("Network error while uploading the post."));
         });
 
-        // ABORT
+        
         xhr.addEventListener("abort", () => {
           reject(new Error("Upload was cancelled."));
         });
@@ -902,9 +790,7 @@ if (!socialPostCreateForm) {
         xhr.send(formData);
       });
 
-      // ----------------------------------------------------
-      // READ RESPONSE SAFELY
-      // ----------------------------------------------------
+      
 
       const responseText = await response.text();
 
@@ -922,9 +808,7 @@ if (!socialPostCreateForm) {
 
       console.log("CREATE POST RESPONSE:", data);
 
-      // ----------------------------------------------------
-      // SERVER ERROR
-      // ----------------------------------------------------
+     
 
       if (!response.ok || !data.success) {
         throw new Error(
@@ -933,17 +817,13 @@ if (!socialPostCreateForm) {
         );
       }
 
-      // ----------------------------------------------------
-      // POST ID
-      // ----------------------------------------------------
+      
 
       if (!data.postId) {
         throw new Error("Post created but postId is missing.");
       }
 
-      // ----------------------------------------------------
-      // SUCCESS
-      // ----------------------------------------------------
+     
 
       const postUrl = `/social/post?postId=${encodeURIComponent(
         String(data.postId),
@@ -967,9 +847,7 @@ if (!socialPostCreateForm) {
   });
 }
 
-// ============================================================
-// SAVED POSTS — DYNAMIC IMAGE RATIO
-// ============================================================
+
 
 function socialSetAverageImageRatio() {
   const mediaContainers = document.querySelectorAll(".social-post-media");
@@ -997,9 +875,7 @@ function socialSetAverageImageRatio() {
   });
 }
 
-// ============================================================
-// RUN AFTER SAVED IMAGES LOAD
-// ============================================================
+
 
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".social-post-image").forEach((image) => {
@@ -1013,9 +889,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// ============================================================
-// SOCIAL REPLY BUTTON
-// ============================================================
+
 
 document.addEventListener("click", (event) => {
   const button = event.target.closest(".social-reply-button");
