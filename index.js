@@ -3606,23 +3606,6 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     let dateFrom = (req.query.dateFrom || "").trim();
     let dateTo = (req.query.dateTo || "").trim();
 
-    // ========================================================
-    // VISIBILITY FILTER
-    //
-    // FULL ADMIN:
-    //   can filter all visibility types
-    //
-    // EMAILS ADMIN:
-    //   can filter:
-    //      loggedin users
-    //      group_only
-    //
-    //   cannot filter admin_only
-    //
-    // NORMAL USER:
-    //   no admin visibility filter
-    // ========================================================
-
     if (isAdmin) {
       visibility = (req.query.visibility || "").trim();
 
@@ -4708,6 +4691,7 @@ app.get("/public/post/connect", async (req, res) => {
         folder: reactionCounts[key]?.folder || 0,
         buom_xinh: reactionCounts[key]?.buom_xinh || 0,
         eagle: reactionCounts[key]?.eagle || 0,
+        evergreen: reactionCounts[key]?.evergreen || 0,
       };
     }
 
@@ -4876,6 +4860,7 @@ app.post("/public/post/connect", connectReactionLimiter, async (req, res) => {
       "folder",
       "buom_xinh",
       "eagle",
+      "evergreen",
     ];
     console.log("PUBLIC REACTION:", {
       ip: req.ip,
