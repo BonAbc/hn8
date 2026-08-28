@@ -237,7 +237,7 @@ const adminEmails = process.env.ADMIN_EMAILS
   : [];
 //
 
-//
+//isAuthenticated is a built in function in passport and Node js
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) return next();
   res.redirect("/login");
@@ -473,11 +473,11 @@ passport.use(
   }),
 );
 
-//
+// store user id
 passport.serializeUser((user, cb) => {
   cb(null, user.id);
 });
-
+// use user id above to retrieve other fields)
 passport.deserializeUser(async (id, cb) => {
   try {
     const result = await db.query(
@@ -616,18 +616,7 @@ app.post("/enable-2fa", async (req, res, next) => {
     return next(err);
   }
 });
-//Add 2FA enable 👌👌👌👌👌👌
-//Add Add 2FA enable 👌👌👌👌👌👌
-//Add Add 2FA enable 👌👌👌👌👌👌
-//app.get("/verify-2fa-setup", (req, res) => {
-// res.render("setup-2fa", { qrCode: "", defaultDate: getToday() });
-//});
-//Add 2FA enable 👌👌👌👌👌👌
-//Add Add 2FA enable 👌👌👌👌👌👌
 
-//Add message table 👌👌👌👌👌👌
-//Add 2FA Page 👌👌👌👌👌👌
-//Add message table 👌👌👌👌👌👌
 app.post("/verify-2fa-setup", async (req, res, next) => {
   try {
     const userId = req.session.pendingSetupUser;
@@ -4652,10 +4641,6 @@ app.get("/public/post/connect", async (req, res) => {
       [limit, offset],
     );
 
-    // ==========================================================
-    // POST IDS
-    // ==========================================================
-
     const postIds = postResult.rows.map((row) => row.id);
 
     let reactionsResult = {
@@ -4717,7 +4702,7 @@ app.get("/public/post/connect", async (req, res) => {
         website: reactionCounts[key]?.website || 0,
         email: reactionCounts[key]?.email || 0,
         smile: reactionCounts[key]?.smile || 0,
-        bell: reactionCounts[key]?.bell || 0,
+        thankyou: reactionCounts[key]?.thankyou || 0,
         trophy: reactionCounts[key]?.trophy || 0,
         victory: reactionCounts[key]?.victory || 0,
         folder: reactionCounts[key]?.folder || 0,
@@ -4852,10 +4837,6 @@ app.get("/public/post/connect", async (req, res) => {
 //
 app.post("/public/post/connect", connectReactionLimiter, async (req, res) => {
   try {
-    // ========================================================
-    // PUBLIC VISITOR ID
-    // ========================================================
-
     let publicVisitorId = req.cookies.publicVisitorId;
 
     if (!publicVisitorId) {
@@ -4868,10 +4849,6 @@ app.post("/public/post/connect", connectReactionLimiter, async (req, res) => {
         maxAge: 1000 * 60 * 60 * 24 * 365,
       });
     }
-
-    // ========================================================
-    // INPUT
-    // ========================================================
 
     const postId = parseInt(req.body.postId, 10);
     const reactionType = String(req.body.reactionType || "").trim();
@@ -4893,7 +4870,7 @@ app.post("/public/post/connect", connectReactionLimiter, async (req, res) => {
       "website",
       "email",
       "smile",
-      "bell",
+      "thankyou",
       "trophy",
       "victory",
       "folder",
@@ -4940,10 +4917,6 @@ app.post("/public/post/connect", connectReactionLimiter, async (req, res) => {
         message: "Post is not available for public reactions.",
       });
     }
-
-    // ========================================================
-    // INSERT OR CHANGE REACTION
-    // ========================================================
 
     await db.query(
       `
