@@ -233,8 +233,24 @@ function isValidPassword(password) {
 }
 
 const adminEmails = process.env.ADMIN_EMAILS
-  ? process.env.ADMIN_EMAILS.split(",").map((email) => email.trim())
+  ? process.env.ADMIN_EMAILS.split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean)
   : [];
+
+//
+function isEmailsAdmin(userEmail) {
+  const emailsAdmin = (process.env.EMAILS_ADMIN || "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+
+  return emailsAdmin.includes(
+    String(userEmail || "")
+      .trim()
+      .toLowerCase(),
+  );
+}
 //
 
 //isAuthenticated is a built in function in passport and Node js
@@ -541,7 +557,12 @@ app.post("/login", (req, res, next) => {
 
     req.session.pending2FAUser = user.id;
     req.session.pendingSetupUser = null;
-    req.session.isAdmin = adminEmails.includes(user.email);
+
+    req.session.isAdmin = adminEmails.includes(
+      String(user.email || "")
+        .trim()
+        .toLowerCase(),
+    );
 
     return req.session.save((sessionErr) => {
       if (sessionErr) {
@@ -1490,8 +1511,14 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
 
       userGroupId = groupResult.rows[0]?.group_id ?? null;
     }
-
+    //
+    //
     const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
       .split(",")
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean);
@@ -1501,9 +1528,13 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       .toLowerCase();
 
     const isAdmin =
-      !!normalizedUserEmail && adminEmails.includes(normalizedUserEmail);
+      !!normalizedUserEmail &&
+      (adminEmails.includes(normalizedUserEmail) ||
+        specialAdminEmails.includes(normalizedUserEmail));
 
     const emailsAdmin = isEmailsAdmin(userEmail);
+
+    //
 
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
 
@@ -2223,14 +2254,12 @@ app.post(
 
       let visibility = "loggedin users";
 
-      if (requestedVisibility === "admin_only") {
-        if (isAdmin || userIsEmailsAdmin) {
-          visibility = "admin_only";
-        }
-      } else if (requestedVisibility === "group_only") {
-        visibility = "group_only";
-      } else if (requestedVisibility === "loggedin users") {
-        visibility = "loggedin users";
+      if (
+        requestedVisibility === "loggedin users" ||
+        requestedVisibility === "group_only" ||
+        requestedVisibility === "admin_only"
+      ) {
+        visibility = requestedVisibility;
       }
 
       // ======================================================
@@ -3547,19 +3576,7 @@ app.post("/social/reaction", ensureAuthenticated, async (req, res) => {
     res.status(500).send("Unable to process reaction.");
   }
 });
-//
-function isEmailsAdmin(userEmail) {
-  const emailsAdmin = (process.env.EMAILS_ADMIN || "")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
 
-  return emailsAdmin.includes(
-    String(userEmail || "")
-      .trim()
-      .toLowerCase(),
-  );
-}
 //
 app.get("/social/search", ensureAuthenticated, async (req, res) => {
   try {
@@ -3596,7 +3613,13 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     // Sees EVERYTHING
     // ========================================================
 
+    //
     const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
       .split(",")
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean);
@@ -3606,7 +3629,9 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       .toLowerCase();
 
     const isAdmin =
-      !!normalizedUserEmail && adminEmails.includes(normalizedUserEmail);
+      !!normalizedUserEmail &&
+      (adminEmails.includes(normalizedUserEmail) ||
+        specialAdminEmails.includes(normalizedUserEmail));
 
     const userIsEmailsAdmin = isEmailsAdmin(userEmail);
 
