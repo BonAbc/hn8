@@ -2111,7 +2111,6 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
   }
 });
 
-//
 // socialFileUpload handle upload and pasted from multer
 app.post(
   "/social/post/create",
@@ -2153,6 +2152,27 @@ app.post(
       const content = String(req.body.content || "").trim();
 
       const files = req.files || [];
+      const MAX_FILES = 10;
+      const MAX_TOTAL_SIZE = 100 * 1024 * 1024; // 100 MB total
+
+      if (files.length > MAX_FILES) {
+        return res.status(400).json({
+          success: false,
+          error: `You can upload a maximum of ${MAX_FILES} files.`,
+        });
+      }
+
+      const totalFileSize = files.reduce(
+        (total, file) => total + (file.size || 0),
+        0,
+      );
+
+      if (totalFileSize > MAX_TOTAL_SIZE) {
+        return res.status(400).json({
+          success: false,
+          error: "Total uploaded file size cannot exceed 100 MB.",
+        });
+      }
 
       const videoFiles = files.filter((file) =>
         ["video/mp4", "video/webm"].includes(file.mimetype),
@@ -4679,19 +4699,13 @@ app.get("/public/post/connect", async (req, res) => {
         like: reactionCounts[key]?.like || 0,
         dislike: reactionCounts[key]?.dislike || 0,
         heart: reactionCounts[key]?.heart || 0,
-        horse: reactionCounts[key]?.horse || 0,
         rose: reactionCounts[key]?.rose || 0,
         call: reactionCounts[key]?.call || 0,
         website: reactionCounts[key]?.website || 0,
         email: reactionCounts[key]?.email || 0,
         smile: reactionCounts[key]?.smile || 0,
-        thankyou: reactionCounts[key]?.thankyou || 0,
         trophy: reactionCounts[key]?.trophy || 0,
         victory: reactionCounts[key]?.victory || 0,
-        folder: reactionCounts[key]?.folder || 0,
-        buom_xinh: reactionCounts[key]?.buom_xinh || 0,
-        eagle: reactionCounts[key]?.eagle || 0,
-        evergreen: reactionCounts[key]?.evergreen || 0,
       };
     }
 
@@ -4848,19 +4862,13 @@ app.post("/public/post/connect", connectReactionLimiter, async (req, res) => {
       "like",
       "dislike",
       "heart",
-      "horse",
       "rose",
       "call",
       "website",
       "email",
       "smile",
-      "thankyou",
       "trophy",
       "victory",
-      "folder",
-      "buom_xinh",
-      "eagle",
-      "evergreen",
     ];
     console.log("PUBLIC REACTION:", {
       ip: req.ip,
