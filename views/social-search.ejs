@@ -75,8 +75,7 @@
                 autocomplete="off"
               >
 
-            </div>
-
+            </div> 
             <br>
 
             <div class="social-search-field">
@@ -255,7 +254,7 @@
              RESULTS
         ======================================================= -->
 
-       <% if (isAdmin && posts.length) { %>
+      <% if (posts.length) { %>
 
 <section class="py-5 bg-light border border-black mt-4 mb-4">
 
@@ -282,29 +281,12 @@
 
           <tr>
 
-            <th>
-              User
-            </th>
-
-            <th>
-              Post
-            </th>
-
-            <th>
-              Visibility
-            </th>
-
-            <th>
-              Public
-            </th>
-
-            <th>
-              Public Reactions
-            </th>
-
-            <th>
-              Actions
-            </th>
+            <th>User</th>
+            <th>Post</th>
+            <th>Visibility</th>
+            <th>Public</th>
+            <th>Public Reactions</th>
+            <th>Actions</th>
 
           </tr>
 
@@ -382,22 +364,26 @@
                     🌎 Public
                   </span>
 
-                  <br>
+                  <% if (isAdmin) { %>
 
-                  <form
-                    action="/social/post/make-unpublic/<%= post.id %>"
-                    method="POST"
-                    style="margin-top: 6px;"
-                  >
+                    <br>
 
-                    <button
-                      type="submit"
-                      class="social-make-public-btn"
+                    <form
+                      action="/social/post/make-unpublic/<%= post.id %>"
+                      method="POST"
+                      style="margin-top: 6px;"
                     >
-                      🔒 Unpublish
-                    </button>
 
-                  </form>
+                      <button
+                        type="submit"
+                        class="social-make-public-btn"
+                      >
+                        🔒 Unpublish
+                      </button>
+
+                    </form>
+
+                  <% } %>
 
                 <% } else { %>
 
@@ -405,22 +391,26 @@
                     🔒 Not Public
                   </span>
 
-                  <br>
+                  <% if (isAdmin) { %>
 
-                  <form
-                    action="/social/post/make-public/<%= post.id %>"
-                    method="POST"
-                    style="margin-top: 6px;"
-                  >
+                    <br>
 
-                    <button
-                      type="submit"
-                      class="social-make-public-btn"
+                    <form
+                      action="/social/post/make-public/<%= post.id %>"
+                      method="POST"
+                      style="margin-top: 6px;"
                     >
-                      🌎 Make Public
-                    </button>
 
-                  </form>
+                      <button
+                        type="submit"
+                        class="social-make-public-btn"
+                      >
+                        🌎 Make Public
+                      </button>
+
+                    </form>
+
+                  <% } %>
 
                 <% } %>
 
@@ -437,22 +427,26 @@
                     👍 Enabled
                   </span>
 
-                  <br>
+                  <% if (isAdmin) { %>
 
-                  <form
-                    action="/social/post/disable-public-reactions/<%= post.id %>"
-                    method="POST"
-                    style="margin-top: 6px;"
-                  >
+                    <br>
 
-                    <button
-                      type="submit"
-                      class="social-make-public-btn"
+                    <form
+                      action="/social/post/disable-public-reactions/<%= post.id %>"
+                      method="POST"
+                      style="margin-top: 6px;"
                     >
-                      🔒 Disable
-                    </button>
 
-                  </form>
+                      <button
+                        type="submit"
+                        class="social-make-public-btn"
+                      >
+                        🔒 Disable
+                      </button>
+
+                    </form>
+
+                  <% } %>
 
                 <% } else { %>
 
@@ -460,22 +454,26 @@
                     👍 Disabled
                   </span>
 
-                  <br>
+                  <% if (isAdmin) { %>
 
-                  <form
-                    action="/social/post/enable-public-reactions/<%= post.id %>"
-                    method="POST"
-                    style="margin-top: 6px;"
-                  >
+                    <br>
 
-                    <button
-                      type="submit"
-                      class="social-make-public-btn"
+                    <form
+                      action="/social/post/enable-public-reactions/<%= post.id %>"
+                      method="POST"
+                      style="margin-top: 6px;"
                     >
-                      👍 Enable
-                    </button>
 
-                  </form>
+                      <button
+                        type="submit"
+                        class="social-make-public-btn"
+                      >
+                        👍 Enable
+                      </button>
+
+                    </form>
+
+                  <% } %>
 
                 <% } %>
 
@@ -484,16 +482,44 @@
 
               <!-- ACTIONS -->
 
-              <td>
+            <!-- ACTIONS -->
 
-                <a
-                  href="/social/post?postId=<%= post.id %>"
-                  class="social-search-view"
-                >
-                  View Post →
-                </a>
+<td>
 
-              </td>
+  <% if (isAdmin) { %>
+
+    <!-- ADMIN CAN CLICK -->
+
+    <a
+      href="/social/post?postId=<%= post.id %>"
+      class="social-search-view"
+    >
+      View Post →
+    </a>
+
+  <% } else if (!isEmailsAdmin) { %>
+
+    <!-- NORMAL USER CAN VIEW -->
+
+    <a
+      href="/social/post?postId=<%= post.id %>"
+      class="social-search-view"
+    >
+      View Post →
+    </a>
+
+  <% } else { %>
+
+    <!-- EMAIL ADMIN: DISPLAY ONLY -->
+
+    <span class="text-muted">
+      View Post →
+    </span>
+
+  <% } %>
+
+</td>
+
 
             </tr>
 
