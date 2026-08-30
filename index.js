@@ -4477,6 +4477,7 @@ app.get("/social/exchange", async (req, res) => {
       defaultDate: getToday(),
       posts,
       pagination,
+      isLoggedIn: req.isAuthenticated(),
     });
   } catch (err) {
     console.error("PUBLIC POSTS ERROR:", err);
@@ -5712,7 +5713,7 @@ app.get("/social/profile/:userId", ensureAuthenticated, async (req, res) => {
       currentUserId: profile.user_id,
       currentUserEmail: profile.user_email,
       profile,
-      defaultDate: getTtoday(),
+      defaultDate: getToday(),
     });
   } catch (err) {
     console.error("SOCIAL PROFILE VIEW ERROR:", err);
