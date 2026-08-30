@@ -1,0 +1,96 @@
+ <%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+
+  <!---->
+  <h2 id="hm">Professional Profile</h2>
+ <section class="py-5 bg-light border border-black mt-4 mb-4">
+
+  <div style="background:#fff3cd;padding:10px;">
+
+    <% if (profile) { %>
+
+      <!-- User name + slogan -->
+      <div style="margin-top:15px; margin-bottom:15px;">
+
+        <div>
+          <strong>User Name:</strong>
+          <%= currentUserEmail %>
+        </div>
+
+        <% if (profile.slogan) { %>
+          <div>
+            <strong>Slogan: <%= profile.slogan %></strong>
+          </div>
+        <% } %>
+
+      </div>
+
+      <!-- Profile -->
+      <div>
+
+        <% if (profile.avatar) { %>
+          <img
+            src="<%= profile.avatar %>"
+            alt="Avatar"
+            style="
+              width:105px;
+              height:105px;
+              border-radius:50%;
+              object-fit:cover;
+              object-position:center;
+              display:block;
+              margin:0 auto 15px auto;
+            "
+          />
+        <% } %>
+
+        <% if (profile.emailpr) { %>
+          <div>
+            <strong>
+              Professional Email: <%= profile.emailpr %>
+            </strong>
+          </div>
+        <% } %>
+
+        <% if (profile.phone) { %>
+          <div>
+            <strong>
+              Phone: <%= profile.phone %>
+            </strong>
+          </div>
+        <% } %>
+
+        <% if (profile.website) { %>
+          <div>
+            <strong>
+              Website: <%= profile.website %>
+            </strong>
+          </div>
+        <% } %>
+
+      </div>
+
+    <% } else { %>
+
+      <div>
+        No professional profile has been created yet.
+      </div>
+
+    <% } %>
+
+  </div>
+
+</section>
+ 
+
+
+</main>
+
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->

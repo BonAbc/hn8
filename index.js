@@ -5667,7 +5667,62 @@ app.delete(
     }
   },
 );
+//Add
+// add user profile link
+app.get("/social/profile/:userId", ensureAuthenticated, async (req, res) => {
+  try {
+    const profileUserId = parseInt(req.params.userId, 10);
+
+    if (!Number.isInteger(profileUserId)) {
+      return res.status(400).send("Invalid user ID.");
+    }
+
+    const result = await db.query(
+      `
+        SELECT
+          u.id AS user_id,
+          u.email AS user_email,
+
+          sp.slogan,
+          sp.avatar,
+          sp.emailpr,
+          sp.phone,
+          sp.website
+
+        FROM my_user u
+
+        LEFT JOIN social_profile sp
+          ON sp.user_id = u.id
+          AND sp.active = TRUE
+
+        WHERE u.id = $1
+
+        LIMIT 1
+        `,
+      [profileUserId],
+    );
+
+    if (!result.rowCount) {
+      return res.status(404).send("User profile not found.");
+    }
+
+    const profile = result.rows[0];
+
+    return res.render("social-profile-view", {
+      currentUserId: profile.user_id,
+      currentUserEmail: profile.user_email,
+      profile,
+      defaultDate: getTtoday(),
+    });
+  } catch (err) {
+    console.error("SOCIAL PROFILE VIEW ERROR:", err);
+
+    return res.status(500).send("Unable to load user profile.");
+  }
+});
+
 //
+
 // ----------------------------
 app.use((err, req, res, next) => {
   console.error("❌ Uncaught error:", err);

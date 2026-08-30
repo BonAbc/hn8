@@ -49,7 +49,7 @@
             display:block;
             margin:0 auto 15px auto;
           "
-        />
+        /> 
       <% } %>
 
       <% if (profile.emailpr) { %>
@@ -272,8 +272,13 @@
             <div class="social-user-info">
 
               <div class="social-user-name">
-                <%= post.email %>
-              </div>
+  <a
+    href="/social/profile/<%= post.userId %>"
+    class="social-profile-link"
+  >
+    <%= post.email %>
+  </a>
+</div>
 
               <div class="social-date">
 

@@ -10,7 +10,7 @@
 
   <!---->  
   <!---->
-  <h2 id="hm">Hoa Mai</h2>
+  <h2 id="hm">Professional Exchange</h2>
   <!--👇👆👆👇👆👇-->
   <!---->
  
@@ -248,7 +248,7 @@
           <% } %>
 
         </div>
-
+ 
 
         <!-- ======================================================
              RESULTS
@@ -301,19 +301,24 @@
 
               <!-- USER -->
 
-              <td>
+             <td>
 
-                <strong>
-                  <%= post.email %>
-                </strong>
+        <a
+          href="/social/profile/<%= post.userId %>"
+          class="social-search-user-link"
+        >
+          <strong>
+            <%= post.email %>
+          </strong>
+        </a>
 
-                <br>
+        <br>
 
-                <small>
-                  <%= new Date(post.createdAt).toLocaleString() %>
-                </small>
+        <small>
+          <%= new Date(post.createdAt).toLocaleString() %>
+        </small>
 
-              </td>
+      </td>
 
 
               <!-- POST -->
@@ -352,7 +357,7 @@
                 <% } %>
 
               </td>
-
+ 
 
               <!-- PUBLIC -->
 
