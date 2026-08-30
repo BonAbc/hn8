@@ -16,18 +16,23 @@
 <section class="py-5 bg-light border border-black mt-4 mb-4">
     
 <div style="background:#fff3cd;padding:10px;">
-<div style="margin-top:15px;">
-  <div>
-    <strong>User Name:</strong>
-    <%= currentUserEmail %>
+
+  <!-- User name + slogan -->
+  <div style="margin-top:15px; margin-bottom:15px;">
+    <div>
+      <strong>User Name:</strong>
+      <%= currentUserEmail %>
+    </div>
+
+    <% if (profile.slogan) { %>
+      <div>
+        <strong>Slogan: <%= profile.slogan %></strong>
+      </div>
+    <% } %>
   </div>
-   <% if (profile.slogan) { %>
-        <div>
-          <strong>Slogan: <%= profile.slogan %></strong>
-        </div>
-      <% } %>     
-      </div> 
-  <div style="margin-top:15px;">
+
+  <!-- Profile -->
+  <div>
 
     <% if (profile) { %>
 
@@ -42,10 +47,10 @@
             object-fit:cover;
             object-position:center;
             display:block;
-            margin:0 auto;
+            margin:0 auto 15px auto;
           "
         />
-      <% } %>   
+      <% } %>
 
       <% if (profile.emailpr) { %>
         <div>
@@ -70,6 +75,7 @@
   </div>
 
 </div>
+
 </section>
 
 <section class="py-5 bg-light border border-black mt-4 mb-4">
