@@ -18,18 +18,39 @@
 <div style="background:#fff3cd;padding:10px;">
 
   <!-- User name + slogan -->
-  <div style="margin-top:15px; margin-bottom:15px;">
-    <div>
-      <strong>User Name:</strong>
-      <%= currentUserEmail %>
-    </div>
-
-    <% if (profile.slogan) { %>
-      <div>
-        <strong>Slogan: <%= profile.slogan %></strong>
-      </div>
-    <% } %>
+ <div style="margin-top:15px; margin-bottom:15px;">
+  <div>
+    <strong>User Name:</strong>
+    <%= currentUserEmail %>
   </div>
+
+  <% if (profile && profile.slogan) { %>
+    <div>
+      <strong>Slogan: <%= profile.slogan %></strong>
+    </div>
+  <% } %>
+</div>
+
+<!-- Profile -->
+<div>
+
+  <% if (profile) { %>
+
+    <% if (profile.avatar) { %>
+      <img
+        src="<%= profile.avatar %>"
+        alt="Avatar"
+      />
+    <% } %>
+
+    <% if (profile.name) { %>
+      <div><%= profile.name %></div>
+    <% } %>
+
+  <% } %>
+
+</div>
+
 
   <!-- Profile -->
   <div>
