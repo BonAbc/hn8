@@ -16,74 +16,73 @@
 
     <% if (profile) { %>
 
-      <!-- User name + slogan -->
-      <div style="margin-top:15px; margin-bottom:15px;">
+  <!-- Professional information -->
+  <div style="margin-top:15px; margin-bottom:15px;">
 
-        <div>
-          <strong>User Name:</strong>
-          <%= currentUserEmail %>
-        </div>
+    <div>
+      <strong>Professional:</strong>
+      <%= currentUserEmail %>
+    </div>
 
-        <% if (profile.slogan) { %>
-          <div>
-            <strong>Slogan: <%= profile.slogan %></strong>
-          </div>
-        <% } %>
-
-      </div>
-
-      <!-- Profile -->
+    <% if (profile.slogan) { %>
       <div>
-
-        <% if (profile.avatar) { %>
-          <img
-            src="<%= profile.avatar %>"
-            alt="Avatar"
-            style="
-              width:105px;
-              height:105px;
-              border-radius:50%;
-              object-fit:cover;
-              object-position:center;
-              display:block;
-              margin:0 auto 15px auto;
-            "
-          />
-        <% } %>
-
-        <% if (profile.emailpr) { %>
-          <div>
-            <strong>
-              Professional Email: <%= profile.emailpr %>
-            </strong>
-          </div>
-        <% } %>
-
-        <% if (profile.phone) { %>
-          <div>
-            <strong>
-              Phone: <%= profile.phone %>
-            </strong>
-          </div>
-        <% } %>
-
-        <% if (profile.website) { %>
-          <div>
-            <strong>
-              Website: <%= profile.website %>
-            </strong>
-          </div>
-        <% } %>
-
+        <strong>Tagline:</strong>
+        <%= profile.slogan %>
       </div>
-
-    <% } else { %>
-
-      <div>
-        No professional profile has been created yet.
-      </div>
-
     <% } %>
+
+  </div>
+
+  <!-- Professional Profile -->
+  <div>
+
+    <% if (profile.avatar) { %>
+      <img
+        src="<%= profile.avatar %>"
+        alt="Profile Photo"
+        style="
+          width:105px;
+          height:105px;
+          border-radius:50%;
+          object-fit:cover;
+          object-position:center;
+          display:block;
+          margin:0 auto 15px auto;
+        "
+      />
+    <% } %>
+
+    <% if (profile.emailpr) { %>
+      <div>
+        <strong>Professional Email:</strong>
+        <%= profile.emailpr %>
+      </div>
+    <% } %>
+
+    <% if (profile.phone) { %>
+      <div>
+        <strong>Phone:</strong>
+        <%= profile.phone %>
+      </div>
+    <% } %>
+
+    <% if (profile.website) { %>
+      <div>
+        <strong>Website:</strong>
+        <%= profile.website %>
+      </div>
+    <% } %>
+
+  </div>
+
+<% } else { %>
+
+  <div>
+    No professional profile has been created yet.
+  </div>
+
+<% } %>
+
 
   </div>
 
