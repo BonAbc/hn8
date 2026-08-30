@@ -4477,7 +4477,6 @@ app.get("/social/exchange", async (req, res) => {
       defaultDate: getToday(),
       posts,
       pagination,
-      isLoggedIn: req.isAuthenticated(),
     });
   } catch (err) {
     console.error("PUBLIC POSTS ERROR:", err);
@@ -5670,7 +5669,7 @@ app.delete(
 );
 //Add
 // add user profile link
-app.get("/social/profile/:userId", ensureAuthenticated, async (req, res) => {
+app.get("/social/profile/:userId", async (req, res) => {
   try {
     const profileUserId = parseInt(req.params.userId, 10);
 
