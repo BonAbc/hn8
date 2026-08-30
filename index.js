@@ -2118,7 +2118,10 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       `
   SELECT
     avatar,
-    slogan
+    slogan,
+    phone,
+    emailpr,
+    website
   FROM social_profile
 
   WHERE user_id = $1
