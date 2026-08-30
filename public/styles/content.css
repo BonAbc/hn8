@@ -2878,7 +2878,176 @@ button:hover {
 /**/
 /**/
 /*Social public react page*/
+/*BEGIN SOCIAL PROFILE*/
+.social-profile-section input.form-control {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 0 !important;
+}
 
+@media (max-width: 576px) {
+  .social-profile-section {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .social-profile-section .card-body {
+    padding: 1rem;
+  }
+}
+/**/
+/*END SOCIAL PROFILE*/
+/*  BEGIN ADMIN SOCIAL PROFILE REPORT PAGINATION */
+
+.allowed-email-domains {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/**/
+.admin-social-profile-page .social-profile-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.admin-social-profile-page .social-profile-page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* All pagination buttons */
+.admin-social-profile-page .social-profile-page-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 40px;
+  min-width: 40px;
+  padding: 0 10px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #d1d9e6;
+  border-radius: 6px;
+
+  background: #fff;
+  color: #1f2937;
+
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+/* Number buttons */
+.admin-social-profile-page .social-profile-page-number {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  padding: 0;
+}
+
+/* Active page */
+.admin-social-profile-page .social-profile-page-number.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+/* Previous / Next */
+.admin-social-profile-page .social-profile-page-prev,
+.admin-social-profile-page .social-profile-page-next {
+  min-width: 84px;
+}
+
+/* Hover */
+.admin-social-profile-page .social-profile-page-button:not(.disabled):hover {
+  background: #f3f6fa;
+  border-color: #b8c4d4;
+  color: #111827;
+}
+
+/* Active hover */
+.admin-social-profile-page .social-profile-page-number.active:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+
+/* Disabled */
+.admin-social-profile-page .social-profile-page-button.disabled {
+  color: #94a3b8;
+  background: #f8fafc;
+  cursor: default;
+}
+
+/* ============================================================
+   ADMIN SOCIAL PROFILE REPORT TABLE
+   Page-specific
+   ============================================================ */
+
+/* Desktop */
+.admin-social-profile-page .social-profile-table {
+  width: 100%;
+}
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 767.98px) {
+  .admin-social-profile-page .social-profile-table,
+  .admin-social-profile-page .social-profile-table tbody,
+  .admin-social-profile-page .social-profile-table tr,
+  .admin-social-profile-page .social-profile-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-social-profile-page .social-profile-table thead {
+    display: none;
+  }
+
+  .admin-social-profile-page .social-profile-table tr {
+    margin-bottom: 15px;
+    border: 1px solid #dee2e6;
+    background: white;
+    padding: 10px;
+  }
+
+  .admin-social-profile-page .social-profile-table td {
+    border: 0;
+    border-bottom: 1px solid #eee;
+    padding: 8px 5px 8px 45%;
+    position: relative;
+    min-height: 40px;
+    word-break: break-word;
+  }
+
+  .admin-social-profile-page .social-profile-table td:last-child {
+    border-bottom: 0;
+  }
+
+  .admin-social-profile-page .social-profile-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 5px;
+    top: 8px;
+    width: 40%;
+    font-weight: 700;
+  }
+}
+
+/*Pagination social-profile report END*/
 /* ============================================================
    END OF STYLESHEET
    ============================================================ */

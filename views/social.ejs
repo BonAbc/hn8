@@ -2,7 +2,7 @@
 <!--Remember this include when add a new page-->
 <main class="container">
   <!--main should move to main page-->
-  <!---->
+  <!----> 
   <form>
     <label for="date">Date:</label>
     <input type="date" id="date" name="date" value="<%= defaultDate %>" />
@@ -16,13 +16,49 @@
 <section class="py-5 bg-light border border-black mt-4 mb-4">
     
 <div style="background:#fff3cd;padding:10px;">
-<div>
-    <strong>Professional Enviroment</strong>   
-  </div>
+ 
   <div>
     <strong>User Name:</strong>
     <%= currentUserEmail %>
   </div>
+
+  <div style="margin-top:15px;">
+
+  <% if (profile) { %>
+
+  <% if (profile.avatar) { %>
+    <img
+      src="<%= profile.avatar %>"
+      alt="Avatar"
+      style="
+        width:110px;
+        height:110px;
+        border-radius:50%;
+        object-fit:cover;
+        object-position:center;
+        display:block;
+        margin:0 auto;
+      "
+    />
+  <% } %>
+
+  <% if (profile.slogan) { %>
+    <div>
+      <strong>Slogan: <%= profile.slogan %></strong>
+    </div>
+  <% } %>
+
+<% } %>
+
+  <!-- ALWAYS SHOW THIS LINK outside the slogan -->
+ <div style="margin-top:10px;">
+    <a href="/social/profile">
+      Update Professional Profile →
+    </a>
+  </div>
+
+  </div>
+
 </div>
 <hr>
 <div>

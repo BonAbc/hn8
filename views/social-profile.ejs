@@ -1,0 +1,188 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+
+  <!---->
+  <h2 id="hm">Professional Profile</h2>
+  <section
+    class="social-profile-section py-5 bg-light border border-black mt-4 mb-4"
+  >
+    <div class="container-fluid">     
+
+      <div class="row justify-content-center mt-4">
+        <div class="col-12 col-md-10 col-lg-8">
+          <div class="card border rounded shadow-sm">
+            <div class="card-body">
+              <h4 class="mb-4">Professional Profile</h4>
+
+              <div class="mb-3">
+                <strong>User ID:</strong>
+                <%= currentUserId %>
+              </div>
+
+              <div class="mb-4">
+                <strong>User Name:</strong>
+                <%= currentUserEmail %>
+              </div>
+
+              <form
+                action="/social/profile"
+                method="POST"
+                enctype="multipart/form-data"
+              >
+                <!-- Avatar -->
+                <div class="mb-3">
+                  <label for="avatar" class="form-label"> Avatar </label>
+
+                  <input
+                    type="file"
+                    id="avatar"
+                    name="avatar"
+                    class="form-control"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                  />
+                </div>
+
+                <!-- Slogan -->
+                <div class="mb-3">
+                  <label for="slogan" class="form-label"> Slogan </label>
+
+                  <input
+                    type="text"
+                    id="slogan"
+                    name="slogan"
+                    class="form-control"
+                    value="<%= profile?.slogan || '' %>"
+                  />
+                </div>
+
+                <!-- Professional Email -->
+                <div class="mb-3">
+                  <label for="emailpr" class="form-label">
+                    Professional Email
+                  </label>
+
+                  <input
+                    type="text"
+                    id="emailpr"
+                    name="emailpr"
+                    class="form-control"
+                    value="<%= profile?.emailpr || '' %>"
+                  />
+                </div>
+
+                <!-- Address -->
+                <div class="mb-3">
+                  <label for="address" class="form-label"> Address </label>
+
+                  <input
+                    type="text"
+                    id="address"
+                    name="address"
+                    class="form-control"
+                    value="<%= profile?.address || '' %>"
+                  />
+                </div>
+
+                <!-- Phone -->
+                <div class="mb-3">
+                  <label for="phone" class="form-label"> Phone </label>
+
+                  <input
+                    type="text"
+                    id="phone"
+                    name="phone"
+                    class="form-control"
+                    value="<%= profile?.phone || '' %>"
+                  />
+                </div>
+ 
+                <!-- Website -->
+                <div class="mb-3">
+                  <label for="website" class="form-label"> Website </label>
+
+                  <input
+                    type="text"
+                    id="website"
+                    name="website"
+                    class="form-control"
+                    value="<%= profile?.website || '' %>"
+                  />
+                </div>
+
+                <div class="mt-4">
+                  <button type="submit" class="btn btn-primary w-auto">
+                    Save Changes
+                  </button>
+
+                  <br /><br />
+
+                  <a href="/social/post" class="btn btn-secondary w-auto">
+                    Cancel
+                  </a>
+                  <br>
+                  <h5> **** To create or update your profile ***</h5>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+
+  <div class="container-fluid">
+
+    <h4>Professional Profile Status</h4>
+
+    <hr class="my-4">
+
+    <% if (profile && profile.active) { %>
+
+      <form
+        action="/social/profile?_method=DELETE"
+        method="POST"
+        onsubmit="return confirm('Delete your professional profile?');"
+      >
+        <button
+          type="submit"
+          class="btn btn-danger w-auto"
+        >
+          Delete Profile
+        </button>
+      </form>
+
+    <% } else if (profile && !profile.active) { %>
+
+      <form
+        action="/social/profile/restore"
+        method="POST"
+        onsubmit="return confirm('Restore your professional profile?');"
+      >
+        <button
+          type="submit"
+          class="btn btn-success w-auto"
+        >
+          Restore Profile
+        </button>
+      </form>
+
+    <% } %>
+
+  </div>
+
+</section>
+
+
+  
+ 
+</main>
+
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->

@@ -31,7 +31,7 @@ import webtraffic from "./middleware/webtraffic.js";
 import { ensureAdmin } from "./middleware/author.js";
 
 import socialFileUpload from "./middleware/socialImageUpload.js";
-
+import profileFileUpload from "./middleware/proupload.js";
 import methodOverride from "method-override";
 
 import ffmpeg from "fluent-ffmpeg";
@@ -2110,7 +2110,25 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         content: p.content,
       })),
     );
+    // ========================================================
+    // CURRENT USER PROFESSIONAL PROFILE
+    // ========================================================
 
+    const profileResult = await db.query(
+      `
+  SELECT
+    avatar,
+    slogan
+  FROM social_profile
+
+  WHERE user_id = $1
+  AND active = true
+  `,
+      [userId],
+    );
+
+    const profile = profileResult.rows[0] || null;
+    //
     return res.render("social", {
       posts,
 
@@ -2119,6 +2137,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       currentUserId: userId,
       currentUserEmail: userEmail,
 
+      profile,
       isAdmin,
 
       isEmailsAdmin: emailsAdmin,
@@ -5139,19 +5158,12 @@ app.get(
           .status(403)
           .send("You are not authorized to download social media files.");
       }
-      // ---------------------------message above sent-----------------------------
-      // MEDIA ID
-      // --------------------------------------------------------
 
       const mediaId = Number(req.params.mediaId);
 
       if (!Number.isInteger(mediaId) || mediaId <= 0) {
         return res.status(400).send("Invalid media ID.");
       }
-
-      // --------------------------------------------------------
-      // GET MEDIA
-      // --------------------------------------------------------
 
       const result = await db.query(
         `
@@ -5172,10 +5184,6 @@ app.get(
 
       const media = result.rows[0];
 
-      // --------------------------------------------------------
-      // SAFE FILE NAME
-      // --------------------------------------------------------
-
       const filename = path.basename(media.file_url);
 
       const filePath = path.join(
@@ -5186,23 +5194,473 @@ app.get(
         filename,
       );
 
-      // --------------------------------------------------------
-      // FILE EXISTS?
-      // --------------------------------------------------------
-
       if (!fs.existsSync(filePath)) {
         return res.status(404).send("File no longer exists.");
       }
-
-      // --------------------------------------------------------
-      // DOWNLOAD
-      // --------------------------------------------------------
 
       return res.download(filePath, media.file_name || filename);
     } catch (err) {
       console.error("Social admin file download error:", err);
 
       return res.status(500).send("Unable to download social media file.");
+    }
+  },
+);
+//
+app.get("/social/profile", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userEmail = req.user.email;
+
+    const result = await db.query(
+      `
+        SELECT
+          id,
+          user_id,
+          slogan,
+          avatar,
+          emailpr,
+          domain,
+          address,
+          phone,
+          website,
+          active
+        FROM social_profile
+        WHERE user_id = $1
+        `,
+      [userId],
+    );
+
+    const profile = result.rows[0] || null;
+
+    return res.render("social-profile", {
+      currentUserId: userId,
+      currentUserEmail: userEmail,
+      profile,
+      defaultDate: getToday(),
+    });
+  } catch (err) {
+    console.error("SOCIAL PROFILE GET ERROR:", err);
+
+    return res.status(500).send("Unable to load professional profile.");
+  }
+});
+//update profile table
+app.post(
+  "/social/profile",
+  ensureAuthenticated,
+
+  profileFileUpload.single("avatar"),
+
+  profileFileUpload.processAvatar,
+
+  async (req, res) => {
+    try {
+      const userId = req.user.id;
+
+      const { slogan, emailpr, address, phone, website } = req.body;
+
+      const professionalEmail = emailpr?.trim().toLowerCase() || null;
+
+      let professionalDomain = null;
+
+      let approvedProfessionalEmail = null;
+
+      if (professionalEmail) {
+        const atIndex = professionalEmail.lastIndexOf("@");
+
+        if (atIndex >= 0) {
+          professionalDomain = professionalEmail.substring(atIndex);
+        }
+      }
+
+      if (professionalEmail && professionalDomain) {
+        const domainResult = await db.query(
+          `
+          SELECT 1
+          FROM allowed_email_domain
+          WHERE domain = $1
+          LIMIT 1
+          `,
+          [professionalDomain],
+        );
+
+        const validDomain = domainResult.rows.length > 0;
+
+        if (validDomain) {
+          approvedProfessionalEmail = professionalEmail;
+        }
+      }
+
+      const avatar = req.file ? `/uploads/avatar/${req.file.filename}` : null;
+
+      await db.query(
+        `
+        INSERT INTO social_profile (
+          user_id,
+          slogan,
+          avatar,
+          emailpr,
+          domain,
+          address,
+          phone,
+          website
+        )
+        VALUES (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6,
+          $7,
+          $8
+        )
+
+        ON CONFLICT (user_id)
+
+        DO UPDATE SET
+
+          slogan = EXCLUDED.slogan,
+
+          -- Keep existing avatar when no new
+          -- avatar was uploaded.
+          avatar = COALESCE(
+            EXCLUDED.avatar,
+            social_profile.avatar
+          ),
+
+          -- Only save approved professional email.
+          emailpr = EXCLUDED.emailpr,
+
+          -- Always save requested domain.
+          domain = EXCLUDED.domain,
+
+          address = EXCLUDED.address,
+
+          phone = EXCLUDED.phone,
+
+          website = EXCLUDED.website,
+
+          updated_at = CURRENT_TIMESTAMP
+        `,
+        [
+          userId,
+
+          // Slogan
+          slogan?.trim() || null,
+
+          // Avatar
+          avatar,
+
+          // Approved professional email
+          approvedProfessionalEmail,
+
+          // Requested domain
+          professionalDomain,
+
+          // Address
+          address?.trim() || null,
+
+          // Phone
+          phone?.trim() || null,
+
+          // Website
+          website?.trim() || null,
+        ],
+      );
+
+      if (professionalEmail && !approvedProfessionalEmail) {
+        return res.send(`
+          <div style="
+            max-width:600px;
+            margin:50px auto;
+            padding:20px;
+            font-family:Arial,sans-serif;
+          ">
+
+            <h2>
+              Professional Profile Saved
+            </h2>
+
+            <p>
+              Your professional profile was
+              saved successfully.
+            </p>
+
+            <p>
+              Your professional email
+              <strong>
+                ${professionalEmail}
+              </strong>
+              was not saved because the domain
+              <strong>
+                ${professionalDomain || ""}
+              </strong>
+              is not currently approved.
+            </p>
+
+            <p>
+              Please contact the administrator
+              to request approval for this domain.
+            </p>
+
+            <p>
+              Once the domain has been approved,
+              return to your professional profile
+              and enter your professional email again.
+            </p>
+
+            <p>
+              <a href="/social/profile">
+                Return to Professional Profile
+              </a>
+            </p>
+
+          </div>
+        `);
+      }
+
+      return res.redirect("/social/post");
+    } catch (err) {
+      console.error("SOCIAL PROFILE POST ERROR:", err);
+
+      if (req.file?.path) {
+        try {
+          await fs.promises.unlink(req.file.path);
+        } catch {}
+      }
+
+      return res
+        .status(500)
+        .send(`Unable to save professional profile: ${err.message}`);
+    }
+  },
+);
+//
+app.delete(
+  "/social/profile",
+  ensureAuthenticated,
+
+  async (req, res) => {
+    try {
+      const userId = req.user.id;
+
+      await db.query(
+        `
+        UPDATE social_profile
+        SET
+          active = false,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = $1
+        `,
+        [userId],
+      );
+
+      return res.redirect("/social/post");
+    } catch (err) {
+      console.error("SOCIAL PROFILE DELETE ERROR:", err);
+
+      return res
+        .status(500)
+        .send(`Unable to delete professional profile: ${err.message}`);
+    }
+  },
+);
+// restore
+app.post(
+  "/social/profile/restore",
+  ensureAuthenticated,
+
+  async (req, res) => {
+    try {
+      const userId = req.user.id;
+
+      await db.query(
+        `
+        UPDATE social_profile
+        SET
+          active = true,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = $1
+        `,
+        [userId],
+      );
+
+      return res.redirect("/social/post");
+    } catch (err) {
+      console.error("SOCIAL PROFILE RESTORE ERROR:", err);
+
+      return res
+        .status(500)
+        .send(`Unable to restore professional profile: ${err.message}`);
+    }
+  },
+);
+//
+app.get(
+  "/admin/social-profiles",
+  ensureAuthenticated,
+  ensureAdmin,
+  async (req, res) => {
+    try {
+      const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+
+      const limit = 10;
+
+      const offset = (page - 1) * limit;
+
+      const countResult = await db.query(
+        `
+        SELECT COUNT(*) AS total
+        FROM social_profile
+        `,
+      );
+
+      const totalProfiles = parseInt(countResult.rows[0].total, 10);
+
+      const totalPages = Math.ceil(totalProfiles / limit);
+
+      const result = await db.query(
+        `
+        SELECT
+          sp.id,
+          sp.user_id,
+          sp.slogan,
+          sp.avatar,
+          sp.emailpr,
+          sp.domain,
+          sp.address,
+          sp.phone,
+          sp.website,
+          sp.active,
+          sp.created_at,
+          sp.updated_at,
+          mu.email
+        FROM social_profile sp
+        LEFT JOIN my_user mu
+          ON mu.id = sp.user_id
+        ORDER BY sp.id DESC
+        LIMIT $1
+        OFFSET $2
+        `,
+        [limit, offset],
+      );
+
+      const allowedDomainsResult = await db.query(
+        `
+        SELECT
+          id,
+          domain,
+          created_at
+        FROM allowed_email_domain
+        ORDER BY domain ASC
+        `,
+      );
+
+      return res.render("admin-social-profiles", {
+        profiles: result.rows,
+
+        page,
+
+        totalProfiles,
+
+        totalPages,
+
+        limit,
+
+        defaultDate: getToday(),
+
+        // Database-approved domains
+        allowedEmailDomains: allowedDomainsResult.rows,
+      });
+    } catch (err) {
+      console.error("ADMIN SOCIAL PROFILE REPORT ERROR:", err);
+
+      return res
+        .status(500)
+        .send(`Unable to load social profile report: ${err.message}`);
+    }
+  },
+);
+//
+app.post(
+  "/admin/social-profiles/allowed-domain",
+  ensureAuthenticated,
+  ensureAdmin,
+  async (req, res) => {
+    try {
+      let domain = req.body.domain?.trim().toLowerCase();
+
+      // ======================================================
+      // VALIDATE DOMAIN
+      // ======================================================
+
+      if (!domain) {
+        return res.status(400).send("Domain is required.");
+      }
+
+      if (!domain.startsWith("@")) {
+        domain = `@${domain}`;
+      }
+
+      // ======================================================
+      // SAVE APPROVED DOMAIN
+      //
+      // The database UNIQUE constraint prevents duplicates.
+      // ======================================================
+
+      await db.query(
+        `
+        INSERT INTO allowed_email_domain (
+          domain
+        )
+        VALUES ($1)
+        ON CONFLICT (domain) DO NOTHING
+        `,
+        [domain],
+      );
+
+      return res.redirect("/admin/social-profiles");
+    } catch (err) {
+      console.error("ADMIN ADD ALLOWED EMAIL DOMAIN ERROR:", err);
+
+      return res
+        .status(500)
+        .send(`Unable to add allowed email domain: ${err.message}`);
+    }
+  },
+);
+//
+app.delete(
+  "/admin/social-profiles/:id",
+  ensureAuthenticated,
+  ensureAdmin,
+  async (req, res) => {
+    try {
+      const profileId = parseInt(req.params.id, 10);
+
+      if (!Number.isInteger(profileId)) {
+        return res.status(400).send("Invalid profile ID.");
+      }
+
+      await db.query(
+        `
+        DELETE FROM social_profile
+        WHERE id = $1
+        `,
+        [profileId],
+      );
+
+      return res.redirect("/admin/social-profiles");
+    } catch (err) {
+      console.error("ADMIN SOCIAL PROFILE HARD DELETE ERROR:", err);
+
+      return res
+        .status(500)
+        .send(
+          `Unable to permanently delete professional profile: ${err.message}`,
+        );
     }
   },
 );

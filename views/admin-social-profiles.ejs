@@ -1,0 +1,361 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+
+  <!---->
+  <h2 id="hm">Hoa Mai</h2>
+   
+  <section
+  class="admin-social-profile-page py-5 bg-light border border-black mt-4 mb-4"
+>
+  <div class="container-fluid">
+
+    <h2>Professional Profile Report</h2>
+
+    <div class="mb-4">
+      <strong>Total Profiles:</strong>
+      <%= totalProfiles %>
+    </div>
+<!-- ======================================================
+     ALLOWED PROFESSIONAL EMAIL DOMAINS
+     ADMIN ONLY
+     ====================================================== -->
+
+<div class="card border border-black mb-4">
+
+  <div class="card-body">
+
+    <h4 class="mb-3">
+      Allowed Professional Email Domains
+    </h4>
+
+
+    <!-- ADD DOMAIN -->
+
+    <form
+      action="/admin/social-profiles/allowed-domain"
+      method="POST"
+      class="row g-2"
+    >
+
+      <div class="col-md-8">
+
+        <input
+          type="text"
+          name="domain"
+          class="form-control"
+          placeholder="@company.com"
+          required
+        >
+
+      </div>
+
+      <div class="col-md-4">
+
+        <button
+          type="submit"
+          class="btn btn-primary"
+        >
+          Add Allowed Domain
+        </button>
+
+      </div>
+
+    </form>
+
+
+    <!-- CURRENT ALLOWED DOMAINS -->
+
+    <div class="mt-3">
+
+      <strong>Currently Allowed:</strong>
+
+      <div class="allowed-email-domains mt-2">
+
+        <% if (allowedEmailDomains.length > 0) { %>
+
+          <% allowedEmailDomains.forEach(domain => { %>
+
+            <span class="badge bg-secondary me-1 mb-1">
+              <%= domain.domain %>
+            </span>
+
+          <% }) %>
+
+        <% } else { %>
+
+          <span class="text-muted">
+            No allowed domains.
+          </span>
+
+        <% } %>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+    <!-- ======================================================
+         PROFILE TABLE
+         ====================================================== -->
+
+    <div class="table-responsive">
+
+      <table class="social-profile-table table table-bordered">
+
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>User ID</th>
+            <th>User Name</th>
+            <th>Avatar</th>
+            <th>Slogan</th>
+            <th>Professional Email</th>
+            <th>Address</th>
+            <th>Phone</th>
+            <th>Website</th>
+            <th>Active</th>
+            <th>Created</th>
+            <th>Updated</th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <% if (profiles.length > 0) { %>
+
+            <% profiles.forEach(profile => { %>
+
+              <tr>
+
+                <td data-label="ID">
+                  <%= profile.id %>
+                </td>
+
+                <td data-label="User ID">
+                  <%= profile.user_id %>
+                </td>
+
+                <td data-label="User Email">
+                  <%= profile.email || '' %>
+                </td>
+
+                <td data-label="Avatar">
+
+                  <% if (profile.avatar) { %>
+
+                    <img
+                      src="<%= profile.avatar %>"
+                      alt="Avatar"
+                      style="
+                        width:60px;
+                        height:60px;
+                        object-fit:cover;
+                        border-radius:50%;
+                      "
+                    />
+
+                  <% } else { %>
+
+                    <span>No avatar</span>
+
+                  <% } %>
+
+                </td>
+
+                <td data-label="Slogan">
+                  <%= profile.slogan || '' %>
+                </td>
+
+                <td data-label="Professional Email">
+                  <%= profile.emailpr || '' %>
+                </td>
+
+                <td data-label="Address">
+                  <%= profile.address || '' %>
+                </td>
+
+                <td data-label="Phone">
+                  <%= profile.phone || '' %>
+                </td>
+
+                <td data-label="Website">
+                  <%= profile.website || '' %>
+                </td>
+
+                <td data-label="Active">
+
+                  <% if (profile.active) { %>
+
+                    <span class="badge bg-success">
+                      Active
+                    </span>
+
+                  <% } else { %>
+
+                    <span class="badge bg-secondary">
+                      Inactive
+                    </span>
+
+                  <% } %>
+
+                </td>
+
+                <td data-label="Created">
+                  <%= profile.created_at
+                    ? new Date(profile.created_at).toLocaleString()
+                    : '' %>
+                </td>
+
+                <td data-label="Updated">
+                  <%= profile.updated_at
+                    ? new Date(profile.updated_at).toLocaleString()
+                    : '' %>
+                </td>
+
+                <td data-label="Delete">
+
+                  <!-- ADMIN HARD DELETE -->
+
+                  <form
+                    action="/admin/social-profiles/<%= profile.id %>?_method=DELETE"
+                    method="POST"
+                    onsubmit="return confirm('PERMANENTLY delete this professional profile?');"
+                  >
+
+                    <button
+                      type="submit"
+                      class="btn btn-danger btn-sm"
+                    >
+                      Delete
+                    </button>
+
+                  </form>
+
+                </td>
+
+              </tr>
+
+            <% }) %>
+
+          <% } else { %>
+
+            <tr>
+              <td
+                colspan="13"
+                class="text-center"
+              >
+                No professional profiles found.
+              </td>
+            </tr>
+
+          <% } %>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+
+    <!-- ======================================================
+         PAGINATION
+         ====================================================== -->
+
+    <% if (totalPages > 1) { %>
+
+      <div class="social-profile-pagination mt-4">
+
+        <!-- Previous -->
+
+        <% if (page > 1) { %>
+
+          <a
+            href="/admin/social-profiles?page=<%= page - 1 %>&limit=<%= limit %>"
+            class="social-profile-page-button social-profile-page-prev"
+          >
+            Previous
+          </a>
+
+        <% } else { %>
+
+          <span
+            class="social-profile-page-button social-profile-page-prev disabled"
+          >
+            Previous
+          </span>
+
+        <% } %>
+
+
+        <!-- Page Numbers -->
+
+        <div class="social-profile-page-numbers">
+
+          <% for (let i = 1; i <= totalPages; i++) { %>
+
+            <% if (i === page) { %>
+
+              <span
+                class="social-profile-page-button social-profile-page-number active"
+              >
+                <%= i %>
+              </span>
+
+            <% } else { %>
+
+              <a
+                href="/admin/social-profiles?page=<%= i %>&limit=<%= limit %>"
+                class="social-profile-page-button social-profile-page-number"
+              >
+                <%= i %>
+              </a>
+
+            <% } %>
+
+          <% } %>
+
+        </div>
+
+
+        <!-- Next -->
+
+        <% if (page < totalPages) { %>
+
+          <a
+            href="/admin/social-profiles?page=<%= page + 1 %>&limit=<%= limit %>"
+            class="social-profile-page-button social-profile-page-next"
+          >
+            Next
+          </a>
+
+        <% } else { %>
+
+          <span
+            class="social-profile-page-button social-profile-page-next disabled"
+          >
+            Next
+          </span>
+
+        <% } %>
+
+      </div>
+
+    <% } %>
+
+  </div>
+</section>
+
+</main>
+
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->
