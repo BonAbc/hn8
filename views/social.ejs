@@ -18,46 +18,25 @@
 <div style="background:#fff3cd;padding:10px;">
 
   <!-- User name + slogan -->
- <div style="margin-top:15px; margin-bottom:15px;">
-  <div>
-    <strong>User Name:</strong>
-    <%= currentUserEmail %>
-  </div>
-
-  <% if (profile && profile.slogan) { %>
+  <div style="margin-top:15px; margin-bottom:15px;">
     <div>
-      <strong>Slogan: <%= profile.slogan %></strong>
+      <strong>User Name:</strong>
+      <%= currentUserEmail %>
     </div>
-  <% } %>
-</div>
 
-<!-- Profile -->
-<div>
-
-  <% if (profile) { %>
-
-    <% if (profile.avatar) { %>
-      <img
-        src="<%= profile.avatar %>"
-        alt="Avatar"
-      />
+    <% if (profile && profile.slogan && profile.slogan.trim() !== '') { %>
+      <div>
+        <strong>Slogan:</strong> <%= profile.slogan %>
+      </div>
     <% } %>
-
-    <% if (profile.name) { %>
-      <div><%= profile.name %></div>
-    <% } %>
-
-  <% } %>
-
-</div>
-
+  </div>
 
   <!-- Profile -->
   <div>
 
     <% if (profile) { %>
 
-      <% if (profile.avatar) { %>
+      <% if (profile.avatar && profile.avatar.trim() !== '') { %>
         <img
           src="<%= profile.avatar %>"
           alt="Avatar"
@@ -70,24 +49,24 @@
             display:block;
             margin:0 auto 15px auto;
           "
-        /> 
+        />
       <% } %>
 
-      <% if (profile.emailpr) { %>
+      <% if (profile.emailpr && profile.emailpr.trim() !== '') { %>
         <div>
-          <strong>Professional Email: <%= profile.emailpr %></strong>
+          <strong>Professional Email:</strong> <%= profile.emailpr %>
         </div>
       <% } %>
 
-      <% if (profile.phone) { %>
+      <% if (profile.phone && profile.phone.trim() !== '') { %>
         <div>
-          <strong>Phone: <%= profile.phone %></strong>
+          <strong>Phone:</strong> <%= profile.phone %>
         </div>
       <% } %>
 
-      <% if (profile.website) { %>
+      <% if (profile.website && profile.website.trim() !== '') { %>
         <div>
-          <strong>Website: <%= profile.website %></strong>
+          <strong>Website:</strong> <%= profile.website %>
         </div>
       <% } %>
 
