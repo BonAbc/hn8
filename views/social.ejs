@@ -20,13 +20,13 @@
   <!-- User name + slogan -->
   <div style="margin-top:15px; margin-bottom:15px;">
     <div>
-      <strong>User Name:</strong>
+      <strong>User:</strong>
       <%= currentUserEmail %>
     </div>
 
     <% if (profile && profile.slogan && profile.slogan.trim() !== '') { %>
       <div>
-        <strong>Slogan:</strong> <%= profile.slogan %>
+        <strong>Tagline:</strong> <%= profile.slogan %>
       </div>
     <% } %>
   </div>
