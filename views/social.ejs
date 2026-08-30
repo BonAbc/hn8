@@ -21,7 +21,11 @@
     <strong>User Name:</strong>
     <%= currentUserEmail %>
   </div>
-
+   <% if (profile.slogan) { %>
+        <div>
+          <strong>Slogan: <%= profile.slogan %></strong>
+        </div>
+      <% } %>
   <div style="margin-top:15px;">
 
     <% if (profile) { %>
@@ -40,13 +44,7 @@
             margin:0 auto;
           "
         />
-      <% } %>
-
-      <% if (profile.slogan) { %>
-        <div>
-          <strong>Slogan: <%= profile.slogan %></strong>
-        </div>
-      <% } %>
+      <% } %>   
 
       <% if (profile.emailpr) { %>
         <div>
@@ -302,10 +300,7 @@
 
           </div>
 
-        </div>
-
- 
-       
+        </div>  
 
     
 
