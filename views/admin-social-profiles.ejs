@@ -208,20 +208,28 @@
                     </span>
 
                   <% } %>
-
+ 
                 </td>
 
                 <td data-label="Created">
                   <%= profile.created_at
-                    ? new Date(profile.created_at).toLocaleString()
-                    : '' %>
+                    ? new Date(profile.created_at).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    })
+  : "" %>
                 </td>
-
-                <td data-label="Updated">
-                  <%= profile.updated_at
-                    ? new Date(profile.updated_at).toLocaleString()
-                    : '' %>
-                </td>
+<td data-label="Updated">
+  <%= profile.updated_at
+    ? new Date(profile.updated_at).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      })
+    : "" %>
+</td>
+                
 
                 <td data-label="Delete">
 
