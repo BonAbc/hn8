@@ -978,7 +978,7 @@ app.post("/add-user", ensureAdmin, async (req, res) => {
           [email, hash, true, false, group_id],
         );
 
-        // Admin stays logged in
+        //  stays logged in
         return res.redirect("/web/traffic/test");
       } catch (insertErr) {
         console.error("Error inserting user:", insertErr);
@@ -1081,8 +1081,8 @@ app.delete("/user/:id", ensureAdmin, async (req, res) => {
     res.status(500).send("Error deactivating user");
   }
 });
-//Admin add user edit 👆
-//Admin add user/reactivate 👆
+//👆
+// 👆
 app.put("/user/:id", ensureAdmin, async (req, res) => {
   const userId = req.params.id;
 
@@ -1124,12 +1124,12 @@ app.get("/user/:id/edit", ensureAdmin, async (req, res) => {
     res.status(500).send("Error loading user");
   }
 });
-//Admin add user edit 👆
+// 👆
 app.patch("/user/:id", ensureAdmin, async (req, res) => {
   const userId = req.params.id;
   const { email, group_id } = req.body;
 
-  // Preserve the filter that was used when opening Edit
+  //
   const filterGroupId = req.query.group_id;
 
   try {
@@ -1260,16 +1260,16 @@ app.post("/chapw", async (req, res) => {
 
     const user = userResult.rows[0];
 
-    // Store password change request temporarily
-    // Store password change request temporarily
+    //
+    //
     req.session.pendingPasswordChange = {
       userId: user.id,
       email: user.email,
       newPassword: newPassword,
       expires: Date.now() + 5 * 60 * 1000,
     };
-    // bcrypt AFTER successful 2FA  👌👌👌👌👌👌
-    // Admin approval check
+    //   👌👌👌👌👌👌
+    //
     if (!user.two_factor_enabled) {
       if (!user.pw_change_approved) {
         return res.render("chapw.ejs", {
@@ -1298,7 +1298,7 @@ app.post("/chapw", async (req, res) => {
   }
 });
 
-//add track
+//
 
 app.get("/admin/password-approval", (req, res) => {
   if (!req.user || !adminEmails.includes(req.user.email)) {
@@ -1360,15 +1360,15 @@ app.post("/admin/password-approval", async (req, res) => {
   }
 });
 //✌✌✌ end sign up ✌✌✌
-//✌✌✌ end sign up authenticator ✌✌✌
-//✌✌✌ end sign up authenticator ✌✌✌
+//✌✌✌ ✌✌✌
+//✌✌✌  ✌✌✌
 app.get("/complete-password-change", async (req, res) => {
   const pending = req.session.pendingPasswordChange;
 
   if (!pending) {
     return res.redirect("/chapw");
   }
-  // when enter > render below. First /chapw ✌✌✌ ✌✌✌
+  // ✌✌✌ ✌✌✌
   res.render("complete-password-change.ejs", {
     message: "Your password change has been approved.",
     defaultDate: getToday(),
@@ -1393,7 +1393,7 @@ app.post("/complete-password-change", async (req, res) => {
   }
 
   try {
-    // Check admin approval
+    //
     const result = await db.query(
       `
       SELECT pw_change_approved
@@ -1417,7 +1417,7 @@ app.post("/complete-password-change", async (req, res) => {
       });
     }
 
-    // Hash new password
+    //
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
     await db.query(
@@ -1476,12 +1476,12 @@ const ALLOWED_REACTIONS = [
 ];
 
 // ============================================================
-// SOCIAL POST / FEED
+
 // ============================================================
 app.get("/social/post", ensureAuthenticated, async (req, res) => {
   try {
     // ========================================================
-    // CURRENT USER
+
     // ========================================================
 
     const userId = req.user?.id || null;
@@ -1494,7 +1494,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
     }
 
     // ========================================================
-    // CURRENT USER GROUP
+
     // ========================================================
 
     let userGroupId = null;
@@ -1512,7 +1512,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       userGroupId = groupResult.rows[0]?.group_id ?? null;
     }
     //
-    //
+    // set conditions who is admin emailsadmin and user below then Line 1557 set visibility.
     const adminEmails = (process.env.ADMIN_EMAILS || "")
       .split(",")
       .map((email) => email.trim().toLowerCase())
@@ -1544,18 +1544,8 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
     let totalPosts = 0;
     let totalPages = 1;
 
-    // ========================================================
-    // COUNT FEED
-    // ========================================================
-
     if (!postId) {
       let totalPostsResult;
-
-      // ======================================================
-      // FULL ADMIN
-      //
-      // ADMIN_EMAILS can see ANY post
-      // ======================================================
 
       if (isAdmin) {
         totalPostsResult = await db.query(
@@ -1564,20 +1554,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
           FROM social_posts
           `,
         );
-      }
-
-      // ======================================================
-      // EMAILS ADMIN
-      //
-      // SPECIAL / HN CPA ADMIN can see:
-      //   loggedin users
-      //   ANY group_only
-      //   own posts
-      //
-      // admin_only is NOT included here unless it is their
-      // own post.
-      // ======================================================
-      else if (emailsAdmin) {
+      } else if (emailsAdmin) {
         totalPostsResult = await db.query(
           `
           SELECT COUNT(*)::INTEGER AS total
@@ -1592,12 +1569,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
           `,
           [userId],
         );
-      }
-
-      // ======================================================
-      // NORMAL USER
-      // ======================================================
-      else {
+      } else {
         totalPostsResult = await db.query(
           `
           SELECT COUNT(*)::INTEGER AS total
@@ -1630,17 +1602,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       }
     }
 
-    // ========================================================
-    // LOAD POSTS
-    // ========================================================
-
     let postsResult;
-
-    // ========================================================
-    // SINGLE POST
-    //
-    // /social/post?postId=26
-    // ========================================================
 
     if (postId) {
       postsResult = await db.query(
@@ -2267,7 +2229,7 @@ app.post(
       }
 
       // ======================================================
-      // VISIBILITY
+      // VISIBILITY Here
       // ======================================================
 
       const requestedVisibility = String(
@@ -2325,7 +2287,7 @@ app.post(
 
       const postId = postResult.rows[0].id;
 
-      console.log("NEW POST ID:", postId);
+      // console.log("NEW POST ID:", postId);
 
       const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
         .split(",")
@@ -5690,7 +5652,7 @@ app.get("/social/profile/:userId", async (req, res) => {
           sp.website
 
         FROM my_user u
-
+  
         LEFT JOIN social_profile sp
           ON sp.user_id = u.id
           AND sp.active = TRUE
