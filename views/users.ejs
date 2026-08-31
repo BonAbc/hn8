@@ -80,14 +80,12 @@
 
   <tbody>
 
-    <% users.forEach(user => { %>
-
-      <tr>
-
-        <td>
-          <%= user.id %>
-        </td>
-
+   
+<% users.forEach((user, index) => { %>
+  <tr>
+    <td>
+      <%= (currentPage - 1) * 6 + index + 1 %>
+    </td>
         <td>
           <%= user.email %>
         </td>
