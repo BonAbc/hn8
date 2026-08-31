@@ -1053,11 +1053,22 @@ app.get("/users/loveme", ensureAdmin, async (req, res) => {
     const userTotal = parseInt(countResults.rows[0].count, 10);
 
     //
+    const groupCountsResult = await db.query(`
+  SELECT group_id, COUNT(*) AS total
+  FROM my_user
+  WHERE group_id IS NOT NULL
+  GROUP BY group_id
+  ORDER BY group_id
+`);
+
+    //
 
     res.render("users.ejs", {
       users: result.rows,
       currentPage: page,
       userTotal,
+      groutCounts: groupCountsResult.rows,
+      totalUsers,
       totalPages,
       groupId,
       groups,

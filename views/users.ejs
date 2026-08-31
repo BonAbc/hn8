@@ -54,7 +54,13 @@
     </button>
   </div>
   <div id="hm">Total Users: <%= userTotal %></div>
-
+<div>
+  <% groupCounts.forEach(group => { %>
+    <div>
+      Group <%= group.group_id %>: <%= group.total %> users
+    </div>
+  <% }) %>
+</div>
 </form>
  </div>
 </section>
