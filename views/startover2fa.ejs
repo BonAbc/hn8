@@ -26,16 +26,12 @@
             >
               <h5>Admin only</h5>
               <form action="/reset-2fa" method="POST">
-                <label> User email <span style="color: red">*</span> </label>
+                <label> Name <span style="color: red">*</span> </label>
                 <div>
-                  <input
-                    type="text"
-                    name="email"
-                    placeholder="User email"
-                    required
-                  />
+                  <input type="text" name="email" placeholder="Name" required />
                 </div>
                 <!--👇👆👆👇👆👇-->
+                <br />
                 <button type="submit" class="btn btn-primary w-auto">
                   Reset Authenticator
                 </button>
