@@ -1046,10 +1046,12 @@ app.get("/users/loveme", ensureAdmin, async (req, res) => {
     const totalUsers = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalUsers / limit);
     // by me
-    const userTotal = await db.query(`
+    const countResults = await db.query(`
   SELECT COUNT(*)
   FROM my_user
 `);
+    const userTotal = parseInt(countResults.rows[0].count, 10);
+
     //
 
     res.render("users.ejs", {
