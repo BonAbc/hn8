@@ -1045,10 +1045,17 @@ app.get("/users/loveme", ensureAdmin, async (req, res) => {
 
     const totalUsers = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalUsers / limit);
+    // by me
+    const userTotal = await db.query(`
+  SELECT COUNT(*)
+  FROM my_user
+`);
+    //
 
     res.render("users.ejs", {
       users: result.rows,
       currentPage: page,
+      userTotal,
       totalPages,
       groupId,
       groups,
@@ -3637,7 +3644,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
 
     if (isAdmin) {
       visibility = (req.query.visibility || "").trim();
-
+      // restriction is here. also in social.ejs
       const allowedVisibility = ["loggedin users", "admin_only", "group_only"];
 
       if (!allowedVisibility.includes(visibility)) {
