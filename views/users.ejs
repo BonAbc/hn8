@@ -54,17 +54,24 @@
     </button>
   </div>
   <div id="hm">Total Users: <%= userTotal %></div>
-<div>
+
+  <div class="mt-3">
   <% groupCounts.forEach(group => { %>
-    <div>
-      Group <%= group.group_id %>: <%= group.total %> users
+    <div class="d-flex align-items-center mb-1">
+      <span class="text-start" style="width: 100px;">
+        Group <%= group.group_id %>:
+      </span>
+
+      <span class="text-end" style="width: 100px;">
+        <%= group.total %> users
+      </span>
     </div>
   <% }) %>
-   
 </div>
-<div>
-    Total Group Users: <%= totalGroup %>
-  </div>
+
+<div class="mt-2">
+  Total Group Users: <%= totalGroup %>
+</div>
 </form>
  </div>
 </section>
