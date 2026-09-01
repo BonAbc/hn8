@@ -1244,7 +1244,6 @@ app.post("/web/traffic/test/delete-selected", ensureAdmin, async (req, res) => {
 
 // Change password POST
 app.post("/chapw", async (req, res) => {
-  const today = new Date().toISOString().split("T")[0];
   const { email, newPassword, confirmPassword } = req.body;
 
   if (!email || !newPassword || !confirmPassword) {
