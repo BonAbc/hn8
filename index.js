@@ -1072,7 +1072,6 @@ app.get("/users/loveme", ensureAdmin, async (req, res) => {
       userTotal,
       groupCounts: groupCountsResult.rows,
       totalGroup,
-
       totalPages,
       groupId,
       groups,
@@ -5495,7 +5494,7 @@ app.get(
     try {
       const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
 
-      const limit = 10;
+      const limit = 6;
 
       const offset = (page - 1) * limit;
 
