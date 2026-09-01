@@ -3048,6 +3048,18 @@ button:hover {
 }
 
 /*Pagination social-profile report END*/
+/*social-profile-view.ejs*/
+/**/
+.profile-view-sky {
+  position: relative;
+  overflow: hidden;
+
+  background-color: #cce9f5;
+}
+
+/**/
+
+/*social-profile-view.ejs*/
 /* ============================================================
    END OF STYLESHEET
    ============================================================ */
