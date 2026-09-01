@@ -1067,7 +1067,7 @@ app.get("/users/loveme", ensureAdmin, async (req, res) => {
       users: result.rows,
       currentPage: page,
       userTotal,
-      groutCounts: groupCountsResult.rows,
+      groupCounts: groupCountsResult.rows,
       totalUsers,
       totalPages,
       groupId,
