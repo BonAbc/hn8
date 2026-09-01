@@ -1060,7 +1060,7 @@ app.get("/users/loveme", ensureAdmin, async (req, res) => {
   GROUP BY group_id
   ORDER BY group_id
 `);
-
+    const totalGroup = groupCountsResult;
     //
 
     res.render("users.ejs", {
@@ -1068,7 +1068,7 @@ app.get("/users/loveme", ensureAdmin, async (req, res) => {
       currentPage: page,
       userTotal,
       groupCounts: groupCountsResult.rows,
-      groupCountsResult,
+      totalGroup,
       totalUsers,
       totalPages,
       groupId,
