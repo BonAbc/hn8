@@ -29,6 +29,11 @@
         <strong>Tagline:</strong> <%= profile.slogan %>
       </div>
     <% } %>
+       <% if (profile.emailpr && profile.emailpr.trim() !== '') { %>
+        <div>
+          <strong>Email:</strong> <%= profile.emailpr %>
+        </div>
+      <% } %>
   </div>
 
 
@@ -53,9 +58,9 @@
         />
       <% } %>
 
-      <% if (profile.emailpr && profile.emailpr.trim() !== '') { %>
+      <% if (profile.address && profile.address.trim() !== '') { %>
         <div>
-          <strong>Professional Email:</strong> <%= profile.emailpr %>
+          <strong>Address:</strong> <%= profile.address %>
         </div>
       <% } %>
 
