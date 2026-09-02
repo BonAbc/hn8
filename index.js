@@ -5674,7 +5674,7 @@ app.get("/social/profile/:userId", async (req, res) => {
           sp.website,
           sp.address
 
-
+  
         FROM my_user u
   
         LEFT JOIN social_profile sp
