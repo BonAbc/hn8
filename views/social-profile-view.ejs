@@ -33,7 +33,7 @@
       </div>
     <% } %>
   
-  </div>
+  </div> 
  
   <!-- Professional Profile -->
   <div>
@@ -68,19 +68,16 @@
       </div>
     <% } %>
 
-    <% if (profile.website) { %>
-      <div>
-        <strong>Website:</strong>
-        <%= profile.website %>
-      </div>
-    <% } %>
-     <% if (profile.address) { %>
-      <div>
-        <strong>Address:</strong>
-        <%= profile.address %>
-      </div>
-    <% } %>
  
+
+<div>
+  <strong>Website:</strong>
+  <%= profile.website || 'Not available' %>
+</div>
+   <div>
+  <strong>Address:</strong>
+  <%= profile.address || 'Not available' %>
+</div>
   </div>
 
 <% } else { %>
