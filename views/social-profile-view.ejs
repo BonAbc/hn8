@@ -25,13 +25,13 @@
       <strong>Name:</strong>
       <%= currentUserEmail %>
     </div> 
-
-    <% if (profile.slogan) { %>
+  <% if (profile.phone) { %>
       <div>
-        <strong>Tagline:</strong>
-        <%= profile.slogan %>
+        <strong>Phone:</strong>
+        <%= profile.phone %>
       </div>
     <% } %>
+ 
     <% if (profile.emailpr) { %>
       <div>
         <strong>Email:</strong>
@@ -62,22 +62,23 @@
 
     
 
-    <% if (profile.phone) { %>
-      <div>
-        <strong>Phone:</strong>
-        <%= profile.phone %>
-      </div>
-    <% } %>
+  
 
  
 
 <div>
+     <% if (profile.slogan) { %>
+      <div>
+        <strong>Tagline:</strong>
+        <%= profile.slogan %>
+      </div>
+    <% } %>
   <strong>Website:</strong>
   <%= profile.website || 'Not available' %>
 </div>
    <div>
   <strong>Address:</strong>
-  <%= profile.address || '----------------' %>
+  <%= profile.address || '-----------------' %>
 </div>
   </div>
 
