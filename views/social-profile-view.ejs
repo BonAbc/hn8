@@ -32,6 +32,12 @@
         <%= profile.slogan %>
       </div>
     <% } %>
+    <% if (profile.emailpr) { %>
+      <div>
+        <strong>Email:</strong>
+        <%= profile.emailpr %>
+      </div>
+    <% } %>
   
   </div> 
  
@@ -54,12 +60,7 @@
       />
     <% } %>
 
-    <% if (profile.emailpr) { %>
-      <div>
-        <strong>Email:</strong>
-        <%= profile.emailpr %>
-      </div>
-    <% } %>
+    
 
     <% if (profile.phone) { %>
       <div>
