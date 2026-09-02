@@ -5667,13 +5667,12 @@ app.get("/social/profile/:userId", async (req, res) => {
         SELECT
           u.id AS user_id,
           u.email AS user_email,
-
           sp.slogan,
           sp.avatar,
           sp.emailpr,
           sp.phone,
           sp.website,
-          sp.address,
+          sp.address
 
 
         FROM my_user u
