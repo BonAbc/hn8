@@ -25,17 +25,18 @@
       <strong>Name:</strong>
       <%= currentUserEmail %>
     </div> 
-  <% if (profile.phone) { %>
-      <div>
-        <strong>Phone:</strong>
-        <%= profile.phone %>
-      </div>
-    <% } %>
+ 
  
     <% if (profile.emailpr) { %>
       <div>
         <strong>Email:</strong>
         <%= profile.emailpr %>
+      </div>
+    <% } %>
+     <% if (profile.phone) { %>
+      <div>
+        <strong>Phone:</strong>
+        <%= profile.phone %>
       </div>
     <% } %>
   
