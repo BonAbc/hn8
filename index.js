@@ -156,9 +156,10 @@ app.use(
 //app.use(session):use session for all incoming request
 //cookie is a small piece of data your server tells the browser to store. : the backend
 app.use(flash());
+// above is from connect-flash to store temperary message in session
 app.use(passport.initialize());
 app.use(passport.session());
-
+// above through passport identified user during login session
 app.use((req, res, next) => {
   res.locals.message = req.flash("error");
   next();
@@ -5671,7 +5672,9 @@ app.get("/social/profile/:userId", async (req, res) => {
           sp.avatar,
           sp.emailpr,
           sp.phone,
-          sp.website
+          sp.website,
+          sp.address,
+
 
         FROM my_user u
   
