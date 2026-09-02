@@ -22,21 +22,18 @@
     <div>
       <strong>Name:</strong>
       <%= currentUserEmail %>
-    </div>
-
-    <% if (profile && profile.slogan && profile.slogan.trim() !== '') { %>
-      <div>
-        <strong>Tagline:</strong> <%= profile.slogan %>
-      </div>
-    <% } %>
+    </div>  
        <% if (profile.emailpr && profile.emailpr.trim() !== '') { %>
         <div>
           <strong>Email:</strong> <%= profile.emailpr %>
         </div>
       <% } %>
+        <% if (profile.phone && profile.phone.trim() !== '') { %>
+        <div>
+          <strong>Phone:</strong> <%= profile.phone %>
+        </div>
+      <% } %>
   </div>
-
-
   <!-- Profile -->
   <div>
 
@@ -56,23 +53,21 @@
             margin:0 auto 15px auto;
           "
         />
-      <% } %>
-
-      <% if (profile.address && profile.address.trim() !== '') { %>
-        <div>
-          <strong>Address:</strong> <%= profile.address %>
-        </div>
-      <% } %>
-
-      <% if (profile.phone && profile.phone.trim() !== '') { %>
-        <div>
-          <strong>Phone:</strong> <%= profile.phone %>
-        </div>
-      <% } %>
+      <% } %>     
 
       <% if (profile.website && profile.website.trim() !== '') { %>
         <div>
           <strong>Website:</strong> <%= profile.website %>
+        </div>
+      <% } %>
+        <% if (profile && profile.slogan && profile.slogan.trim() !== '') { %>
+      <div>
+        <strong>Tagline:</strong> <%= profile.slogan %>
+      </div>
+    <% } %>
+        <% if (profile.address && profile.address.trim() !== '') { %>
+        <div>
+          <strong>Address:</strong> <%= profile.address %>
         </div>
       <% } %>
 
