@@ -19,21 +19,27 @@
 
   <!-- User name + slogan -->
   <div style="margin-top:15px; margin-bottom:15px;">
-    <div>
-      <strong>Name:</strong>
-      <%= currentUserEmail %>
-    </div>  
-       <% if (profile.emailpr && profile.emailpr.trim() !== '') { %>
-        <div>
-          <strong>Email:</strong> <%= profile.emailpr %>
-        </div>
-      <% } %>
-        <% if (profile.phone && profile.phone.trim() !== '') { %>
-        <div>
-          <strong>Phone:</strong> <%= profile.phone %>
-        </div>
-      <% } %>
+  <div>
+    <strong>Name:</strong>
+    <%= currentUserEmail %>
   </div>
+
+  <% if (profile) { %>
+
+    <% if (profile.emailpr && profile.emailpr.trim() !== '') { %>
+      <div>
+        <strong>Email:</strong> <%= profile.emailpr %>
+      </div>
+    <% } %>
+
+    <% if (profile.phone && profile.phone.trim() !== '') { %>
+      <div>
+        <strong>Phone:</strong> <%= profile.phone %>
+      </div>
+    <% } %>
+
+  <% } %>
+</div>
   <!-- Profile -->
   <div>
 
