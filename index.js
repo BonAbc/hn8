@@ -2106,6 +2106,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
     slogan,
     phone,
     emailpr,
+    address,
     website
   FROM social_profile
 
