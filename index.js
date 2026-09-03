@@ -3752,7 +3752,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     //
     // EMAILS ADMIN:
     //   loggedin users
-    //   group_only
+    //   all groups
     //   own posts
     //   NOT admin_only
     //
@@ -3763,26 +3763,47 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     // ========================================================
 
     if (isAdmin) {
-      // FULL ADMIN sees everything.
+      // ------------------------------------------------------
+      // ADMIN
+      // ------------------------------------------------------
+      // Sees everything:
+      //   loggedin users
+      //   group_only from all groups
+      //   admin_only from all users
+      //
       // No security condition needed.
     } else if (userIsEmailsAdmin) {
+      // ------------------------------------------------------
+      // EMAILS_ADMIN
+      // ------------------------------------------------------
+      // Sees:
+      //   loggedin users → all
+      //   group_only     → all groups
+      //   own posts      → including own admin_only
+      //
+      // Does NOT see another user's admin_only posts.
+
       const userIdParam = values.length + 1;
 
       values.push(userId);
 
       conditions.push(`
-        (
-          p.visibility = 'loggedin users'
+    (
+      p.visibility = 'loggedin users'
 
-          OR p.visibility = 'group_only'
+      OR p.visibility = 'group_only'
 
-          OR p.user_id = $${userIdParam}
-        )
-      `);
+      OR p.user_id = $${userIdParam}
+    )
+  `);
     } else {
       // ------------------------------------------------------
       // NORMAL USER
       // ------------------------------------------------------
+      // Sees:
+      //   loggedin users → all
+      //   group_only     → own group only
+      //   own posts      → including own admin_only
 
       const userIdParam = values.length + 1;
 
@@ -3793,18 +3814,18 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       values.push(userGroupId);
 
       conditions.push(`
-        (
-          p.visibility = 'loggedin users'
+    (
+      p.visibility = 'loggedin users'
 
-          OR p.user_id = $${userIdParam}
+      OR p.user_id = $${userIdParam}
 
-          OR (
-            p.visibility = 'group_only'
-            AND $${groupIdParam}::INTEGER IS NOT NULL
-            AND u.group_id = $${groupIdParam}::INTEGER
-          )
-        )
-      `);
+      OR (
+        p.visibility = 'group_only'
+        AND $${groupIdParam}::INTEGER IS NOT NULL
+        AND u.group_id = $${groupIdParam}::INTEGER
+      )
+    )
+  `);
     }
 
     // ========================================================
@@ -3899,53 +3920,71 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     //
     // EMAILS ADMIN:
     //   loggedin users + group_only
-    //   admin_only remains 0 / hidden
+    //   admin_only = their own posts
+    //
+    // NORMAL USER:
+    //   loggedin users + group_only
+    //   admin_only = their own posts
     // ========================================================
 
     let everyonePosts = 0;
     let userAdminPosts = 0;
     let groupPosts = 0;
 
-    if (isAdmin || userIsEmailsAdmin) {
+    if (userId) {
+      const breakdownValues = [...values];
+
+      let adminOnlyCondition = "";
+
+      // ------------------------------------------------------
+      // FULL ADMIN
+      // ------------------------------------------------------
+      // isAdmin = all admin_only posts
+      //
+      // EMAILS_ADMIN / NORMAL USER
+      // = only their own admin_only posts
+      // ------------------------------------------------------
+
+      if (!isAdmin) {
+        const userIdParam = breakdownValues.length + 1;
+
+        breakdownValues.push(userId);
+
+        adminOnlyCondition = `AND p.user_id = $${userIdParam}`;
+      }
+
       const breakdownResult = await db.query(
         `
-        SELECT
+    SELECT
 
-          COUNT(*) FILTER (
-            WHERE p.visibility = 'loggedin users'
-          )::INTEGER AS everyone_posts,
+      COUNT(*) FILTER (
+        WHERE p.visibility = 'loggedin users'
+      )::INTEGER AS everyone_posts,
 
-          COUNT(*) FILTER (
-            WHERE p.visibility = 'admin_only'
-          )::INTEGER AS user_admin_posts,
+      COUNT(*) FILTER (
+        WHERE p.visibility = 'admin_only'
+        ${adminOnlyCondition}
+      )::INTEGER AS user_admin_posts,
 
-          COUNT(*) FILTER (
-            WHERE p.visibility = 'group_only'
-          )::INTEGER AS group_posts
+      COUNT(*) FILTER (
+        WHERE p.visibility = 'group_only'
+      )::INTEGER AS group_posts
 
-        FROM social_posts p
+    FROM social_posts p
 
-        JOIN my_user u
-          ON u.id = p.user_id
+    JOIN my_user u
+      ON u.id = p.user_id
 
-        ${whereClause}
-        `,
-        values,
+    ${whereClause}
+    `,
+        breakdownValues,
       );
 
       everyonePosts = Number(breakdownResult.rows[0]?.everyone_posts) || 0;
 
       groupPosts = Number(breakdownResult.rows[0]?.group_posts) || 0;
 
-      // ------------------------------------------------------
-      // EMAILS_ADMIN must NEVER expose admin_only count.
-      // ------------------------------------------------------
-
-      if (isAdmin) {
-        userAdminPosts = Number(breakdownResult.rows[0]?.user_admin_posts) || 0;
-      } else {
-        userAdminPosts = 0;
-      }
+      userAdminPosts = Number(breakdownResult.rows[0]?.user_admin_posts) || 0;
     }
 
     // ========================================================
