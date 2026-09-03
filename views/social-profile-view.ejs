@@ -62,23 +62,44 @@
 
  <!-- Website -->
       <div>
-        <strong>Website:</strong>
-        <%= profile.website || 'Not available' %>
-      </div>
+  <strong>Website:</strong>
+
+  <% if (profile.website) { 
+       let website = profile.website.trim();
+
+       // Add protocol if missing
+       if (!/^https?:\/\//i.test(website)) {
+         website = 'https://' + website;
+       }
+  %>
+
+    <a
+      href="<%= website %>"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <%= profile.website %>
+    </a>
+
+  <% } else { %>
+    Not available
+  <% } %>
+</div>
+
+      
+ <!-- Website -->
      <% if (profile.slogan) { %>
       <div>
         <strong>Tagline:</strong>
         <%= profile.slogan %>
       </div>
-    <% } %>
-
- 
+    <% } %> 
 
    <div>
   <strong>Address:</strong>
   <%= profile.address || '--------------------' %>
 </div>
-  </div>
+  </div> 
 
 <% } else { %>
 
