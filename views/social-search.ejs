@@ -248,7 +248,7 @@
           <% } %>
 
         </div>
- 
+  
 
         <!-- ======================================================
              RESULTS
@@ -495,39 +495,15 @@
 
 <td>
 
-  <% if (isAdmin) { %>
-
-    <!-- ADMIN CAN CLICK -->
-
-    <a
-      href="/social/post?postId=<%= post.id %>"
-      class="social-search-view"
-    >
-      View Post →
-    </a>
-
-  <% } else if (!isEmailsAdmin) { %>
-
-    <!-- NORMAL USER CAN VIEW -->
-
-    <a
-      href="/social/post?postId=<%= post.id %>"
-      class="social-search-view"
-    >
-      View Post →
-    </a>
-
-  <% } else { %>
-
-    <!-- EMAIL ADMIN: DISPLAY ONLY -->
-
-    <span class="text-muted">
-      View Post →
-    </span>
-
-  <% } %>
+  <a
+    href="/social/post?postId=<%= post.id %>"
+    class="social-search-view"
+  >
+    View Post →
+  </a>
 
 </td>
+
 
 
             </tr>
