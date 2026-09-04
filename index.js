@@ -3357,13 +3357,64 @@ app.post("/social/post/comment", ensureAuthenticated, async (req, res) => {
       return res.status(400).send("Comment is too long.");
     }
 
-    // Verify post exists
+    // ======================================================
+    // CURRENT USER ROLE
+    // ======================================================
+
+    const userResult = await db.query(
+      `
+      SELECT role
+      FROM my_user
+      WHERE id = $1
+      `,
+      [userId],
+    );
+
+    const userRole = userResult.rows[0]?.role ?? null;
+
+    const isClient =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "client";
+
+    // ======================================================
+    // CURRENT USER ADMIN CHECK
+    //
+    // KEEP EXISTING ADMIN FUNCTIONS UNCHANGED
+    // ======================================================
+
+    const userEmail = req.user?.email || null;
+
+    const isAdmin2 =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "admin2" || isSpecialAdmin(userEmail);
+
+    const isAdmin1 =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "admin1" ||
+      isAdminEmail(userEmail) ||
+      isAdmin2;
+
+    const isAdmin = isAdmin1 || isAdmin2;
+
+    // ======================================================
+    // VERIFY POST + OWNER ROLE
+    // ======================================================
 
     const postResult = await db.query(
       `
-      SELECT id
-      FROM social_posts
-      WHERE id = $1
+      SELECT
+        p.id,
+        u.role AS owner_role
+
+      FROM social_posts p
+
+      JOIN my_user u
+        ON u.id = p.user_id
+
+      WHERE p.id = $1
       `,
       [postId],
     );
@@ -3371,6 +3422,34 @@ app.post("/social/post/comment", ensureAuthenticated, async (req, res) => {
     if (!postResult.rowCount) {
       return res.status(404).send("Post not found.");
     }
+
+    const ownerRole = postResult.rows[0]?.owner_role ?? null;
+
+    const postOwnerIsClient =
+      String(ownerRole || "")
+        .trim()
+        .toLowerCase() === "client";
+
+    // ======================================================
+    // PERMISSION
+    //
+    // ADMIN:
+    //   Can comment on any post.
+    //
+    // CLIENT:
+    //   Can comment only on client posts.
+    //
+    // NON-CLIENT:
+    //   Can comment only on non-client posts.
+    // ======================================================
+
+    if (!isAdmin && isClient !== postOwnerIsClient) {
+      return res.status(403).send("You cannot comment on this post.");
+    }
+
+    // ======================================================
+    // CREATE COMMENT
+    // ======================================================
 
     await db.query(
       `
@@ -3394,100 +3473,155 @@ app.post("/social/post/comment", ensureAuthenticated, async (req, res) => {
     res.status(500).send("Unable to add comment.");
   }
 });
-
-app.post("/social/comment/edit", ensureAuthenticated, async (req, res) => {
+//
+app.post("/social/post/comment", ensureAuthenticated, async (req, res) => {
   try {
     const userId = req.user?.id;
-    const commentId = req.body.id;
-    const content = (req.body.content || "").trim();
+
+    const postId = req.body.postId;
+
+    const content = (req.body.comment || "").trim();
 
     if (!userId) {
       return res.status(401).send("Please log in.");
     }
 
-    const parsedCommentId = Number(commentId);
-
-    if (!Number.isInteger(parsedCommentId) || parsedCommentId <= 0) {
-      return res.status(400).send("Invalid comment ID.");
+    if (!postId) {
+      return res.status(400).send("Post ID is required.");
     }
 
     if (!content) {
-      return res.status(400).send("Comment cannot be empty.");
+      return res.redirect("/social/post");
     }
 
     if (content.length > 2000) {
       return res.status(400).send("Comment is too long.");
     }
 
-    const commentResult = await db.query(
+    // ======================================================
+    // CURRENT USER ROLE
+    // ======================================================
+
+    const userResult = await db.query(
       `
-      SELECT
-        id,
-        post_id,
-        user_id
-      FROM social_comments
+      SELECT role
+      FROM my_user
       WHERE id = $1
       `,
-      [parsedCommentId],
+      [userId],
     );
 
-    if (!commentResult.rowCount) {
-      return res.status(404).send("Comment not found.");
-    }
+    const userRole = userResult.rows[0]?.role ?? null;
 
-    const comment = commentResult.rows[0];
+    const isClient =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "client";
 
-    if (String(comment.user_id) !== String(userId)) {
-      return res.status(403).send("You cannot edit this comment.");
-    }
+    // ======================================================
+    // CURRENT USER ADMIN CHECK
+    //
+    // KEEP EXISTING ADMIN FUNCTIONS UNCHANGED
+    // ======================================================
 
-    const postId = Number(comment.post_id);
+    const userEmail = req.user?.email || null;
 
-    console.log("COMMENT POST ID:", postId);
+    const isAdmin2 =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "admin2" || isSpecialAdmin(userEmail);
 
-    if (!Number.isInteger(postId) || postId <= 0) {
-      console.error("BAD COMMENT POST ID:", comment.post_id);
+    const isAdmin1 =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "admin1" ||
+      isAdminEmail(userEmail) ||
+      isAdmin2;
 
-      return res.status(500).send("Invalid post ID.");
-    }
+    const isAdmin = isAdmin1 || isAdmin2;
 
-    const updateResult = await db.query(
+    // ======================================================
+    // VERIFY POST + OWNER ROLE
+    // ======================================================
+
+    const postResult = await db.query(
       `
-      UPDATE social_comments
-      SET
-        content = $1,
-        updated_at = NOW()
-      WHERE
-        id = $2
-        AND user_id = $3
-      RETURNING
-        id,
-        post_id
+      SELECT
+        p.id,
+        u.role AS owner_role
+
+      FROM social_posts p
+
+      JOIN my_user u
+        ON u.id = p.user_id
+
+      WHERE p.id = $1
       `,
-      [content, parsedCommentId, userId],
+      [postId],
     );
 
-    console.log("COMMENT UPDATED:", updateResult.rows);
-
-    if (!updateResult.rowCount) {
-      return res.status(403).send("You cannot edit this comment.");
+    if (!postResult.rowCount) {
+      return res.status(404).send("Post not found.");
     }
 
-    console.log("REDIRECT:", `/social/post?postId=${postId}`);
+    const ownerRole = postResult.rows[0]?.owner_role ?? null;
 
-    return res.redirect(`/social/post?postId=${encodeURIComponent(postId)}`);
+    const postOwnerIsClient =
+      String(ownerRole || "")
+        .trim()
+        .toLowerCase() === "client";
+
+    // ======================================================
+    // PERMISSION
+    //
+    // ADMIN:
+    //   Can comment on any post.
+    //
+    // CLIENT:
+    //   Can comment only on client posts.
+    //
+    // NON-CLIENT:
+    //   Can comment only on non-client posts.
+    // ======================================================
+
+    if (!isAdmin && isClient !== postOwnerIsClient) {
+      return res.status(403).send("You cannot comment on this post.");
+    }
+
+    // ======================================================
+    // CREATE COMMENT
+    // ======================================================
+
+    await db.query(
+      `
+      INSERT INTO social_comments
+        (
+          post_id,
+          user_id,
+          content
+        )
+      VALUES
+        ($1, $2, $3)
+      `,
+      [postId, userId, content],
+    );
+
+    //res.redirect("/social/post");
+    res.redirect(`/social/post?postId=${postId}`);
   } catch (err) {
-    console.error("SOCIAL COMMENT EDIT ERROR:", err);
+    console.error("Comment error:", err);
 
-    return res.status(500).send("Unable to edit comment.");
+    res.status(500).send("Unable to add comment.");
   }
 });
+//
 
 app.post("/social/comment/delete", ensureAuthenticated, async (req, res) => {
   const client = await db.connect();
 
   try {
     const userId = req.user?.id;
+    const userEmail = req.user?.email || null;
     const commentId = req.body.id;
 
     if (!userId) {
@@ -3500,19 +3634,112 @@ app.post("/social/comment/delete", ensureAuthenticated, async (req, res) => {
       return res.status(400).send("Comment ID is required.");
     }
 
+    // ======================================================
+    // CURRENT USER ROLE
+    // ======================================================
+
+    const userResult = await client.query(
+      `
+      SELECT role
+      FROM my_user
+      WHERE id = $1
+      `,
+      [userId],
+    );
+
+    const userRole = userResult.rows[0]?.role ?? null;
+
+    const isClient =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "client";
+
+    // ======================================================
+    // CURRENT USER ADMIN CHECK
+    //
+    // KEEP EXISTING ADMIN FUNCTIONS UNCHANGED
+    // ======================================================
+
+    const isAdmin2 =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "admin2" || isSpecialAdmin(userEmail);
+
+    const isAdmin1 =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "admin1" ||
+      isAdminEmail(userEmail) ||
+      isAdmin2;
+
+    const isAdmin = isAdmin1 || isAdmin2;
+
+    // ======================================================
+    // BEGIN TRANSACTION
+    // ======================================================
+
     await client.query("BEGIN");
+
+    // ======================================================
+    // VERIFY PERMISSION
+    //
+    // ADMIN:
+    //   Can delete any comment.
+    //
+    // CLIENT:
+    //   Can delete only their own comment on a client post.
+    //
+    // NON-CLIENT:
+    //   Can delete only their own comment on a non-client post.
+    // ======================================================
 
     const commentResult = await client.query(
       `
       SELECT
-        id,
-        post_id
-      FROM social_comments
-      WHERE id = $1
-        AND user_id = $2
+        c.id,
+        c.post_id,
+        u.role AS post_owner_role
+
+      FROM social_comments c
+
+      JOIN social_posts p
+        ON p.id = c.post_id
+
+      JOIN my_user u
+        ON u.id = p.user_id
+
+      WHERE
+        c.id = $1
+
+        AND
+        (
+          -- ADMIN CAN DELETE ANY COMMENT
+          $3 = TRUE
+
+          OR
+
+          -- CLIENT CAN DELETE ONLY THEIR OWN COMMENT
+          -- ON A CLIENT POST
+          (
+            $4 = TRUE
+            AND c.user_id = $2
+            AND LOWER(TRIM(COALESCE(u.role, ''))) = 'client'
+          )
+
+          OR
+
+          -- NON-CLIENT CAN DELETE ONLY THEIR OWN COMMENT
+          -- ON A NON-CLIENT POST
+          (
+            $4 = FALSE
+            AND c.user_id = $2
+            AND LOWER(TRIM(COALESCE(u.role, ''))) <> 'client'
+          )
+        )
+
       FOR UPDATE
       `,
-      [commentId, userId],
+      [commentId, userId, isAdmin, isClient],
     );
 
     if (!commentResult.rowCount) {
@@ -3523,6 +3750,10 @@ app.post("/social/comment/delete", ensureAuthenticated, async (req, res) => {
     }
 
     const postId = commentResult.rows[0].post_id;
+
+    // ======================================================
+    // DELETE REPLY REACTIONS
+    // ======================================================
 
     await client.query(
       `
@@ -3537,6 +3768,10 @@ app.post("/social/comment/delete", ensureAuthenticated, async (req, res) => {
       [commentId],
     );
 
+    // ======================================================
+    // DELETE COMMENT REACTIONS
+    // ======================================================
+
     await client.query(
       `
       DELETE FROM social_reactions
@@ -3546,6 +3781,10 @@ app.post("/social/comment/delete", ensureAuthenticated, async (req, res) => {
       [commentId],
     );
 
+    // ======================================================
+    // DELETE REPLIES
+    // ======================================================
+
     await client.query(
       `
       DELETE FROM social_replies
@@ -3553,6 +3792,10 @@ app.post("/social/comment/delete", ensureAuthenticated, async (req, res) => {
       `,
       [commentId],
     );
+
+    // ======================================================
+    // DELETE COMMENT
+    // ======================================================
 
     await client.query(
       `
@@ -3563,11 +3806,15 @@ app.post("/social/comment/delete", ensureAuthenticated, async (req, res) => {
       [commentId, userId],
     );
 
+    // ======================================================
+    // COMMIT
+    // ======================================================
+
     await client.query("COMMIT");
 
     client.release();
 
-    res.redirect(`/social/post?postId=${postId}`);
+    return res.redirect(`/social/post?postId=${postId}`);
   } catch (err) {
     try {
       await client.query("ROLLBACK");
@@ -3579,13 +3826,16 @@ app.post("/social/comment/delete", ensureAuthenticated, async (req, res) => {
 
     console.error("Delete comment error:", err);
 
-    res.status(500).send("Unable to delete comment.");
+    return res.status(500).send("Unable to delete comment.");
   }
 });
 
+//
 app.post("/social/comment/reply", ensureAuthenticated, async (req, res) => {
   try {
     const userId = req.user?.id;
+
+    const userEmail = req.user?.email || null;
 
     const commentId = req.body?.commentId;
 
@@ -3607,6 +3857,46 @@ app.post("/social/comment/reply", ensureAuthenticated, async (req, res) => {
     }
 
     // ======================================================
+    // CURRENT USER ROLE
+    // ======================================================
+
+    const userResult = await db.query(
+      `
+      SELECT role
+      FROM my_user
+      WHERE id = $1
+      `,
+      [userId],
+    );
+
+    const userRole = userResult.rows[0]?.role ?? null;
+
+    const isClient =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "client";
+
+    // ======================================================
+    // CURRENT USER ADMIN CHECK
+    //
+    // KEEP EXISTING ADMIN FUNCTIONS UNCHANGED
+    // ======================================================
+
+    const isAdmin2 =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "admin2" || isSpecialAdmin(userEmail);
+
+    const isAdmin1 =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "admin1" ||
+      isAdminEmail(userEmail) ||
+      isAdmin2;
+
+    const isAdmin = isAdmin1 || isAdmin2;
+
+    // ======================================================
     // REPLY TO ANOTHER REPLY
     // ======================================================
 
@@ -3617,10 +3907,20 @@ app.post("/social/comment/reply", ensureAuthenticated, async (req, res) => {
           r.id,
           r.comment_id,
           r.parent_reply_id,
-          c.post_id
+          c.post_id,
+          u.role AS post_owner_role
+
         FROM social_replies r
+
         JOIN social_comments c
           ON c.id = r.comment_id
+
+        JOIN social_posts p
+          ON p.id = c.post_id
+
+        JOIN my_user u
+          ON u.id = p.user_id
+
         WHERE r.id = $1
         `,
         [parentReplyId],
@@ -3631,6 +3931,28 @@ app.post("/social/comment/reply", ensureAuthenticated, async (req, res) => {
       }
 
       const parentReply = parentReplyResult.rows[0];
+
+      // ====================================================
+      // PERMISSION
+      //
+      // ADMIN:
+      //   Can reply to any post.
+      //
+      // CLIENT:
+      //   Can reply only to client posts.
+      //
+      // NON-CLIENT:
+      //   Can reply only to non-client posts.
+      // ====================================================
+
+      const postOwnerIsClient =
+        String(parentReply.post_owner_role || "")
+          .trim()
+          .toLowerCase() === "client";
+
+      if (!isAdmin && isClient !== postOwnerIsClient) {
+        return res.status(403).send("You cannot reply to this post.");
+      }
 
       if (commentId && String(commentId) !== String(parentReply.comment_id)) {
         return res.status(400).send("Reply does not belong to this comment.");
@@ -3674,16 +3996,49 @@ app.post("/social/comment/reply", ensureAuthenticated, async (req, res) => {
     const commentResult = await db.query(
       `
       SELECT
-        id,
-        post_id
-      FROM social_comments
-      WHERE id = $1
+        c.id,
+        c.post_id,
+        u.role AS post_owner_role
+
+      FROM social_comments c
+
+      JOIN social_posts p
+        ON p.id = c.post_id
+
+      JOIN my_user u
+        ON u.id = p.user_id
+
+      WHERE c.id = $1
       `,
       [commentId],
     );
 
     if (!commentResult.rowCount) {
       return res.status(404).send("Comment not found.");
+    }
+
+    const comment = commentResult.rows[0];
+
+    // ======================================================
+    // PERMISSION
+    //
+    // ADMIN:
+    //   Can reply to any post.
+    //
+    // CLIENT:
+    //   Can reply only to client posts.
+    //
+    // NON-CLIENT:
+    //   Can reply only to non-client posts.
+    // ======================================================
+
+    const postOwnerIsClient =
+      String(comment.post_owner_role || "")
+        .trim()
+        .toLowerCase() === "client";
+
+    if (!isAdmin && isClient !== postOwnerIsClient) {
+      return res.status(403).send("You cannot reply to this post.");
     }
 
     const insertResult = await db.query(
@@ -3704,11 +4059,14 @@ app.post("/social/comment/reply", ensureAuthenticated, async (req, res) => {
 
     console.log("REPLY CREATED:", insertResult.rows[0]);
 
-    return res.redirect(`/social/post?postId=${commentResult.rows[0].post_id}`);
+    return res.redirect(`/social/post?postId=${comment.post_id}`);
   } catch (err) {
+    console.error("Reply error:", err);
+
     return res.status(500).send("Unable to add reply.");
   }
 });
+
 //
 app.post("/social/reply/edit", ensureAuthenticated, async (req, res) => {
   try {
@@ -3775,7 +4133,7 @@ app.post("/social/reply/edit", ensureAuthenticated, async (req, res) => {
     return res.status(500).send("Unable to edit reply.");
   }
 });
-
+//
 app.post("/social/reply/delete", ensureAuthenticated, async (req, res) => {
   const client = await db.connect();
 
@@ -4032,30 +4390,39 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     console.log("SOCIAL SEARCH req.user =", req.user);
 
     let userGroupId = null;
+    let userRole = null;
 
     if (userId) {
-      const groupResult = await db.query(
+      const userResult = await db.query(
         `
-        SELECT group_id
+        SELECT
+          role,
+          group_id
         FROM my_user
         WHERE id = $1
         `,
         [userId],
       );
 
-      userGroupId = groupResult.rows[0]?.group_id ?? null;
+      userRole = userResult.rows[0]?.role ?? null;
+      userGroupId = userResult.rows[0]?.group_id ?? null;
     }
 
+    console.log("SOCIAL SEARCH userRole =", userRole);
     console.log("SOCIAL SEARCH userGroupId =", userGroupId);
 
+    const normalizedRole = String(userRole || "")
+      .trim()
+      .toLowerCase();
+
+    const normalizedUserEmail = String(userEmail || "")
+      .trim()
+      .toLowerCase();
+
     // ========================================================
-    // FULL ADMIN CHECK
-    // ADMIN_EMAILS
-    //
-    // Sees EVERYTHING
+    // ADMIN EMAIL LISTS
     // ========================================================
 
-    //
     const adminEmails = (process.env.ADMIN_EMAILS || "")
       .split(",")
       .map((email) => email.trim().toLowerCase())
@@ -4066,16 +4433,47 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean);
 
-    const normalizedUserEmail = String(userEmail || "")
-      .trim()
-      .toLowerCase();
+    // ========================================================
+    // PERMISSION MODEL
+    //
+    // admin role          -> EMAILS ADMIN
+    // EMAILS_ADMIN        -> EMAILS ADMIN
+    //
+    // admin1 role         -> ADMIN1
+    // ADMIN_EMAILS        -> ADMIN1
+    //
+    // admin2 role         -> ADMIN2
+    // SPECIAL_ADMIN_EMAILS-> ADMIN2
+    //
+    // IMPORTANT:
+    // admin role is NOT full admin.
+    // ========================================================
 
-    const isAdmin =
-      !!normalizedUserEmail &&
-      (adminEmails.includes(normalizedUserEmail) ||
-        specialAdminEmails.includes(normalizedUserEmail));
+    const isEmailsAdmin =
+      normalizedRole === "admin" || isEmailsAdmin(userEmail);
 
-    const userIsEmailsAdmin = isEmailsAdmin(userEmail);
+    const isAdmin2 =
+      normalizedRole === "admin2" ||
+      specialAdminEmails.includes(normalizedUserEmail);
+
+    const isAdmin1 =
+      normalizedRole === "admin1" || adminEmails.includes(normalizedUserEmail);
+
+    // ========================================================
+    // FULL ADMIN ACCESS
+    //
+    // ADMIN1 OR ADMIN2
+    // ========================================================
+
+    const isAdmin = isAdmin1 || isAdmin2;
+
+    // Existing EJS compatibility
+    const userIsEmailsAdmin = isEmailsAdmin;
+
+    console.log("SOCIAL isEmailsAdmin =", isEmailsAdmin);
+    console.log("SOCIAL isAdmin1 =", isAdmin1);
+    console.log("SOCIAL isAdmin2 =", isAdmin2);
+    console.log("SOCIAL isAdmin =", isAdmin);
 
     // ========================================================
     // SEARCH INPUT
@@ -4095,6 +4493,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
 
     if (isAdmin) {
       visibility = (req.query.visibility || "").trim();
+
       // restriction is here. also in social.ejs
       const allowedVisibility = ["loggedin users", "admin_only", "group_only"];
 
@@ -4188,7 +4587,7 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     //   loggedin users
     //   all groups
     //   own posts
-    //   NOT admin_only
+    //   NOT another user's admin_only
     //
     // NORMAL USER:
     //   loggedin users
@@ -4198,22 +4597,19 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
 
     if (isAdmin) {
       // ------------------------------------------------------
-      // ADMIN
+      // ADMIN1 / ADMIN2
       // ------------------------------------------------------
-      // Sees everything:
-      //   loggedin users
-      //   group_only from all groups
-      //   admin_only from all users
+      // Sees everything.
       //
       // No security condition needed.
     } else if (userIsEmailsAdmin) {
       // ------------------------------------------------------
-      // EMAILS_ADMIN
+      // EMAILS ADMIN
       // ------------------------------------------------------
       // Sees:
-      //   loggedin users → all
-      //   group_only     → all groups
-      //   own posts      → including own admin_only
+      //   loggedin users
+      //   group_only
+      //   own posts, including own admin_only
       //
       // Does NOT see another user's admin_only posts.
 
@@ -4235,9 +4631,9 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       // NORMAL USER
       // ------------------------------------------------------
       // Sees:
-      //   loggedin users → all
-      //   group_only     → own group only
-      //   own posts      → including own admin_only
+      //   loggedin users
+      //   own posts
+      //   group_only from own group
 
       const userIdParam = values.length + 1;
 
@@ -4578,10 +4974,26 @@ app.post(
   ensureAuthenticated,
   async (req, res) => {
     try {
+      const userId = req.user?.id || null;
       const userEmail = req.user?.email || null;
 
       // =========================================
-      // ADMIN CHECK
+      // USER ROLE
+      // =========================================
+
+      const roleResult = await db.query(
+        `
+        SELECT role
+        FROM my_user
+        WHERE id = $1
+        `,
+        [userId],
+      );
+
+      const userRole = roleResult.rows[0]?.role ?? null;
+
+      // =========================================
+      // EMAIL PERMISSION LISTS
       // =========================================
 
       const adminEmails = (process.env.ADMIN_EMAILS || "")
@@ -4589,10 +5001,90 @@ app.post(
         .map((email) => email.trim().toLowerCase())
         .filter(Boolean);
 
-      const isAdmin =
-        !!userEmail && adminEmails.includes(userEmail.toLowerCase());
+      const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
 
-      if (!isAdmin) {
+      const emailsAdminEmails = (process.env.EMAILS_ADMIN || "")
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+
+      const normalizedUserEmail = String(userEmail || "")
+        .trim()
+        .toLowerCase();
+
+      const normalizedUserRole = String(userRole || "")
+        .trim()
+        .toLowerCase();
+
+      // =========================================
+      // ADMIN PERMISSION
+      //
+      // admin role / ADMIN_EMAILS
+      //   -> isAdmin
+      //
+      // admin1 role / SPECIAL_ADMIN_EMAILS
+      //   -> isAdmin1
+      //
+      // admin2 role / SPECIAL_ADMIN_EMAILS
+      //   -> isAdmin2
+      //
+      // EMAILS_ADMIN
+      //   -> isEmailsAdmin
+      //
+      // FULL ADMIN:
+      //   admin
+      //   admin1
+      //   admin2
+      //
+      // EMAILS_ADMIN:
+      //   can manage public posts as before
+      // =========================================
+
+      const isAdmin =
+        normalizedUserRole === "admin" ||
+        adminEmails.includes(normalizedUserEmail);
+
+      const isAdmin2 =
+        normalizedUserRole === "admin2" ||
+        specialAdminEmails.includes(normalizedUserEmail);
+
+      const isAdmin1 =
+        normalizedUserRole === "admin1" ||
+        adminEmails.includes(normalizedUserEmail) ||
+        isAdmin2;
+
+      const isEmailsAdmin =
+        normalizedUserRole === "closerelative" ||
+        emailsAdminEmails.includes(normalizedUserEmail);
+
+      const hasFullAdminAccess = isAdmin || isAdmin1 || isAdmin2;
+
+      const canManagePublicPost = hasFullAdminAccess || isEmailsAdmin;
+
+      // =========================================
+      // DEBUG
+      // =========================================
+
+      console.log("MAKE PUBLIC USER:", {
+        userId,
+        userEmail,
+        userRole,
+        isAdmin,
+        isAdmin1,
+        isAdmin2,
+        isEmailsAdmin,
+        hasFullAdminAccess,
+        canManagePublicPost,
+      });
+
+      // =========================================
+      // PERMISSION CHECK
+      // =========================================
+
+      if (!canManagePublicPost) {
         return res.status(403).send("Admin access required.");
       }
 
@@ -4602,12 +5094,69 @@ app.post(
 
       const postId = parseInt(req.params.postId, 10);
 
-      if (!Number.isInteger(postId)) {
+      if (!Number.isInteger(postId) || postId <= 0) {
         return res.status(400).send("Invalid post ID.");
       }
 
       // =========================================
-      // PUBLISH POST
+      // GET POST + OWNER ROLE
+      // =========================================
+
+      const postOwnerResult = await db.query(
+        `
+        SELECT
+          p.id,
+          p.user_id,
+          p.public_enabled,
+          u.role AS owner_role,
+          u.email AS owner_email
+
+        FROM social_posts p
+
+        LEFT JOIN my_user u
+          ON u.id = p.user_id
+
+        WHERE p.id = $1
+        `,
+        [postId],
+      );
+
+      // =========================================
+      // POST NOT FOUND
+      // =========================================
+
+      if (!postOwnerResult.rowCount) {
+        return res.status(404).send("Post not found.");
+      }
+
+      const post = postOwnerResult.rows[0];
+
+      // =========================================
+      // CLIENT POSTS CANNOT BE PUBLIC
+      // =========================================
+
+      const ownerRole = String(post.owner_role || "")
+        .trim()
+        .toLowerCase();
+
+      if (ownerRole === "client") {
+        return res.status(403).send("Client posts cannot be made public.");
+      }
+
+      // =========================================
+      // DEBUG
+      // =========================================
+
+      console.log("MAKE PUBLIC POST:", {
+        postId: post.id,
+        ownerUserId: post.user_id,
+        ownerEmail: post.owner_email,
+        ownerRole: post.owner_role,
+        currentPublicEnabled: post.public_enabled,
+      });
+
+      // =========================================
+      // PUBLISH ONLY THIS POST
       // =========================================
 
       const result = await db.query(
@@ -4615,16 +5164,26 @@ app.post(
         UPDATE social_posts
         SET public_enabled = TRUE
         WHERE id = $1
-        RETURNING id, public_enabled
+        RETURNING
+          id,
+          public_enabled
         `,
         [postId],
       );
+
+      // =========================================
+      // UPDATE FAILED
+      // =========================================
 
       if (!result.rowCount) {
         return res.status(404).send("Post not found.");
       }
 
-      console.log("POST MADE PUBLIC:", postId);
+      // =========================================
+      // SUCCESS
+      // =========================================
+
+      console.log("POST MADE PUBLIC:", result.rows[0]);
 
       return res.redirect("/social/search");
     } catch (err) {
@@ -4641,12 +5200,34 @@ app.post(
   ensureAuthenticated,
   async (req, res) => {
     try {
+      const userId = req.user?.id || null;
       const userEmail = req.user?.email || null;
 
-      const postId = parseInt(req.params.postId, 10);
+      // =========================================
+      // USER ROLE
+      // =========================================
+
+      const roleResult = await db.query(
+        `
+        SELECT role
+        FROM my_user
+        WHERE id = $1
+        `,
+        [userId],
+      );
+
+      const userRole = roleResult.rows[0]?.role ?? null;
+
+      const normalizedUserRole = String(userRole || "")
+        .trim()
+        .toLowerCase();
+
+      const normalizedUserEmail = String(userEmail || "")
+        .trim()
+        .toLowerCase();
 
       // =========================================
-      // ADMIN CHECK
+      // EMAIL PERMISSION LISTS
       // =========================================
 
       const adminEmails = (process.env.ADMIN_EMAILS || "")
@@ -4654,10 +5235,74 @@ app.post(
         .map((email) => email.trim().toLowerCase())
         .filter(Boolean);
 
-      const isAdmin =
-        !!userEmail && adminEmails.includes(userEmail.toLowerCase());
+      const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
 
-      if (!isAdmin) {
+      const emailsAdminEmails = (process.env.EMAILS_ADMIN || "")
+        .split(",")
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+
+      // =========================================
+      // ADMIN PERMISSIONS
+      //
+      // admin role / ADMIN_EMAILS
+      //   -> isAdmin
+      //
+      // admin1 role
+      //   -> isAdmin1
+      //
+      // admin2 role / SPECIAL_ADMIN_EMAILS
+      //   -> isAdmin2
+      //
+      // EMAILS_ADMIN
+      //   -> isEmailsAdmin
+      // =========================================
+
+      const isAdmin =
+        normalizedUserRole === "admin" ||
+        adminEmails.includes(normalizedUserEmail);
+
+      const isAdmin2 =
+        normalizedUserRole === "admin2" ||
+        specialAdminEmails.includes(normalizedUserEmail);
+
+      const isAdmin1 =
+        normalizedUserRole === "admin1" ||
+        adminEmails.includes(normalizedUserEmail) ||
+        isAdmin2;
+
+      const isEmailsAdmin =
+        normalizedUserRole === "closerelative" ||
+        emailsAdminEmails.includes(normalizedUserEmail);
+
+      const hasFullAdminAccess = isAdmin || isAdmin1 || isAdmin2;
+
+      const canManagePublicPost = hasFullAdminAccess || isEmailsAdmin;
+
+      // =========================================
+      // DEBUG
+      // =========================================
+
+      console.log("MAKE UNPUBLIC USER:", {
+        userId,
+        userEmail,
+        userRole,
+        isAdmin,
+        isAdmin1,
+        isAdmin2,
+        isEmailsAdmin,
+        hasFullAdminAccess,
+        canManagePublicPost,
+      });
+
+      // =========================================
+      // PERMISSION CHECK
+      // =========================================
+
+      if (!canManagePublicPost) {
         return res.status(403).send("Admin access required.");
       }
 
@@ -4665,12 +5310,73 @@ app.post(
       // VALIDATE POST ID
       // =========================================
 
-      if (!Number.isInteger(postId)) {
+      const postId = parseInt(req.params.postId, 10);
+
+      if (!Number.isInteger(postId) || postId <= 0) {
         return res.status(400).send("Invalid post ID.");
       }
 
       // =========================================
-      // MAKE POST PRIVATE FROM PUBLIC PAGE
+      // GET POST + OWNER ROLE
+      // =========================================
+
+      const postOwnerResult = await db.query(
+        `
+        SELECT
+          p.id,
+          p.user_id,
+          p.public_enabled,
+          u.role AS owner_role,
+          u.email AS owner_email
+
+        FROM social_posts p
+
+        LEFT JOIN my_user u
+          ON u.id = p.user_id
+
+        WHERE p.id = $1
+        `,
+        [postId],
+      );
+
+      // =========================================
+      // POST NOT FOUND
+      // =========================================
+
+      if (!postOwnerResult.rowCount) {
+        return res.status(404).send("Post not found.");
+      }
+
+      const post = postOwnerResult.rows[0];
+
+      // =========================================
+      // CLIENT POSTS CANNOT BE PUBLIC
+      // =========================================
+
+      const ownerRole = String(post.owner_role || "")
+        .trim()
+        .toLowerCase();
+
+      if (ownerRole === "client") {
+        return res
+          .status(403)
+          .send("Client posts cannot be managed as public posts.");
+      }
+
+      // =========================================
+      // DEBUG
+      // =========================================
+
+      console.log("MAKE UNPUBLIC POST:", {
+        postId: post.id,
+        ownerUserId: post.user_id,
+        ownerEmail: post.owner_email,
+        ownerRole: post.owner_role,
+        currentPublicEnabled: post.public_enabled,
+      });
+
+      // =========================================
+      // REMOVE ONLY THIS POST FROM PUBLIC PAGE
       // =========================================
 
       const result = await db.query(
@@ -4678,18 +5384,27 @@ app.post(
         UPDATE social_posts
         SET public_enabled = FALSE
         WHERE id = $1
-        RETURNING id
+        RETURNING
+          id,
+          public_enabled
         `,
         [postId],
       );
+
+      // =========================================
+      // UPDATE FAILED
+      // =========================================
 
       if (!result.rowCount) {
         return res.status(404).send("Post not found.");
       }
 
-      console.log("POST REMOVED FROM PUBLIC:", postId);
+      // =========================================
+      // SUCCESS
+      // =========================================
 
-      // Return to search page
+      console.log("POST REMOVED FROM PUBLIC:", result.rows[0]);
+
       return res.redirect("/social/search");
     } catch (err) {
       console.error("MAKE UNPUBLIC ERROR:", err);
@@ -4947,6 +5662,12 @@ app.get("/social/exchange", async (req, res) => {
 //
 //allow public react
 //allow public react
+// ============================================================
+// ENABLE PUBLIC REACTIONS
+// ADMIN / SPECIAL ADMIN ONLY
+// CLIENT POSTS CANNOT HAVE PUBLIC REACTIONS
+// ============================================================
+
 app.post(
   "/social/post/enable-public-reactions/:postId",
   ensureAuthenticated,
@@ -4971,6 +5692,7 @@ app.post(
       const isAdmin =
         !!normalizedUserEmail && adminEmails.includes(normalizedUserEmail);
 
+      // ========================================================
       // SPECIAL ADMIN CHECK
       // ========================================================
 
@@ -4982,6 +5704,7 @@ app.post(
       const isSpecialAdmin =
         !!normalizedUserEmail &&
         specialAdminEmails.includes(normalizedUserEmail);
+
       // ========================================================
       // ADMIN OR SPECIAL ADMIN ONLY
       //
@@ -4992,25 +5715,104 @@ app.post(
         return res.status(403).send("Admin access required.");
       }
 
+      // ========================================================
+      // VALIDATE POST ID
+      // ========================================================
+
       const postId = parseInt(req.params.postId, 10);
 
       if (!Number.isInteger(postId)) {
         return res.status(400).send("Invalid post ID.");
       }
 
+      // ========================================================
+      // GET POST + OWNER ROLE
+      // ========================================================
+
+      const postResult = await db.query(
+        `
+        SELECT
+          p.id,
+          p.user_id,
+          p.public_reactions_enabled,
+          u.role AS owner_role,
+          u.email AS owner_email
+
+        FROM social_posts p
+
+        LEFT JOIN my_user u
+          ON u.id = p.user_id
+
+        WHERE p.id = $1
+        `,
+        [postId],
+      );
+
+      // ========================================================
+      // POST NOT FOUND
+      // ========================================================
+
+      if (!postResult.rowCount) {
+        return res.status(404).send("Post not found.");
+      }
+
+      const post = postResult.rows[0];
+
+      // ========================================================
+      // CLIENT POSTS CANNOT HAVE PUBLIC REACTIONS
+      // ========================================================
+
+      const ownerRole = String(post.owner_role || "")
+        .trim()
+        .toLowerCase();
+
+      if (ownerRole === "client") {
+        return res
+          .status(403)
+          .send("Client posts cannot have public reactions enabled.");
+      }
+
+      // ========================================================
+      // DEBUG
+      // ========================================================
+
+      console.log("ENABLE PUBLIC REACTIONS:", {
+        postId,
+        ownerUserId: post.user_id,
+        ownerEmail: post.owner_email,
+        ownerRole: post.owner_role,
+        currentPublicReactionsEnabled: post.public_reactions_enabled,
+      });
+
+      // ========================================================
+      // ENABLE PUBLIC REACTIONS
+      // ========================================================
+
       const result = await db.query(
         `
         UPDATE social_posts
         SET public_reactions_enabled = TRUE
         WHERE id = $1
-        RETURNING id, public_reactions_enabled
+        RETURNING
+          id,
+          public_reactions_enabled
         `,
         [postId],
       );
 
+      // ========================================================
+      // UPDATE FAILED
+      // ========================================================
+
       if (!result.rowCount) {
         return res.status(404).send("Post not found.");
       }
+
+      // ========================================================
+      // SUCCESS
+      // ========================================================
+
+      console.log("PUBLIC REACTIONS ENABLED:", result.rows[0]);
 
       return res.redirect("/social/search");
     } catch (err) {
@@ -5021,12 +5823,21 @@ app.post(
   },
 );
 
+// ============================================================
+// DISABLE PUBLIC REACTIONS
+// ADMIN / SPECIAL ADMIN ONLY
+// ============================================================
+
 app.post(
   "/social/post/disable-public-reactions/:postId",
   ensureAuthenticated,
   async (req, res) => {
     try {
       const userEmail = req.user?.email || null;
+
+      // ========================================================
+      // ADMIN CHECK
+      // ========================================================
 
       const adminEmails = (process.env.ADMIN_EMAILS || "")
         .split(",")
@@ -5040,6 +5851,10 @@ app.post(
       const isAdmin =
         !!normalizedUserEmail && adminEmails.includes(normalizedUserEmail);
 
+      // ========================================================
+      // SPECIAL ADMIN CHECK
+      // ========================================================
+
       const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
         .split(",")
         .map((email) => email.trim().toLowerCase())
@@ -5049,9 +5864,19 @@ app.post(
         !!normalizedUserEmail &&
         specialAdminEmails.includes(normalizedUserEmail);
 
+      // ========================================================
+      // ADMIN OR SPECIAL ADMIN ONLY
+      //
+      // EMAIL ADMIN IS NOT USED
+      // ========================================================
+
       if (!isAdmin && !isSpecialAdmin) {
         return res.status(403).send("Admin access required.");
       }
+
+      // ========================================================
+      // VALIDATE POST ID
+      // ========================================================
 
       const postId = parseInt(req.params.postId, 10);
 
@@ -5059,19 +5884,35 @@ app.post(
         return res.status(400).send("Invalid post ID.");
       }
 
+      // ========================================================
+      // DISABLE PUBLIC REACTIONS
+      // ========================================================
+
       const result = await db.query(
         `
         UPDATE social_posts
         SET public_reactions_enabled = FALSE
         WHERE id = $1
-        RETURNING id, public_reactions_enabled
+        RETURNING
+          id,
+          public_reactions_enabled
         `,
         [postId],
       );
 
+      // ========================================================
+      // UPDATE FAILED
+      // ========================================================
+
       if (!result.rowCount) {
         return res.status(404).send("Post not found.");
       }
+
+      // ========================================================
+      // SUCCESS
+      // ========================================================
+
+      console.log("PUBLIC REACTIONS DISABLED:", result.rows[0]);
 
       return res.redirect("/social/search");
     } catch (err) {
@@ -5082,8 +5923,16 @@ app.post(
   },
 );
 
+// ============================================================
+// PUBLIC POST CONNECT
+// ============================================================
+
 app.get("/public/post/connect", async (req, res) => {
   try {
+    // ========================================================
+    // PUBLIC VISITOR ID
+    // ========================================================
+
     let publicVisitorId = req.cookies.publicVisitorId;
 
     if (!publicVisitorId) {
@@ -5097,16 +5946,33 @@ app.get("/public/post/connect", async (req, res) => {
       });
     }
 
+    // ========================================================
+    // PAGINATION
+    // ========================================================
+
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
 
     const limit = 2;
 
+    // ========================================================
+    // COUNT PUBLIC POSTS
+    //
+    // CLIENT POSTS ARE NEVER INCLUDED.
+    // ========================================================
+
     const countResult = await db.query(`
-      SELECT COUNT(*)::INTEGER AS total
-      FROM social_posts
+      SELECT
+        COUNT(*)::INTEGER AS total
+
+      FROM social_posts p
+
+      JOIN my_user u
+        ON u.id = p.user_id
+
       WHERE
-        public_enabled = TRUE
-        AND public_reactions_enabled = TRUE
+        p.public_enabled = TRUE
+        AND p.public_reactions_enabled = TRUE
+        AND LOWER(TRIM(COALESCE(u.role, ''))) <> 'client'
     `);
 
     const totalPosts = Number(countResult.rows[0]?.total) || 0;
@@ -5116,6 +5982,12 @@ app.get("/public/post/connect", async (req, res) => {
     const currentPage = Math.min(page, totalPages);
 
     const offset = (currentPage - 1) * limit;
+
+    // ========================================================
+    // PUBLIC POSTS
+    //
+    // CLIENT POSTS ARE NEVER SHOWN.
+    // ========================================================
 
     const postResult = await db.query(
       `
@@ -5129,6 +6001,7 @@ app.get("/public/post/connect", async (req, res) => {
         p.public_reactions_enabled,
         p.created_at,
         p.updated_at,
+
         u.email
 
       FROM social_posts p
@@ -5139,6 +6012,7 @@ app.get("/public/post/connect", async (req, res) => {
       WHERE
         p.public_enabled = TRUE
         AND p.public_reactions_enabled = TRUE
+        AND LOWER(TRIM(COALESCE(u.role, ''))) <> 'client'
 
       ORDER BY
         p.created_at DESC,
@@ -5150,7 +6024,16 @@ app.get("/public/post/connect", async (req, res) => {
       [limit, offset],
     );
 
+    // ========================================================
+    // POST IDS ON THIS PAGE
+    // ========================================================
+
     const postIds = postResult.rows.map((row) => row.id);
+
+    // ========================================================
+    // PUBLIC POST REACTIONS
+    // ONLY FOR POSTS ON THIS PAGE
+    // ========================================================
 
     let reactionsResult = {
       rows: [],
@@ -5178,9 +6061,9 @@ app.get("/public/post/connect", async (req, res) => {
       );
     }
 
-    // ==========================================================
+    // ========================================================
     // REACTION COUNTS LOOKUP
-    // ==========================================================
+    // ========================================================
 
     const reactionCounts = {};
 
@@ -5194,9 +6077,9 @@ app.get("/public/post/connect", async (req, res) => {
       reactionCounts[key][row.reaction_type] = Number(row.count);
     }
 
-    // ==========================================================
+    // ========================================================
     // REACTION HELPER
-    // ==========================================================
+    // ========================================================
 
     function getPostReactions(postId) {
       const key = String(postId);
@@ -5215,10 +6098,10 @@ app.get("/public/post/connect", async (req, res) => {
       };
     }
 
-    // ==========================================================
+    // ========================================================
     // MEDIA
     // ONLY LOAD MEDIA FOR CURRENT PAGE POSTS
-    // ==========================================================
+    // ========================================================
 
     let mediaResult = {
       rows: [],
@@ -5250,9 +6133,9 @@ app.get("/public/post/connect", async (req, res) => {
       );
     }
 
-    // ==========================================================
+    // ========================================================
     // MEDIA LOOKUP
-    // ==========================================================
+    // ========================================================
 
     const mediaByPost = {};
 
@@ -5273,23 +6156,29 @@ app.get("/public/post/connect", async (req, res) => {
       });
     }
 
-    // ==========================================================
+    // ========================================================
     // BUILD POSTS
-    // ==========================================================
+    // ========================================================
 
     const posts = postResult.rows.map((row) => ({
       id: row.id,
+
       userId: row.user_id,
+
       email: row.email,
 
       content: row.content,
+
       color: row.color,
+
       visibility: row.visibility,
 
       publicEnabled: row.public_enabled,
+
       publicReactionsEnabled: row.public_reactions_enabled,
 
       createdAt: row.created_at,
+
       updatedAt: row.updated_at,
 
       media: mediaByPost[row.id] || [],
@@ -5297,18 +6186,21 @@ app.get("/public/post/connect", async (req, res) => {
       reactions: getPostReactions(row.id),
     }));
 
-    // ==========================================================
+    // ========================================================
     // PAGINATION
-    // ==========================================================
+    // ========================================================
 
     const pagination = {
       page: currentPage,
+
       limit,
 
       totalPosts,
+
       totalPages,
 
       hasPrevious: currentPage > 1,
+
       hasNext: currentPage < totalPages,
 
       previousPage: currentPage > 1 ? currentPage - 1 : null,
@@ -5316,9 +6208,9 @@ app.get("/public/post/connect", async (req, res) => {
       nextPage: currentPage < totalPages ? currentPage + 1 : null,
     };
 
-    // ==========================================================
+    // ========================================================
     // RENDER
-    // ==========================================================
+    // ========================================================
 
     return res.render("social-public-connect", {
       defaultDate: getToday(),
@@ -5338,9 +6230,14 @@ app.get("/public/post/connect", async (req, res) => {
     return res.status(500).send("Unable to load public reaction page.");
   }
 });
+
 //
 app.post("/public/post/connect", connectReactionLimiter, async (req, res) => {
   try {
+    // ========================================================
+    // PUBLIC VISITOR ID
+    // ========================================================
+
     let publicVisitorId = req.cookies.publicVisitorId;
 
     if (!publicVisitorId) {
@@ -5354,15 +6251,30 @@ app.post("/public/post/connect", connectReactionLimiter, async (req, res) => {
       });
     }
 
-    const postId = parseInt(req.body.postId, 10);
-    const reactionType = String(req.body.reactionType || "").trim();
+    // ========================================================
+    // INPUT
+    // ========================================================
 
-    if (!Number.isInteger(postId)) {
+    const postId = parseInt(req.body?.postId, 10);
+
+    const reactionType = String(req.body?.reactionType || "")
+      .trim()
+      .toLowerCase();
+
+    // ========================================================
+    // VALIDATE POST ID
+    // ========================================================
+
+    if (!Number.isInteger(postId) || postId <= 0) {
       return res.status(400).json({
         success: false,
         message: "Invalid post ID.",
       });
     }
+
+    // ========================================================
+    // ALLOWED PUBLIC REACTIONS
+    // ========================================================
 
     const allowedReactions = [
       "like",
@@ -5376,13 +6288,11 @@ app.post("/public/post/connect", connectReactionLimiter, async (req, res) => {
       "trophy",
       "victory",
     ];
-    console.log("PUBLIC REACTION:", {
-      ip: req.ip,
-      postId,
-      reactionType,
-      visitorId: publicVisitorId,
-      userAgent: req.get("user-agent"),
-    });
+
+    // ========================================================
+    // VALIDATE REACTION
+    // ========================================================
+
     if (!allowedReactions.includes(reactionType)) {
       console.warn("🚨 BLOCKED PUBLIC REACTION:", {
         ip: req.ip,
@@ -5398,9 +6308,32 @@ app.post("/public/post/connect", connectReactionLimiter, async (req, res) => {
       });
     }
 
+    // ========================================================
+    // DEBUG
+    // ========================================================
+
+    console.log("PUBLIC REACTION:", {
+      ip: req.ip,
+      postId,
+      reactionType,
+      visitorId: publicVisitorId,
+      userAgent: req.get("user-agent"),
+    });
+
+    // ========================================================
+    // VERIFY POST
+    //
+    // Public reaction requires BOTH:
+    //
+    //   public_enabled = TRUE
+    //   public_reactions_enabled = TRUE
+    //
+    // ========================================================
+
     const postResult = await db.query(
       `
-      SELECT id
+      SELECT
+        id
       FROM social_posts
       WHERE
         id = $1
@@ -5417,17 +6350,35 @@ app.post("/public/post/connect", connectReactionLimiter, async (req, res) => {
       });
     }
 
+    // ========================================================
+    // SAVE / CHANGE PUBLIC REACTION
+    //
+    // One reaction per visitor per post.
+    //
+    // Same visitor + same post:
+    //   existing reaction is replaced.
+    //
+    // ========================================================
+
     await db.query(
       `
-      INSERT INTO social_public_reactions (
+      INSERT INTO social_public_reactions
+      (
         public_visitor_id,
         target_type,
         target_id,
         reaction_type
       )
-      VALUES ($1, 'post', $2, $3)
+      VALUES
+      (
+        $1,
+        'post',
+        $2,
+        $3
+      )
 
-      ON CONFLICT (
+      ON CONFLICT
+      (
         public_visitor_id,
         target_type,
         target_id
@@ -5439,6 +6390,10 @@ app.post("/public/post/connect", connectReactionLimiter, async (req, res) => {
       `,
       [publicVisitorId, postId, reactionType],
     );
+
+    // ========================================================
+    // SUCCESS
+    // ========================================================
 
     return res.json({
       success: true,
