@@ -1597,10 +1597,15 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       userGroupId = userResult.rows[0]?.group_id ?? null;
     }
 
-    const isClient =
-      String(userRole || "")
-        .trim()
-        .toLowerCase() === "client";
+    const normalizedUserRole = String(userRole || "")
+      .trim()
+      .toLowerCase();
+
+    const normalizedUserEmail = String(userEmail || "")
+      .trim()
+      .toLowerCase();
+
+    const isClient = normalizedUserRole === "client";
 
     console.log("SOCIAL userRole:", JSON.stringify(userRole));
     console.log("SOCIAL userGroupId:", JSON.stringify(userGroupId));
@@ -1610,32 +1615,56 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
     // CURRENT USER ADMIN ROLE
     //
     // ADMIN / ADMIN1 / ADMIN2 = ADMIN ACCESS
+    //
+    // Mapping:
+    //
+    // role=admin       -> emailsAdmin
+    // EMAILS_ADMIN     -> emailsAdmin
+    //
+    // role=admin1      -> isAdmin1
+    // ADMIN_EMAILS     -> isAdmin1
+    //
+    // role=admin2      -> isAdmin2
+    // SPECIAL_ADMIN_EMAILS -> isAdmin2
+    //
+    // NULL / BLANK role = allowed
     // ========================================================
 
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const emailsAdminEmails = (process.env.EMAILS_ADMIN || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
     const isAdmin2 =
-      String(userRole || "")
-        .trim()
-        .toLowerCase() === "admin2" || isSpecialAdmin(userEmail);
+      normalizedUserRole === "admin2" ||
+      (!!normalizedUserEmail &&
+        specialAdminEmails.includes(normalizedUserEmail));
 
     const isAdmin1 =
-      String(userRole || "")
-        .trim()
-        .toLowerCase() === "admin1" ||
-      isAdminEmail(userEmail) ||
+      normalizedUserRole === "admin1" ||
+      (!!normalizedUserEmail && adminEmails.includes(normalizedUserEmail)) ||
       isAdmin2;
 
     const isAdmin = isAdmin1 || isAdmin2;
 
+    const emailsAdmin =
+      normalizedUserRole === "admin" ||
+      (!!normalizedUserEmail &&
+        emailsAdminEmails.includes(normalizedUserEmail));
+
     console.log("SOCIAL isAdmin2:", isAdmin2);
     console.log("SOCIAL isAdmin1:", isAdmin1);
     console.log("SOCIAL isAdmin:", isAdmin);
-
-    // ========================================================
-    // HN CPA / EMAILS ADMIN
-    // ========================================================
-
-    const emailsAdmin = isEmailsAdmin(userEmail);
-
     console.log("SOCIAL emailsAdmin:", emailsAdmin);
 
     // ========================================================
@@ -1679,6 +1708,8 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       // loggedin users
       // group_only
       // own posts
+      //
+      // CLIENT POSTS ARE BLOCKED UNLESS OWN POST
       // ======================================================
       else if (emailsAdmin) {
         totalPostsResult = await db.query(
@@ -1736,7 +1767,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       // NORMAL NON-CLIENT USER
       //
       // Existing group_id behavior
-      // BUT CLIENT POSTS ARE COMPLETELY BLOCKED
+      // CLIENT POSTS COMPLETELY BLOCKED
       // ======================================================
       else {
         totalPostsResult = await db.query(
@@ -1859,19 +1890,15 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
 
               AND
               (
-                -- Logged-in users posts
                 p.visibility = 'loggedin users'
 
-                -- Owner can always see own non-client post
                 OR p.user_id = $2
 
-                -- HN CPA / EMAILS ADMIN
                 OR (
                   $4 = TRUE
                   AND p.visibility = 'group_only'
                 )
 
-                -- Same group
                 OR (
                   p.visibility = 'group_only'
                   AND $5::INTEGER IS NOT NULL
@@ -2022,7 +2049,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
     // NORMAL NON-CLIENT USER FEED
     //
     // Existing group_id behavior
-    // CLIENT POSTS ARE COMPLETELY BLOCKED
+    // CLIENT POSTS COMPLETELY BLOCKED
     // ========================================================
     else {
       postsResult = await db.query(
@@ -2470,7 +2497,7 @@ app.post(
       //
       // CLIENT = ONLY admin_only
       // Other roles = existing visibility behavior
-      // NULL / blank = allowed, no error
+      // NULL / BLANK = allowed, no error
       // ======================================================
 
       const roleResult = await client.query(
@@ -2958,65 +2985,6 @@ app.get(
 // EDIT POST
 // ============================================================
 
-app.post("/social/post/edit", ensureAuthenticated, async (req, res) => {
-  try {
-    const userId = req.user?.id;
-
-    const postId = req.body.id;
-
-    const content = (req.body.content || "").trim();
-
-    if (!userId) {
-      return res.status(401).send("Please log in.");
-    }
-
-    if (!postId) {
-      return res.status(400).send("Post ID is required.");
-    }
-
-    if (!content) {
-      return res.redirect("/social/post");
-    }
-
-    if (content.length > 5000) {
-      return res.status(400).send("Post is too long.");
-    }
-
-    const result = await db.query(
-      `
-      UPDATE social_posts
-      SET
-        content = $1,
-        updated_at = NOW()
-      WHERE id = $2
-        AND user_id = $3
-      RETURNING id
-      `,
-      [content, postId, userId],
-    );
-
-    if (!result.rowCount) {
-      return res.status(403).send("You cannot edit this post.");
-    }
-
-    //res.redirect("/social/post");
-    res.redirect(`/social/post?postId=${postId}`);
-  } catch (err) {
-    console.error("Edit post error:", err);
-
-    res.status(500).send("Unable to edit post.");
-  }
-});
-
-// ============================================================
-// DELETE POST
-// ============================================================
-
-// ============================================================
-// DELETE POST
-// Owner OR Admin can delete
-// ============================================================
-
 app.post("/social/post/delete", ensureAuthenticated, async (req, res) => {
   const client = await db.connect();
 
@@ -3027,16 +2995,8 @@ app.post("/social/post/delete", ensureAuthenticated, async (req, res) => {
     const postId = req.body.id;
 
     // ========================================================
-    // ADMIN CHECK
+    // VALIDATION
     // ========================================================
-
-    const adminEmails = (process.env.ADMIN_EMAILS || "")
-      .split(",")
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean);
-
-    const isAdmin =
-      !!userEmail && adminEmails.includes(userEmail.toLowerCase());
 
     if (!userId) {
       client.release();
@@ -3050,27 +3010,157 @@ app.post("/social/post/delete", ensureAuthenticated, async (req, res) => {
       return res.status(400).send("Post ID is required.");
     }
 
+    // ========================================================
+    // CURRENT USER ROLE
+    //
+    // role can be NULL / blank.
+    // No error.
+    // ========================================================
+
+    const roleResult = await client.query(
+      `
+      SELECT role
+      FROM my_user
+      WHERE id = $1
+      `,
+      [userId],
+    );
+
+    const userRole = roleResult.rows[0]?.role ?? null;
+
+    const normalizedRole = String(userRole || "")
+      .trim()
+      .toLowerCase();
+
+    const normalizedUserEmail = String(userEmail || "")
+      .trim()
+      .toLowerCase();
+
+    // ========================================================
+    // ADMIN MAPPING
+    //
+    // admin role:
+    //   emailsAdmin = TRUE
+    //   isAdmin1    = FALSE
+    //   isAdmin2    = FALSE
+    //   isAdmin     = FALSE
+    //
+    // admin1 role OR ADMIN_EMAILS:
+    //   isAdmin1 = TRUE
+    //   isAdmin  = TRUE
+    //
+    // admin2 role OR SPECIAL_ADMIN_EMAILS:
+    //   isAdmin2 = TRUE
+    //   isAdmin  = TRUE
+    // ========================================================
+
+    const emailsAdminList = (process.env.EMAILS_ADMIN || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const emailsAdmin =
+      normalizedRole === "admin" ||
+      (!!normalizedUserEmail && emailsAdminList.includes(normalizedUserEmail));
+
+    const isAdmin2 =
+      normalizedRole === "admin2" ||
+      (!!normalizedUserEmail &&
+        specialAdminEmails.includes(normalizedUserEmail));
+
+    const isAdmin1 =
+      normalizedRole === "admin1" ||
+      (!!normalizedUserEmail && adminEmails.includes(normalizedUserEmail));
+
+    const isAdmin = isAdmin1 || isAdmin2;
+
+    const isClient = normalizedRole === "client";
+
+    console.log("DELETE POST userId =", userId);
+    console.log("DELETE POST userRole =", userRole);
+    console.log("DELETE POST isClient =", isClient);
+    console.log("DELETE POST emailsAdmin =", emailsAdmin);
+    console.log("DELETE POST isAdmin2 =", isAdmin2);
+    console.log("DELETE POST isAdmin1 =", isAdmin1);
+    console.log("DELETE POST isAdmin =", isAdmin);
+    console.log("DELETE POST postId =", postId);
+
+    // ========================================================
+    // BEGIN TRANSACTION
+    // ========================================================
+
     await client.query("BEGIN");
 
     // ========================================================
     // VERIFY PERMISSION
     //
-    // Owner can delete own post.
-    // Admin can delete ANY post.
+    // ADMIN1 / ADMIN2:
+    //   Can delete ANY post.
+    //
+    // CLIENT:
+    //   Can delete ONLY their own client post.
+    //
+    // NON-CLIENT:
+    //   Can delete ONLY their own non-client post.
+    //
+    // IMPORTANT:
+    //   emailsAdmin is NOT full admin.
+    //   It remains restricted to non-client ownership.
     // ========================================================
 
     const postResult = await client.query(
       `
-      SELECT id
-      FROM social_posts
-      WHERE id = $1
-        AND (
-          user_id = $2
-          OR $3 = true
+      SELECT
+        p.id,
+        p.user_id,
+        u.role AS owner_role
+
+      FROM social_posts p
+
+      JOIN my_user u
+        ON u.id = p.user_id
+
+      WHERE
+        p.id = $1
+
+        AND
+        (
+          -- ADMIN1 / ADMIN2 CAN DELETE ANY POST
+          $3 = TRUE
+
+          OR
+
+          -- CLIENT CAN DELETE ONLY THEIR OWN CLIENT POST
+          (
+            $4 = TRUE
+            AND p.user_id = $2
+            AND LOWER(TRIM(COALESCE(u.role, ''))) = 'client'
+          )
+
+          OR
+
+          -- NON-CLIENT / EMAILS ADMIN:
+          -- ONLY THEIR OWN NON-CLIENT POST
+          (
+            $4 = FALSE
+            AND p.user_id = $2
+            AND LOWER(TRIM(COALESCE(u.role, ''))) <> 'client'
+          )
         )
+
       FOR UPDATE
       `,
-      [postId, userId, isAdmin],
+      [postId, userId, isAdmin, isClient],
     );
 
     if (!postResult.rowCount) {
@@ -3160,19 +3250,50 @@ app.post("/social/post/delete", ensureAuthenticated, async (req, res) => {
     // ========================================================
     // DELETE POST
     //
-    // Owner OR admin.
+    // Same permission rule as verification above.
     // ========================================================
 
     await client.query(
       `
       DELETE FROM social_posts
-      WHERE id = $1
-        AND (
-          user_id = $2
-          OR $3 = true
+      WHERE
+        id = $1
+
+        AND
+        (
+          -- ADMIN1 / ADMIN2 CAN DELETE ANY POST
+          $3 = TRUE
+
+          OR
+
+          -- CLIENT CAN DELETE ONLY THEIR OWN CLIENT POST
+          (
+            $4 = TRUE
+            AND user_id = $2
+            AND EXISTS (
+              SELECT 1
+              FROM my_user u
+              WHERE u.id = social_posts.user_id
+                AND LOWER(TRIM(COALESCE(u.role, ''))) = 'client'
+            )
+          )
+
+          OR
+
+          -- NON-CLIENT CAN DELETE ONLY THEIR OWN NON-CLIENT POST
+          (
+            $4 = FALSE
+            AND user_id = $2
+            AND EXISTS (
+              SELECT 1
+              FROM my_user u
+              WHERE u.id = social_posts.user_id
+                AND LOWER(TRIM(COALESCE(u.role, ''))) <> 'client'
+            )
+          )
         )
       `,
-      [postId, userId, isAdmin],
+      [postId, userId, isAdmin, isClient],
     );
 
     // ========================================================
@@ -3183,8 +3304,16 @@ app.post("/social/post/delete", ensureAuthenticated, async (req, res) => {
 
     client.release();
 
-    res.redirect("/social/post");
+    // ========================================================
+    // SUCCESS
+    // ========================================================
+
+    return res.redirect("/social/post");
   } catch (err) {
+    // ========================================================
+    // ROLLBACK
+    // ========================================================
+
     try {
       await client.query("ROLLBACK");
     } catch (rollbackErr) {
@@ -3193,12 +3322,17 @@ app.post("/social/post/delete", ensureAuthenticated, async (req, res) => {
 
     client.release();
 
+    // ========================================================
+    // ERROR
+    // ========================================================
+
     console.error("Delete post error:", err);
 
-    res.status(500).send("Unable to delete post.");
+    return res.status(500).send("Unable to delete post.");
   }
 });
 
+//
 app.post("/social/post/comment", ensureAuthenticated, async (req, res) => {
   try {
     const userId = req.user?.id;
