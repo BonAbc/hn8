@@ -3513,29 +3513,46 @@ app.post("/social/post/comment", ensureAuthenticated, async (req, res) => {
 
     const userRole = userResult.rows[0]?.role ?? null;
 
-    const isClient =
-      String(userRole || "")
-        .trim()
-        .toLowerCase() === "client";
+    const normalizedRole = String(userRole || "")
+      .trim()
+      .toLowerCase();
+
+    const isClient = normalizedRole === "client";
 
     // ======================================================
     // CURRENT USER ADMIN CHECK
     //
-    // KEEP EXISTING ADMIN FUNCTIONS UNCHANGED
+    // Keep existing admin functions unchanged:
+    //
+    // ADMIN_EMAILS
+    // SPECIAL_ADMIN_EMAILS
+    // admin1
+    // admin2
     // ======================================================
 
     const userEmail = req.user?.email || null;
 
+    const normalizedUserEmail = String(userEmail || "")
+      .trim()
+      .toLowerCase();
+
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
     const isAdmin2 =
-      String(userRole || "")
-        .trim()
-        .toLowerCase() === "admin2" || isSpecialAdmin(userEmail);
+      normalizedRole === "admin2" ||
+      specialAdminEmails.includes(normalizedUserEmail);
 
     const isAdmin1 =
-      String(userRole || "")
-        .trim()
-        .toLowerCase() === "admin1" ||
-      isAdminEmail(userEmail) ||
+      normalizedRole === "admin1" ||
+      adminEmails.includes(normalizedUserEmail) ||
       isAdmin2;
 
     const isAdmin = isAdmin1 || isAdmin2;
@@ -3606,14 +3623,18 @@ app.post("/social/post/comment", ensureAuthenticated, async (req, res) => {
       [postId, userId, content],
     );
 
-    //res.redirect("/social/post");
-    res.redirect(`/social/post?postId=${postId}`);
+    // ======================================================
+    // REDIRECT
+    // ======================================================
+
+    return res.redirect(`/social/post?postId=${postId}`);
   } catch (err) {
     console.error("Comment error:", err);
 
-    res.status(500).send("Unable to add comment.");
+    return res.status(500).send("Unable to add comment.");
   }
 });
+
 //
 
 app.post("/social/comment/delete", ensureAuthenticated, async (req, res) => {
