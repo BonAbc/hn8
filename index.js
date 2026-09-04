@@ -3333,146 +3333,7 @@ app.post("/social/post/delete", ensureAuthenticated, async (req, res) => {
 });
 
 //
-app.post("/social/post/comment", ensureAuthenticated, async (req, res) => {
-  try {
-    const userId = req.user?.id;
 
-    const postId = req.body.postId;
-
-    const content = (req.body.comment || "").trim();
-
-    if (!userId) {
-      return res.status(401).send("Please log in.");
-    }
-
-    if (!postId) {
-      return res.status(400).send("Post ID is required.");
-    }
-
-    if (!content) {
-      return res.redirect("/social/post");
-    }
-
-    if (content.length > 2000) {
-      return res.status(400).send("Comment is too long.");
-    }
-
-    // ======================================================
-    // CURRENT USER ROLE
-    // ======================================================
-
-    const userResult = await db.query(
-      `
-      SELECT role
-      FROM my_user
-      WHERE id = $1
-      `,
-      [userId],
-    );
-
-    const userRole = userResult.rows[0]?.role ?? null;
-
-    const isClient =
-      String(userRole || "")
-        .trim()
-        .toLowerCase() === "client";
-
-    // ======================================================
-    // CURRENT USER ADMIN CHECK
-    //
-    // KEEP EXISTING ADMIN FUNCTIONS UNCHANGED
-    // ======================================================
-
-    const userEmail = req.user?.email || null;
-
-    const isAdmin2 =
-      String(userRole || "")
-        .trim()
-        .toLowerCase() === "admin2" || isSpecialAdmin(userEmail);
-
-    const isAdmin1 =
-      String(userRole || "")
-        .trim()
-        .toLowerCase() === "admin1" ||
-      isAdminEmail(userEmail) ||
-      isAdmin2;
-
-    const isAdmin = isAdmin1 || isAdmin2;
-
-    // ======================================================
-    // VERIFY POST + OWNER ROLE
-    // ======================================================
-
-    const postResult = await db.query(
-      `
-      SELECT
-        p.id,
-        u.role AS owner_role
-
-      FROM social_posts p
-
-      JOIN my_user u
-        ON u.id = p.user_id
-
-      WHERE p.id = $1
-      `,
-      [postId],
-    );
-
-    if (!postResult.rowCount) {
-      return res.status(404).send("Post not found.");
-    }
-
-    const ownerRole = postResult.rows[0]?.owner_role ?? null;
-
-    const postOwnerIsClient =
-      String(ownerRole || "")
-        .trim()
-        .toLowerCase() === "client";
-
-    // ======================================================
-    // PERMISSION
-    //
-    // ADMIN:
-    //   Can comment on any post.
-    //
-    // CLIENT:
-    //   Can comment only on client posts.
-    //
-    // NON-CLIENT:
-    //   Can comment only on non-client posts.
-    // ======================================================
-
-    if (!isAdmin && isClient !== postOwnerIsClient) {
-      return res.status(403).send("You cannot comment on this post.");
-    }
-
-    // ======================================================
-    // CREATE COMMENT
-    // ======================================================
-
-    await db.query(
-      `
-      INSERT INTO social_comments
-        (
-          post_id,
-          user_id,
-          content
-        )
-      VALUES
-        ($1, $2, $3)
-      `,
-      [postId, userId, content],
-    );
-
-    //res.redirect("/social/post");
-    res.redirect(`/social/post?postId=${postId}`);
-  } catch (err) {
-    console.error("Comment error:", err);
-
-    res.status(500).send("Unable to add comment.");
-  }
-});
 //
 app.post("/social/post/comment", ensureAuthenticated, async (req, res) => {
   try {
@@ -3632,6 +3493,147 @@ app.post("/social/post/comment", ensureAuthenticated, async (req, res) => {
     console.error("Comment error:", err);
 
     return res.status(500).send("Unable to add comment.");
+  }
+});
+//
+app.post("/social/comment/edit", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+
+    const postId = req.body.postId;
+
+    const content = (req.body.comment || "").trim();
+
+    if (!userId) {
+      return res.status(401).send("Please log in.");
+    }
+
+    if (!postId) {
+      return res.status(400).send("Post ID is required.");
+    }
+
+    if (!content) {
+      return res.redirect("/social/post");
+    }
+
+    if (content.length > 2000) {
+      return res.status(400).send("Comment is too long.");
+    }
+
+    // ======================================================
+    // CURRENT USER ROLE
+    // ======================================================
+
+    const userResult = await db.query(
+      `
+      SELECT role
+      FROM my_user
+      WHERE id = $1
+      `,
+      [userId],
+    );
+
+    const userRole = userResult.rows[0]?.role ?? null;
+
+    const isClient =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "client";
+
+    // ======================================================
+    // CURRENT USER ADMIN CHECK
+    //
+    // KEEP EXISTING ADMIN FUNCTIONS UNCHANGED
+    // ======================================================
+
+    const userEmail = req.user?.email || null;
+
+    const isAdmin2 =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "admin2" || isSpecialAdmin(userEmail);
+
+    const isAdmin1 =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "admin1" ||
+      isAdminEmail(userEmail) ||
+      isAdmin2;
+
+    const isAdmin = isAdmin1 || isAdmin2;
+
+    // ======================================================
+    // VERIFY POST + OWNER ROLE
+    // ======================================================
+
+    const postResult = await db.query(
+      `
+      SELECT
+        p.id,
+        u.role AS owner_role
+
+      FROM social_posts p
+
+      JOIN my_user u
+        ON u.id = p.user_id
+
+      WHERE p.id = $1
+      `,
+      [postId],
+    );
+
+    if (!postResult.rowCount) {
+      return res.status(404).send("Post not found.");
+    }
+
+    const ownerRole = postResult.rows[0]?.owner_role ?? null;
+
+    const postOwnerIsClient =
+      String(ownerRole || "")
+        .trim()
+        .toLowerCase() === "client";
+
+    // ======================================================
+    // PERMISSION
+    //
+    // ADMIN:
+    //   Can comment on any post.
+    //
+    // CLIENT:
+    //   Can comment only on client posts.
+    //
+    // NON-CLIENT:
+    //   Can comment only on non-client posts.
+    // ======================================================
+
+    if (!isAdmin && isClient !== postOwnerIsClient) {
+      return res.status(403).send("You cannot comment on this post.");
+    }
+
+    // ======================================================
+    // CREATE COMMENT
+    // ======================================================
+
+    await db.query(
+      `
+      INSERT INTO social_comments
+        (
+          post_id,
+          user_id,
+          content
+        )
+      VALUES
+        ($1, $2, $3)
+      `,
+      [postId, userId, content],
+    );
+
+    //res.redirect("/social/post");
+    res.redirect(`/social/post?postId=${postId}`);
+  } catch (err) {
+    console.error("Comment error:", err);
+
+    res.status(500).send("Unable to add comment.");
   }
 });
 
@@ -4454,7 +4456,6 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean);
 
-    // ========================================================
     // PERMISSION MODEL
     //
     // admin role          -> EMAILS ADMIN
@@ -4470,8 +4471,14 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     // admin role is NOT full admin.
     // ========================================================
 
-    const isEmailsAdmin =
-      normalizedRole === "admin" || isEmailsAdmin(userEmail);
+    const emailsAdminEmails = (process.env.EMAILS_ADMIN || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const isEmailsAdminUser =
+      normalizedRole === "admin" ||
+      emailsAdminEmails.includes(normalizedUserEmail);
 
     const isAdmin2 =
       normalizedRole === "admin2" ||
@@ -4489,9 +4496,9 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     const isAdmin = isAdmin1 || isAdmin2;
 
     // Existing EJS compatibility
-    const userIsEmailsAdmin = isEmailsAdmin;
+    const userIsEmailsAdmin = isEmailsAdminUser;
 
-    console.log("SOCIAL isEmailsAdmin =", isEmailsAdmin);
+    console.log("SOCIAL isEmailsAdmin =", isEmailsAdminUser);
     console.log("SOCIAL isAdmin1 =", isAdmin1);
     console.log("SOCIAL isAdmin2 =", isAdmin2);
     console.log("SOCIAL isAdmin =", isAdmin);
