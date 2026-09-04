@@ -3857,13 +3857,10 @@ app.post("/social/comment/delete", ensureAuthenticated, async (req, res) => {
 app.post("/social/comment/reply", ensureAuthenticated, async (req, res) => {
   try {
     const userId = req.user?.id;
-
     const userEmail = req.user?.email || null;
 
     const commentId = req.body?.commentId;
-
     const parentReplyId = req.body?.parentReplyId || null;
-
     const content = String(req.body?.reply || "").trim();
 
     if (!userId) {
@@ -3894,30 +3891,69 @@ app.post("/social/comment/reply", ensureAuthenticated, async (req, res) => {
 
     const userRole = userResult.rows[0]?.role ?? null;
 
-    const isClient =
-      String(userRole || "")
-        .trim()
-        .toLowerCase() === "client";
+    const normalizedRole = String(userRole || "")
+      .trim()
+      .toLowerCase();
+
+    const isClient = normalizedRole === "client";
 
     // ======================================================
     // CURRENT USER ADMIN CHECK
     //
-    // KEEP EXISTING ADMIN FUNCTIONS UNCHANGED
+    // admin role          -> EMAILS ADMIN
+    // EMAILS_ADMIN        -> EMAILS ADMIN
+    //
+    // admin1 role         -> ADMIN1
+    // ADMIN_EMAILS        -> ADMIN1
+    //
+    // admin2 role         -> ADMIN2
+    // SPECIAL_ADMIN_EMAILS-> ADMIN2
+    //
+    // ADMIN1 / ADMIN2:
+    //   Can reply to any post.
     // ======================================================
 
+    const normalizedUserEmail = String(userEmail || "")
+      .trim()
+      .toLowerCase();
+
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const emailsAdminEmails = (process.env.EMAILS_ADMIN || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    const isEmailsAdminUser =
+      normalizedRole === "admin" ||
+      emailsAdminEmails.includes(normalizedUserEmail);
+
     const isAdmin2 =
-      String(userRole || "")
-        .trim()
-        .toLowerCase() === "admin2" || isSpecialAdmin(userEmail);
+      normalizedRole === "admin2" ||
+      specialAdminEmails.includes(normalizedUserEmail);
 
     const isAdmin1 =
-      String(userRole || "")
-        .trim()
-        .toLowerCase() === "admin1" ||
-      isAdminEmail(userEmail) ||
-      isAdmin2;
+      normalizedRole === "admin1" || adminEmails.includes(normalizedUserEmail);
 
     const isAdmin = isAdmin1 || isAdmin2;
+
+    console.log("SOCIAL REPLY permissions =", {
+      userId,
+      userRole,
+      isClient,
+      isEmailsAdmin: isEmailsAdminUser,
+      isAdmin1,
+      isAdmin2,
+      isAdmin,
+    });
 
     // ======================================================
     // REPLY TO ANOTHER REPLY
