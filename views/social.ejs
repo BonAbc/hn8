@@ -38,7 +38,7 @@
       </div>
     <% } %>
 
-  <% } %>
+  <% } %> 
 </div>
   <!-- Profile -->
   <div>
@@ -197,26 +197,33 @@
  
   <!-- VISIBILITY -->
 <!-- VISIBILITY -->
-  <div class="social-visibility-options">
+<div class="social-visibility-options">
+
+  <% if (isClient) { %>
+
+    <!-- CLIENT: ONLY ADMIN-ONLY -->
+    <label>
+      <input
+        type="radio"
+        name="visibility"
+        value="admin_only"
+        checked
+      >
+      <span>🔒 Only me + Admin/HN CPA 🔒</span>
+    </label>
+
+  <% } else { %>
+
+    <!-- NON-CLIENT: NORMAL OPTIONS -->
 
     <label>
       <input
         type="radio"
         name="visibility"
         value="loggedin users"
-       checked
+        checked
       >
-      <span>👨‍👩‍👧‍👧👩‍👩‍👧‍👦All Loggedin Users👨‍👩‍👧‍👧👩‍👩‍👧‍👦</span>
-    </label>
- 
-    <label>
-      <input
-        type="radio"
-        name="visibility"
-        value="admin_only"
-        
-      >
-      <span>🔒 Only me + HN CPA/ 🔒</span>
+      <span>👨‍👩‍👧‍👧👩‍👩‍👧‍👦 All Loggedin Users 👨‍👩‍👧‍👧👩‍👩‍👧‍👦</span>
     </label>
 
     <label>
@@ -225,10 +232,14 @@
         name="visibility"
         value="group_only"
       >
-      <span>👥 My Group 👥 </span> 
+      <span>👥 My Group 👥</span>
     </label>
+
+  <% } %>
+
+</div>
+
  
-  </div>
  <!-- VISIBILITY -->
   <div class="social-create-post-footer">
 

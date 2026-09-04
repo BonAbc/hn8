@@ -938,19 +938,24 @@ app.get("/add-user", ensureAdmin, (req, res) => {
   res.render("adduserbyadmin.ejs", { defaultDate: getToday() });
 });
 //
+//Admin add user 👆
 app.post("/add-user", ensureAdmin, async (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
-  const group_id = parseInt(req.body.group_id, 10);
+  const rawGroupId = String(req.body.group_id || "").trim();
+  let group_id = null;
 
-  // Validate group ID
-  if (!Number.isInteger(group_id) || group_id < 1) {
-    return res.send("Invalid group ID.");
+  if (rawGroupId !== "") {
+    group_id = parseInt(rawGroupId, 10);
+
+    if (!Number.isInteger(group_id) || group_id < 1) {
+      return res.send("Invalid group ID.");
+    }
   }
 
+  const role = String(req.body.role || "").trim();
   try {
-    // Check existing user
     const checkUser = await db.query("SELECT * FROM my_user WHERE email = $1", [
       email,
     ]);
@@ -959,12 +964,10 @@ app.post("/add-user", ensureAdmin, async (req, res) => {
       return res.send("Email already exists.");
     }
 
-    // Same validation as signup
     if (!isValidPassword(password)) {
       return res.send("Invalid password.");
     }
 
-    // Hash password
     bcrypt.hash(password, saltRounds, async (err, hash) => {
       if (err) {
         console.error("Error hashing password:", err);
@@ -974,12 +977,11 @@ app.post("/add-user", ensureAdmin, async (req, res) => {
       try {
         await db.query(
           `INSERT INTO my_user
-           (email, pw, is_active, two_factor_enabled, group_id)
+           (email, pw, two_factor_enabled, group_id, role)
            VALUES ($1, $2, $3, $4, $5)`,
-          [email, hash, true, false, group_id],
+          [email, hash, false, group_id, role],
         );
 
-        //  stays logged in
         return res.redirect("/web/traffic/test");
       } catch (insertErr) {
         console.error("Error inserting user:", insertErr);
@@ -991,6 +993,7 @@ app.post("/add-user", ensureAdmin, async (req, res) => {
     res.status(500).send("Error creating user");
   }
 });
+
 //
 app.get("/users/loveme", ensureAdmin, async (req, res) => {
   try {
@@ -999,6 +1002,9 @@ app.get("/users/loveme", ensureAdmin, async (req, res) => {
     const offset = (page - 1) * limit;
 
     const groupId = req.query.group_id || "";
+    //
+    const role = String(req.query.role || "").trim();
+    //
 
     // Get group IDs dynamically
     const groupsResult = await db.query(`
@@ -1009,58 +1015,97 @@ app.get("/users/loveme", ensureAdmin, async (req, res) => {
     `);
 
     const groups = groupsResult.rows;
+    //
+    const rolesResult = await db.query(`
+  SELECT DISTINCT role
+  FROM my_user
+  WHERE role IS NOT NULL
+    AND TRIM(role) <> ''
+  ORDER BY role
+`);
 
-    let result;
-    let countResult;
+    const roles = rolesResult.rows;
+
+    // ========================================================
+    // BUILD FILTER
+    // ========================================================
+
+    const conditions = [];
+    const values = [];
 
     if (groupId) {
-      result = await db.query(
-        `SELECT id, email, is_active, group_id
-         FROM my_user
-         WHERE group_id = $1
-         ORDER BY id
-         LIMIT $2 OFFSET $3`,
-        [groupId, limit, offset],
-      );
-
-      countResult = await db.query(
-        `SELECT COUNT(*)
-         FROM my_user
-         WHERE group_id = $1`,
-        [groupId],
-      );
-    } else {
-      result = await db.query(
-        `SELECT id, email, is_active, group_id
-         FROM my_user
-         ORDER BY id
-         LIMIT $1 OFFSET $2`,
-        [limit, offset],
-      );
-
-      countResult = await db.query(`
-        SELECT COUNT(*)
-        FROM my_user
-      `);
+      values.push(groupId);
+      conditions.push(`group_id = $${values.length}`);
     }
+
+    if (role) {
+      values.push(role);
+      conditions.push(`role = $${values.length}`);
+    }
+
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    // ========================================================
+    // USERS
+    // ========================================================
+
+    values.push(limit);
+    const limitParam = values.length;
+
+    values.push(offset);
+    const offsetParam = values.length;
+
+    const result = await db.query(
+      `
+      SELECT
+        id,
+        email,
+        is_active,
+        group_id,
+        role
+      FROM my_user
+      ${whereClause}
+      ORDER BY id
+      LIMIT $${limitParam}
+      OFFSET $${offsetParam}
+      `,
+      values,
+    );
+
+    // ========================================================
+    // COUNT
+    // ========================================================
+
+    const countResult = await db.query(
+      `
+      SELECT COUNT(*)
+      FROM my_user
+      ${whereClause}
+      `,
+      values.slice(0, -2),
+    );
 
     const totalUsers = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalUsers / limit);
+
     // by me
     const countResults = await db.query(`
-  SELECT COUNT(*)
-  FROM my_user
-`);
+      SELECT COUNT(*)
+      FROM my_user
+    `);
     const userTotal = parseInt(countResults.rows[0].count, 10);
 
     //
     const groupCountsResult = await db.query(`
-  SELECT group_id, COUNT(*) AS total
-  FROM my_user
-  WHERE group_id IS NOT NULL
-  GROUP BY group_id
-  ORDER BY group_id
-`);
+      SELECT group_id, COUNT(*) AS total
+      FROM my_user
+      WHERE group_id IS NOT NULL
+      GROUP BY group_id
+      ORDER BY group_id
+    `);
+    //
+
     const totalGroup = groupCountsResult.rows.reduce(
       (sum, group) => sum + Number(group.total),
       0,
@@ -1076,6 +1121,11 @@ app.get("/users/loveme", ensureAdmin, async (req, res) => {
       totalPages,
       groupId,
       groups,
+
+      // NEW role filter
+      role,
+      roles,
+
       defaultDate: getToday(),
       message: req.query.message,
     });
@@ -1084,6 +1134,8 @@ app.get("/users/loveme", ensureAdmin, async (req, res) => {
     res.status(500).send("Error loading users");
   }
 });
+
+//
 
 //
 app.delete("/user/:id", ensureAdmin, async (req, res) => {
@@ -1504,7 +1556,7 @@ const ALLOWED_REACTIONS = [
 app.get("/social/post", ensureAuthenticated, async (req, res) => {
   try {
     // ========================================================
-
+    // CURRENT USER
     // ========================================================
 
     const userId = req.user?.id || null;
@@ -1512,52 +1564,83 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
 
     const postId = req.query.postId ? parseInt(req.query.postId, 10) : null;
 
+    console.log("========================================");
+    console.log("SOCIAL GET");
+    console.log("userId:", userId);
+    console.log("userEmail:", userEmail);
+    console.log("postId:", postId);
+
     if (req.query.postId && !Number.isInteger(postId)) {
       return res.status(400).send("Invalid post ID.");
     }
 
     // ========================================================
-
+    // CURRENT USER ROLE + GROUP
     // ========================================================
 
+    let userRole = null;
     let userGroupId = null;
 
     if (userId) {
-      const groupResult = await db.query(
+      const userResult = await db.query(
         `
-        SELECT group_id
+        SELECT
+          role,
+          group_id
         FROM my_user
         WHERE id = $1
         `,
         [userId],
       );
 
-      userGroupId = groupResult.rows[0]?.group_id ?? null;
+      userRole = userResult.rows[0]?.role ?? null;
+      userGroupId = userResult.rows[0]?.group_id ?? null;
     }
+
+    const isClient =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "client";
+
+    console.log("SOCIAL userRole:", JSON.stringify(userRole));
+    console.log("SOCIAL userGroupId:", JSON.stringify(userGroupId));
+    console.log("SOCIAL isClient:", isClient);
+
+    // ========================================================
+    // CURRENT USER ADMIN ROLE
     //
-    // set conditions who is admin emailsadmin and user below then Line 1557 set visibility.
-    const adminEmails = (process.env.ADMIN_EMAILS || "")
-      .split(",")
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean);
+    // ADMIN / ADMIN1 / ADMIN2 = ADMIN ACCESS
+    // ========================================================
 
-    const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
-      .split(",")
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean);
+    const isAdmin2 =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "admin2" || isSpecialAdmin(userEmail);
 
-    const normalizedUserEmail = String(userEmail || "")
-      .trim()
-      .toLowerCase();
+    const isAdmin1 =
+      String(userRole || "")
+        .trim()
+        .toLowerCase() === "admin1" ||
+      isAdminEmail(userEmail) ||
+      isAdmin2;
 
-    const isAdmin =
-      !!normalizedUserEmail &&
-      (adminEmails.includes(normalizedUserEmail) ||
-        specialAdminEmails.includes(normalizedUserEmail));
+    const isAdmin = isAdmin1 || isAdmin2;
+
+    console.log("SOCIAL isAdmin2:", isAdmin2);
+    console.log("SOCIAL isAdmin1:", isAdmin1);
+    console.log("SOCIAL isAdmin:", isAdmin);
+
+    // ========================================================
+    // HN CPA / EMAILS ADMIN
+    // ========================================================
 
     const emailsAdmin = isEmailsAdmin(userEmail);
 
-    //
+    console.log("SOCIAL emailsAdmin:", emailsAdmin);
+
+    // ========================================================
+    // PAGINATION
+    // ========================================================
 
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
 
@@ -1567,8 +1650,18 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
     let totalPosts = 0;
     let totalPages = 1;
 
+    // ========================================================
+    // COUNT FEED
+    // ========================================================
+
     if (!postId) {
       let totalPostsResult;
+
+      // ======================================================
+      // FULL ADMIN
+      //
+      // Admin can see ANY post
+      // ======================================================
 
       if (isAdmin) {
         totalPostsResult = await db.query(
@@ -1577,22 +1670,17 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
           FROM social_posts
           `,
         );
-      } else if (emailsAdmin) {
-        totalPostsResult = await db.query(
-          `
-          SELECT COUNT(*)::INTEGER AS total
-          FROM social_posts p
+      }
 
-          WHERE
-            p.visibility = 'loggedin users'
-
-            OR p.visibility = 'group_only'
-
-            OR p.user_id = $1
-          `,
-          [userId],
-        );
-      } else {
+      // ======================================================
+      // EMAILS ADMIN
+      //
+      // Can see:
+      // loggedin users
+      // group_only
+      // own posts
+      // ======================================================
+      else if (emailsAdmin) {
         totalPostsResult = await db.query(
           `
           SELECT COUNT(*)::INTEGER AS total
@@ -1602,14 +1690,79 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
             ON u.id = p.user_id
 
           WHERE
-            p.visibility = 'loggedin users'
+            (
+              p.visibility = 'loggedin users'
 
-            OR p.user_id = $1
+              OR p.visibility = 'group_only'
 
-            OR (
-              p.visibility = 'group_only'
-              AND $2::INTEGER IS NOT NULL
-              AND u.group_id = $2::INTEGER
+              OR p.user_id = $1
+            )
+
+            AND
+            (
+              u.role IS NULL
+              OR LOWER(TRIM(u.role)) <> 'client'
+              OR p.user_id = $1
+            )
+          `,
+          [userId],
+        );
+      }
+
+      // ======================================================
+      // CLIENT
+      //
+      // CLIENT CAN ONLY SEE THEIR OWN ADMIN-ONLY POSTS
+      // ======================================================
+      else if (isClient) {
+        totalPostsResult = await db.query(
+          `
+          SELECT COUNT(*)::INTEGER AS total
+          FROM social_posts p
+
+          JOIN my_user u
+            ON u.id = p.user_id
+
+          WHERE
+            p.visibility = 'admin_only'
+            AND p.user_id = $1
+            AND LOWER(TRIM(u.role)) = 'client'
+          `,
+          [userId],
+        );
+      }
+
+      // ======================================================
+      // NORMAL NON-CLIENT USER
+      //
+      // Existing group_id behavior
+      // BUT CLIENT POSTS ARE COMPLETELY BLOCKED
+      // ======================================================
+      else {
+        totalPostsResult = await db.query(
+          `
+          SELECT COUNT(*)::INTEGER AS total
+          FROM social_posts p
+
+          JOIN my_user u
+            ON u.id = p.user_id
+
+          WHERE
+            (
+              p.visibility = 'loggedin users'
+
+              OR p.user_id = $1
+
+              OR (
+                p.visibility = 'group_only'
+                AND $2::INTEGER IS NOT NULL
+                AND u.group_id = $2::INTEGER
+              )
+            )
+
+            AND (
+              u.role IS NULL
+              OR LOWER(TRIM(u.role)) <> 'client'
             )
           `,
           [userId, userGroupId],
@@ -1625,7 +1778,17 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       }
     }
 
+    // ========================================================
+    // LOAD POSTS
+    // ========================================================
+
     let postsResult;
+
+    // ========================================================
+    // SINGLE POST
+    //
+    // /social/post?postId=26
+    // ========================================================
 
     if (postId) {
       postsResult = await db.query(
@@ -1639,7 +1802,8 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
           p.created_at,
           p.updated_at,
           u.email,
-          u.group_id
+          u.group_id,
+          u.role
 
         FROM social_posts p
 
@@ -1649,34 +1813,80 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         WHERE
           p.id = $1
 
-          AND (
-            -- Everyone logged in can see public-to-users posts
-            p.visibility = 'loggedin users'
+          AND
+          (
+            -- =================================================
+            -- CLIENT
+            --
+            -- ONLY own client admin_only posts
+            -- =================================================
 
-            -- Owner can always see own post
-            OR p.user_id = $2
-
-            -- Full ADMIN_EMAILS admin can see ANY post
-            OR $3 = TRUE
-
-            -- HN CPA / EMAILS ADMIN can see ANY group post
-            OR (
-              $4 = TRUE
-              AND p.visibility = 'group_only'
+            (
+              $6 = TRUE
+              AND p.visibility = 'admin_only'
+              AND p.user_id = $2
+              AND LOWER(TRIM(u.role)) = 'client'
             )
 
-            -- Normal user can see own group's posts
-            OR (
-              p.visibility = 'group_only'
-              AND $5::INTEGER IS NOT NULL
-              AND u.group_id = $5::INTEGER
+            OR
+
+            -- =================================================
+            -- ADMIN
+            --
+            -- Existing admin access remains unchanged
+            -- =================================================
+
+            (
+              $6 = FALSE
+              AND $3 = TRUE
+            )
+
+            OR
+
+            -- =================================================
+            -- NON-CLIENT / EMAILS ADMIN
+            --
+            -- Client posts are blocked
+            -- =================================================
+
+            (
+              $6 = FALSE
+              AND $3 = FALSE
+              AND (
+                u.role IS NULL
+                OR LOWER(TRIM(u.role)) <> 'client'
+              )
+
+              AND
+              (
+                -- Logged-in users posts
+                p.visibility = 'loggedin users'
+
+                -- Owner can always see own non-client post
+                OR p.user_id = $2
+
+                -- HN CPA / EMAILS ADMIN
+                OR (
+                  $4 = TRUE
+                  AND p.visibility = 'group_only'
+                )
+
+                -- Same group
+                OR (
+                  p.visibility = 'group_only'
+                  AND $5::INTEGER IS NOT NULL
+                  AND u.group_id = $5::INTEGER
+                )
+              )
             )
           )
 
         LIMIT 1
         `,
-        [postId, userId, isAdmin, emailsAdmin, userGroupId],
+        [postId, userId, isAdmin, emailsAdmin, userGroupId, isClient],
       );
+
+      console.log("SINGLE POST RESULT:", postsResult.rows);
 
       if (!postsResult.rowCount) {
         return res.status(404).send("Post not found.");
@@ -1685,8 +1895,6 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
 
     // ========================================================
     // FULL ADMIN FEED
-    //
-    // ADMIN_EMAILS can see ANY post
     // ========================================================
     else if (isAdmin) {
       postsResult = await db.query(
@@ -1700,7 +1908,8 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
           p.created_at,
           p.updated_at,
           u.email,
-          u.group_id
+          u.group_id,
+          u.role
 
         FROM social_posts p
 
@@ -1720,11 +1929,6 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
 
     // ========================================================
     // EMAILS ADMIN FEED
-    //
-    // HN CPA / SPECIAL ADMIN can see:
-    //   loggedin users
-    //   ANY group_only
-    //   own posts
     // ========================================================
     else if (emailsAdmin) {
       postsResult = await db.query(
@@ -1738,7 +1942,8 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
           p.created_at,
           p.updated_at,
           u.email,
-          u.group_id
+          u.group_id,
+          u.role
 
         FROM social_posts p
 
@@ -1746,11 +1951,20 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
           ON u.id = p.user_id
 
         WHERE
-          p.visibility = 'loggedin users'
+          (
+            p.visibility = 'loggedin users'
 
-          OR p.visibility = 'group_only'
+            OR p.visibility = 'group_only'
 
-          OR p.user_id = $1
+            OR p.user_id = $1
+          )
+
+          AND
+          (
+            u.role IS NULL
+            OR LOWER(TRIM(u.role)) <> 'client'
+            OR p.user_id = $1
+          )
 
         ORDER BY
           p.created_at DESC,
@@ -1764,7 +1978,51 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
     }
 
     // ========================================================
-    // NORMAL USER FEED
+    // CLIENT FEED
+    //
+    // ONLY own admin_only posts
+    // ========================================================
+    else if (isClient) {
+      postsResult = await db.query(
+        `
+        SELECT
+          p.id,
+          p.user_id,
+          p.content,
+          p.color,
+          p.visibility,
+          p.created_at,
+          p.updated_at,
+          u.email,
+          u.group_id,
+          u.role
+
+        FROM social_posts p
+
+        JOIN my_user u
+          ON u.id = p.user_id
+
+        WHERE
+          p.visibility = 'admin_only'
+          AND p.user_id = $1
+          AND LOWER(TRIM(u.role)) = 'client'
+
+        ORDER BY
+          p.created_at DESC,
+          p.id DESC
+
+        LIMIT $2
+        OFFSET $3
+        `,
+        [userId, limit, offset],
+      );
+    }
+
+    // ========================================================
+    // NORMAL NON-CLIENT USER FEED
+    //
+    // Existing group_id behavior
+    // CLIENT POSTS ARE COMPLETELY BLOCKED
     // ========================================================
     else {
       postsResult = await db.query(
@@ -1778,7 +2036,8 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
           p.created_at,
           p.updated_at,
           u.email,
-          u.group_id
+          u.group_id,
+          u.role
 
         FROM social_posts p
 
@@ -1786,14 +2045,21 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
           ON u.id = p.user_id
 
         WHERE
-          p.visibility = 'loggedin users'
+          (
+            p.visibility = 'loggedin users'
 
-          OR p.user_id = $1
+            OR p.user_id = $1
 
-          OR (
-            p.visibility = 'group_only'
-            AND $2::INTEGER IS NOT NULL
-            AND u.group_id = $2::INTEGER
+            OR (
+              p.visibility = 'group_only'
+              AND $2::INTEGER IS NOT NULL
+              AND u.group_id = $2::INTEGER
+            )
+          )
+
+          AND (
+            u.role IS NULL
+            OR LOWER(TRIM(u.role)) <> 'client'
           )
 
         ORDER BY
@@ -1820,7 +2086,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         mime_type,
         file_size,
         media_text,
-         thumbnail_url,
+        thumbnail_url,
         created_at
 
       FROM social_post_media
@@ -1829,6 +2095,12 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         created_at ASC,
         id ASC
     `);
+
+    console.log("SOCIAL MEDIA COUNT:", mediaResult.rows.length);
+
+    // ========================================================
+    // MEDIA LOOKUP
+    // ========================================================
 
     const mediaByPost = {};
 
@@ -1845,7 +2117,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         mimeType: row.mime_type,
         fileSize: row.file_size,
         mediaText: row.media_text,
-        thumbnailUrl: row.thumbnail_url || null,
+        thumbnailUrl: row.thumbnail_url,
         createdAt: row.created_at,
       });
     }
@@ -1989,7 +2261,6 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         email: reactionCounts[key]?.email || 0,
         smile: reactionCounts[key]?.smile || 0,
         victory: reactionCounts[key]?.victory || 0,
-        // NEW
         bell: reactionCounts[key]?.bell || 0,
         trophy: reactionCounts[key]?.trophy || 0,
         myReaction: myReactions[key] || null,
@@ -2090,34 +2361,36 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       "SOCIAL POSTS:",
       posts.map((p) => ({
         id: p.id,
+        userId: p.userId,
+        visibility: p.visibility,
         mediaCount: p.media.length,
         media: p.media,
         content: p.content,
       })),
     );
+
     // ========================================================
     // CURRENT USER PROFESSIONAL PROFILE
     // ========================================================
 
     const profileResult = await db.query(
       `
-  SELECT
-    avatar,
-    slogan,
-    phone,
-    emailpr,
-    address,
-    website
-  FROM social_profile
-
-  WHERE user_id = $1
-  AND active = true
-  `,
+      SELECT
+        avatar,
+        slogan
+      FROM social_profile
+      WHERE user_id = $1
+        AND active = true
+      `,
       [userId],
     );
 
     const profile = profileResult.rows[0] || null;
-    //
+
+    // ========================================================
+    // RENDER
+    // ========================================================
+
     return res.render("social", {
       posts,
 
@@ -2127,7 +2400,11 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       currentUserEmail: userEmail,
 
       profile,
+
       isAdmin,
+
+      // CLIENT = role='client'
+      isClient,
 
       isEmailsAdmin: emailsAdmin,
 
@@ -2187,6 +2464,30 @@ app.post(
         !!normalizedUserEmail && adminEmails.includes(normalizedUserEmail);
 
       const userIsEmailsAdmin = isEmailsAdmin(userEmail);
+
+      // ======================================================
+      // CURRENT USER ROLE
+      //
+      // CLIENT = ONLY admin_only
+      // Other roles = existing visibility behavior
+      // NULL / blank = allowed, no error
+      // ======================================================
+
+      const roleResult = await client.query(
+        `
+        SELECT role
+        FROM my_user
+        WHERE id = $1
+        `,
+        [userId],
+      );
+
+      const userRole = roleResult.rows[0]?.role ?? null;
+
+      const isClient =
+        String(userRole || "")
+          .trim()
+          .toLowerCase() === "client";
 
       const content = String(req.body.content || "").trim();
 
@@ -2253,7 +2554,7 @@ app.post(
       }
 
       // ======================================================
-      // VISIBILITY Here
+      // VISIBILITY
       // ======================================================
 
       const requestedVisibility = String(
@@ -2262,7 +2563,12 @@ app.post(
 
       let visibility = "loggedin users";
 
-      if (
+      // CLIENT:
+      // Always force admin_only.
+      // Client cannot create loggedin users or group_only posts.
+      if (isClient) {
+        visibility = "admin_only";
+      } else if (
         requestedVisibility === "loggedin users" ||
         requestedVisibility === "group_only" ||
         requestedVisibility === "admin_only"
@@ -2311,7 +2617,9 @@ app.post(
 
       const postId = postResult.rows[0].id;
 
-      // console.log("NEW POST ID:", postId);
+      // ======================================================
+      // SPECIAL ADMIN EMAILS
+      // ======================================================
 
       const specialAdminEmails = (process.env.SPECIAL_ADMIN_EMAILS || "")
         .split(",")
@@ -2465,19 +2773,11 @@ app.post(
         url: postUrl,
       });
     } catch (err) {
-      // ======================================================
-      // ROLLBACK
-      // ======================================================
-
       try {
         await client.query("ROLLBACK");
       } catch (rollbackError) {
         console.error("Rollback error:", rollbackError);
       }
-
-      // ======================================================
-      // ERROR
-      // ======================================================
 
       console.error("========================================");
       console.error("CREATE POST ERROR");

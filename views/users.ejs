@@ -47,7 +47,30 @@
       <% }) %>
     </select>
   </div>
+   <!---->
+  <div class="col-12 col-md-auto">
+    <label for="role" class="form-label fw-bold mb-1">
+      Filter by Role:
+    </label>
 
+    <select
+      name="role"
+      id="role"
+      class="form-select"
+    >
+      <option value="">All Roles</option>
+
+      <% roles.forEach(item => { %>
+        <option
+          value="<%= item.role %>"
+          <%= String(role || "") === String(item.role) ? "selected" : "" %>
+        >
+          <%= item.role %>
+        </option>
+      <% }) %>
+    </select>
+  </div>
+ <!---->
   <div class="col-12 col-md-auto">
     <button type="submit" class="btn btn-primary w-100">
       Filter
@@ -90,6 +113,7 @@
       <th>Email</th>
       <th>Status</th>
       <th>Group ID</th>
+      <th>Role</th>
       <th>Edit</th>
       <th>Action</th>
     </tr>
@@ -117,7 +141,9 @@
          <td>
           <%= user.group_id %>
         </td>
- 
+  <td>
+              <%= user.role || "" %>
+            </td>
  
         <!-- Edit column -->
         <td>
@@ -292,10 +318,9 @@
 
   <% if (currentPage > 1) { %>
 
-    <a
-      href="/users/loveme?page=<%= currentPage - 1 %><%= groupId ? '&group_id=' + groupId : '' %>"
-      class="social-search-page-button social-search-page-prev"
-    >
+  
+  <a>  href="/users/loveme?page=<%= currentPage - 1 %><%= groupId ? '&group_id=' + groupId : '' %><%= role ? '&role=' + encodeURIComponent(role) : '' %>"
+
       ← Previous
     </a>
 
@@ -317,7 +342,9 @@
     <% for (let i = 1; i <= totalPages; i++) { %>
 
       <a
-        href="/users/loveme?page=<%= i %><%= groupId ? '&group_id=' + groupId : '' %>"
+       
+        href="/users/loveme?page=<%= i %><%= groupId ? '&group_id=' + groupId : '' %><%= role ? '&role=' + encodeURIComponent(role) : '' %>"
+
         class="social-search-page-button social-search-page-number <%= currentPage === i ? 'active' : '' %>"
         aria-label="Page <%= i %>"
         <%= currentPage === i ? 'aria-current="page"' : '' %>
@@ -335,7 +362,9 @@
   <% if (currentPage < totalPages) { %>
 
     <a
-      href="/users/loveme?page=<%= currentPage + 1 %><%= groupId ? '&group_id=' + groupId : '' %>"
+   
+      href="/users/loveme?page=<%= currentPage + 1 %><%= groupId ? '&group_id=' + groupId : '' %><%= role ? '&role=' + encodeURIComponent(role) : '' %>"
+
       class="social-search-page-button social-search-page-next"
     >
       Next →
@@ -350,7 +379,7 @@
     </span>
 
   <% } %>
- 
+  
 </nav>
 <!-- Pagination -->
   </section>
