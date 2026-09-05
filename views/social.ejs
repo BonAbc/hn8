@@ -196,7 +196,6 @@
 </div>
  
   <!-- VISIBILITY -->
-<!-- VISIBILITY -->
 <div class="social-visibility-options">
 
   <% if (isClient) { %>
@@ -214,7 +213,7 @@
 
   <% } else { %>
 
-    <!-- NON-CLIENT: NORMAL OPTIONS -->
+    <!-- NON-CLIENT: ALL 3 OPTIONS -->
 
     <label>
       <input
@@ -226,7 +225,7 @@
       <span>👨‍👩‍👧‍👧👩‍👩‍👧‍👦 All Loggedin Users 👨‍👩‍👧‍👧👩‍👩‍👧‍👦</span>
     </label>
 
-    <label>
+    <label> 
       <input
         type="radio"
         name="visibility"
@@ -235,11 +234,19 @@
       <span>👥 My Group 👥</span>
     </label>
 
-  <% } %>
+    <label>
+      <input
+        type="radio"
+        name="visibility"
+        value="admin_only"
+      >
+      <span>🔒 Admin Only 🔒</span>
+    </label>
 
+  <% } %>
+ 
 </div>
 
- 
  <!-- VISIBILITY -->
   <div class="social-create-post-footer">
 

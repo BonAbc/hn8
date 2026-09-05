@@ -202,55 +202,51 @@
 
           <% } %>
    <!-- ======================================================
-               FULL ADMIN BREAKDOWN ONLY
+               FULL  BREAKDOWN ONLY
           ======================================================= -->
 
-          <% if ((isAdmin || isEmailsAdmin || currentUserId) && totalPosts > 0) { %>
+        <% if (totalPosts > 0) { %>
 
-            <div class="social-search-admin-breakdown">
+  <div class="social-search-admin-breakdown">
 
-              <span class="social-search-everyone">
+    <span class="social-search-everyone">
 
-                👨‍👩‍👧‍👧👩‍👩‍👧‍👦 Loggedin Users 👨‍👩‍👧‍👧👩‍👩‍👧‍👦:
+      👨‍👩‍👧‍👧👩‍👩‍👧‍👦 Loggedin Users:
 
-                <strong>
-                  <%= everyonePosts %>
-                </strong>
+      <strong>
+        <%= everyonePosts %>
+      </strong>
 
-              </span>
+    </span>
 
+    <span class="social-search-admin-only">
 
-              <span class="social-search-admin-only">
+      🔒 User + Hieu Nguyen, CPA only:
 
-                🔒 User + Hieu Nguyen, CPA only:
+      <strong>
+        <%= userAdminPosts %>
+      </strong>
 
-                <strong>
-                  <%= userAdminPosts %>
-                </strong>
+    </span>
 
-              </span>
+    <span class="social-search-group-only">
 
+      👥 Group: 
 
-              <span class="social-search-group-only">
+      <strong>
+        <%= groupPosts %>
+      </strong>
 
-                👥 Group:
+    </span>
 
-                <strong>
-                  <%= groupPosts %>
-                </strong>
+  </div>
 
-              </span>
-
-            </div>
-
-          <% } %>
-
-        </div>
-
+<% } %>
+ 
 
 
           <!-- ======================================================
-               FULL ADMIN BREAKDOWN ONLY
+               FULL BREAKDOWN ONLY
           ======================================================= -->
 
          
@@ -595,6 +591,7 @@
               >
                 ← Previous
               </a>
+           
 
             <% } else { %>
 

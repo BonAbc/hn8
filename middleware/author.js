@@ -4,17 +4,9 @@ export function ensureAdmin(req, res, next) {
     return res.redirect("/login");
   }
 
-  const adminEmails = process.env.ADMIN_EMAILS.split(",").map((email) =>
-    email.trim().toLowerCase(),
-  );
+  const role = req.user?.role;
 
-  const specialAdminEmails =
-    process.env.SPECIAL_ADMIN_EMAIL?.trim().toLowerCase();
-
-  const userEmail = req.user.email.trim().toLowerCase();
-
-  const isAdmin =
-    adminEmails.includes(userEmail) || userEmail === specialAdminEmails;
+  const isAdmin = role === "admin1" || role === "admin2";
 
   if (!isAdmin) {
     req.session.showAdminLoginModal = true;
