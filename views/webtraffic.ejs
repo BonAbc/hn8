@@ -102,22 +102,7 @@
                 <td data-label="Page">
                   <%= visitor.page %>
                 </td>
-
-              <td data-label="Time">
-                   
-               
- <%=  visitor.created_at  
-    ? new Date(visitor.created_at).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true
-      }) 
-    : "" 
-%>
- </td>
+                 <td><%= visitor.created_at %></td>   
 
               </tr>
 
