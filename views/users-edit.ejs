@@ -59,8 +59,32 @@
     />
 
   </div>
+ 
+<!-- Role -->
+<div class="mb-3">
 
+  <label for="role" class="form-label">
+    Role
+  </label>
 
+  <select
+    id="role"
+    name="role"
+    class="form-select"
+  >
+    <% roles.forEach(role => { %>
+      <option
+        value="<%= role %>"
+        <%= user.role === role ? "selected" : "" %>
+      >
+        <%= role %>
+      </option>
+    <% }) %>
+  </select>
+
+</div>
+
+<!-- Role -->
   <!-- Group ID -->
   <div class="mb-3">
 

@@ -1185,9 +1185,17 @@ app.get("/user/:id/edit", ensureAdmin, async (req, res) => {
       return res.status(404).send("User not found");
     }
 
+    const rolesResult = await db.query(
+      `SELECT DISTINCT role
+       FROM my_user
+       WHERE role IS NOT NULL
+       ORDER BY role`,
+    );
+
     res.render("users-edit.ejs", {
       user: result.rows[0],
       groupId,
+      roles: rolesResult.rows.map((row) => row.role),
       defaultDate: getToday(),
     });
   } catch (err) {
@@ -1198,19 +1206,29 @@ app.get("/user/:id/edit", ensureAdmin, async (req, res) => {
 // 👆
 app.patch("/user/:id", ensureAdmin, async (req, res) => {
   const userId = req.params.id;
-  const { email, group_id } = req.body;
+  const { email, group_id, role } = req.body;
 
-  //
   const filterGroupId = req.query.group_id;
 
   try {
-    await db.query(
-      `UPDATE my_user
-       SET email = $1,
-           group_id = $2
-       WHERE id = $3`,
-      [email, group_id, userId],
-    );
+    if (role && role.trim() !== "") {
+      await db.query(
+        `UPDATE my_user
+         SET email = $1,
+             group_id = $2,
+             role = $3
+         WHERE id = $4`,
+        [email, group_id, role.trim(), userId],
+      );
+    } else {
+      await db.query(
+        `UPDATE my_user
+         SET email = $1,
+             group_id = $2
+         WHERE id = $3`,
+        [email, group_id, userId],
+      );
+    }
 
     const redirectUrl = filterGroupId
       ? `/users/loveme?group_id=${encodeURIComponent(filterGroupId)}&message=updated`
@@ -1222,6 +1240,7 @@ app.patch("/user/:id", ensureAdmin, async (req, res) => {
     res.status(500).send("Error updating user");
   }
 });
+
 app.get("/web/traffic/test", ensureAdmin, async (req, res) => {
   const page = Number(req.query.page) || 1;
   const limit = 10;
