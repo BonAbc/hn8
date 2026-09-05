@@ -502,6 +502,7 @@ passport.deserializeUser(async (id, cb) => {
       SELECT
         id,
         email,
+        role,
         is_active,
         two_factor_enabled
       FROM my_user
