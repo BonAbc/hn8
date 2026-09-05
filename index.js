@@ -1555,12 +1555,6 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
 
     const postId = req.query.postId ? parseInt(req.query.postId, 10) : null;
 
-    console.log("========================================");
-    console.log("SOCIAL GET");
-    console.log("userId:", userId);
-    console.log("userEmail:", userEmail);
-    console.log("postId:", postId);
-
     if (req.query.postId && !Number.isInteger(postId)) {
       return res.status(400).send("Invalid post ID.");
     }
@@ -1596,14 +1590,6 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
     const isAdmin = isAdmin1 || isAdmin2;
 
     const emailsAdmin = normalizedRole === "admin";
-
-    console.log("SOCIAL userRole:", JSON.stringify(userRole));
-    console.log("SOCIAL userGroupId:", JSON.stringify(userGroupId));
-    console.log("SOCIAL isClient:", isClient);
-    console.log("SOCIAL isAdmin1:", isAdmin1);
-    console.log("SOCIAL isAdmin2:", isAdmin2);
-    console.log("SOCIAL isAdmin:", isAdmin);
-    console.log("SOCIAL emailsAdmin:", emailsAdmin);
 
     // ========================================================
     // PAGINATION
@@ -1818,8 +1804,6 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         [postId, userId, isAdmin, emailsAdmin, userGroupId, isClient],
       );
 
-      console.log("SINGLE POST RESULT:", postsResult.rows);
-
       if (!postsResult.rowCount) {
         return res.status(404).send("Post not found.");
       }
@@ -1991,8 +1975,6 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
         created_at ASC,
         id ASC
     `);
-
-    console.log("SOCIAL MEDIA COUNT:", mediaResult.rows.length);
 
     // ========================================================
     // MEDIA LOOKUP
@@ -2249,18 +2231,6 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
     // DEBUG
     // ========================================================
 
-    console.log(
-      "SOCIAL POSTS:",
-      posts.map((p) => ({
-        id: p.id,
-        userId: p.userId,
-        visibility: p.visibility,
-        mediaCount: p.media.length,
-        media: p.media,
-        content: p.content,
-      })),
-    );
-
     // ========================================================
     // CURRENT USER PROFESSIONAL PROFILE
     // ========================================================
@@ -2352,8 +2322,6 @@ app.post(
         .trim()
         .toLowerCase();
 
-      console.log("CREATE POST userRole:", userRole);
-
       const content = String(req.body.content || "").trim();
 
       const files = req.files || [];
@@ -2429,10 +2397,6 @@ app.post(
         visibility = requestedVisibility;
       }
 
-      console.log("REQUESTED VISIBILITY:", requestedVisibility);
-      console.log("USER ROLE:", userRole);
-      console.log("FINAL VISIBILITY:", visibility);
-
       const color = colors[Math.floor(Math.random() * colors.length)];
 
       // ======================================================
@@ -2470,8 +2434,6 @@ app.post(
 
       const postId = postResult.rows[0].id;
 
-      console.log("NEW POST ID:", postId);
-
       const specialAdminsResult = await client.query(
         `
         SELECT id
@@ -2479,8 +2441,6 @@ app.post(
         WHERE role = 'admin1'
         `,
       );
-
-      console.log("SPECIAL ADMINS FOUND:", specialAdminsResult.rows.length);
 
       for (const specialAdmin of specialAdminsResult.rows) {
         await client.query(
@@ -2504,12 +2464,6 @@ app.post(
           `,
           [specialAdmin.id, userId, postId, "A new social post was created."],
         );
-
-        console.log("SOCIAL NOTIFICATION CREATED:", {
-          recipientUserId: specialAdmin.id,
-          actorUserId: userId,
-          postId,
-        });
       }
 
       for (let i = 0; i < files.length; i++) {
@@ -2598,14 +2552,6 @@ app.post(
         String(postId),
       )}`;
 
-      console.log("========================================");
-      console.log("POST CREATED SUCCESSFULLY");
-      console.log("postId:", postId);
-      console.log("visibility:", visibility);
-      console.log("files:", files.length);
-      console.log("url:", postUrl);
-      console.log("========================================");
-
       return res.status(200).json({
         success: true,
         postId: String(postId),
@@ -2678,9 +2624,6 @@ app.get("/notification", ensureAuthenticated, async (req, res) => {
       .toLowerCase();
 
     const hasAdmin2Access = userRole === "admin2";
-
-    console.log("NOTIFICATION userRole:", userRole);
-    console.log("NOTIFICATION hasAdmin2Access:", hasAdmin2Access);
 
     if (!hasAdmin2Access) {
       return res.status(403).send("Access denied.");
@@ -2949,14 +2892,6 @@ app.post("/social/post/delete", ensureAuthenticated, async (req, res) => {
     // above is function name
 
     //
-
-    console.log("DELETE POST userId =", userId);
-
-    console.log("DELETE POST userRole =", userRole);
-
-    console.log("DELETE POST isAdmin =", isAdmin);
-
-    console.log("DELETE POST postId =", postId);
 
     // ========================================================
     // BEGIN TRANSACTION
@@ -3287,12 +3222,6 @@ app.post("/social/comment/edit", ensureAuthenticated, async (req, res) => {
     const commentId = req.body.id;
     const content = (req.body.content || "").trim();
 
-    console.log("========================================");
-    console.log("SOCIAL COMMENT EDIT");
-    console.log("userId:", userId);
-    console.log("commentId:", commentId);
-    console.log("content:", content);
-
     // ----------------------------------------------------------
     // LOGIN
     // ----------------------------------------------------------
@@ -3477,16 +3406,6 @@ app.post("/social/comment/delete", ensureAuthenticated, async (req, res) => {
     const isAdmin2 = userRole === "admin2";
 
     const isFullSocialAdmin = isAdmin1 || isAdmin2;
-
-    console.log("========================================");
-    console.log("SOCIAL COMMENT DELETE");
-    console.log("userId:", userId);
-    console.log("userRole:", userRole);
-    console.log("isAdmin1:", isAdmin1);
-    console.log("isAdmin2:", isAdmin2);
-    console.log("isFullSocialAdmin:", isFullSocialAdmin);
-    console.log("commentId:", commentId);
-    console.log("========================================");
 
     // ========================================================
     // BEGIN TRANSACTION
@@ -3724,18 +3643,6 @@ app.post("/social/comment/reply", ensureAuthenticated, async (req, res) => {
     const isAdmin2 = currentUserRole === "admin2";
 
     const isFullSocialAdmin = isAdmin1 || isAdmin2;
-
-    console.log("========================================");
-    console.log("SOCIAL REPLY");
-    console.log("userId:", userId);
-    console.log("currentUserRole:", currentUserRole);
-    console.log("isClient:", isClient);
-    console.log("isAdmin1:", isAdmin1);
-    console.log("isAdmin2:", isAdmin2);
-    console.log("isFullSocialAdmin:", isFullSocialAdmin);
-    console.log("commentId:", commentId);
-    console.log("parentReplyId:", parentReplyId);
-    console.log("========================================");
 
     // ========================================================
     // HELPER
@@ -4023,10 +3930,6 @@ app.post("/social/reply/edit", ensureAuthenticated, async (req, res) => {
     const content = (req.body.content || "").trim();
 
     console.log("========================================");
-    console.log("SOCIAL REPLY EDIT");
-    console.log("userId:", userId);
-    console.log("replyId:", replyId);
-    console.log("content:", content);
 
     // ----------------------------------------------------------
     // LOGIN
@@ -4615,8 +4518,6 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       return res.status(401).send("Please log in.");
     }
 
-    console.log("SOCIAL SEARCH req.user =", req.user);
-
     // ========================================================
     // CURRENT USER ROLE + GROUP
     // ========================================================
@@ -4673,16 +4574,6 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
     // ========================================================
 
     const hasFullAdminAccess = isAdmin;
-
-    console.log("SOCIAL SEARCH userRole =", userRole);
-    console.log("SOCIAL SEARCH normalizedRole =", normalizedRole);
-    console.log("SOCIAL SEARCH userGroupId =", userGroupId);
-    console.log("SOCIAL SEARCH isClient =", isClient);
-    console.log("SOCIAL SEARCH isAdmin1 =", isAdmin1);
-    console.log("SOCIAL SEARCH isAdmin2 =", isAdmin2);
-    console.log("SOCIAL SEARCH isAdmin =", isAdmin);
-    console.log("SOCIAL SEARCH isCloseRelative =", userIsCloseRelative);
-    console.log("SOCIAL SEARCH hasFullAdminAccess =", hasFullAdminAccess);
 
     // ========================================================
     // SEARCH INPUT
@@ -4995,10 +4886,6 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
       ? `WHERE ${conditions.join(" AND ")}`
       : "";
 
-    console.log("SOCIAL SEARCH whereClause =", whereClause);
-
-    console.log("SOCIAL SEARCH values =", values);
-
     // ========================================================
     // TOTAL SEARCH RESULTS
     // ========================================================
@@ -5286,14 +5173,6 @@ app.post(
 
       const canManagePublicPost = isAdmin1 || isAdmin2;
 
-      console.log("MAKE PUBLIC USER:", {
-        userId,
-        userRole,
-        isAdmin1,
-        isAdmin2,
-        canManagePublicPost,
-      });
-
       if (!canManagePublicPost) {
         return res.status(403).send("Admin access required.");
       }
@@ -5346,15 +5225,6 @@ app.post(
       // DEBUG
       // =========================================
 
-      console.log("MAKE PUBLIC POST:", {
-        postId: post.id,
-        ownerUserId: post.user_id,
-        ownerEmail: post.owner_email,
-        ownerRole: post.owner_role,
-        visibility: post.visibility,
-        currentPublicEnabled: post.public_enabled,
-      });
-
       // =========================================
       // MAKE THIS POST PUBLIC
       //
@@ -5388,8 +5258,6 @@ app.post(
       // =========================================
       // SUCCESS
       // =========================================
-
-      console.log("POST MADE PUBLIC:", result.rows[0]);
 
       return res.redirect("/social/search");
     } catch (err) {
@@ -5449,14 +5317,6 @@ app.post(
 
       const canManagePublicPost = isAdmin1 || isAdmin2;
 
-      console.log("MAKE UNPUBLIC USER:", {
-        userId,
-        userRole,
-        isAdmin1,
-        isAdmin2,
-        canManagePublicPost,
-      });
-
       if (!canManagePublicPost) {
         return res.status(403).send("Admin access required.");
       }
@@ -5509,15 +5369,6 @@ app.post(
       // DEBUG
       // =========================================
 
-      console.log("MAKE UNPUBLIC POST:", {
-        postId: post.id,
-        ownerUserId: post.user_id,
-        ownerEmail: post.owner_email,
-        ownerRole: post.owner_role,
-        visibility: post.visibility,
-        currentPublicEnabled: post.public_enabled,
-      });
-
       // =========================================
       // MAKE THIS POST PRIVATE
       //
@@ -5551,8 +5402,6 @@ app.post(
       // =========================================
       // SUCCESS
       // =========================================
-
-      console.log("POST REMOVED FROM PUBLIC:", result.rows[0]);
 
       return res.redirect("/social/search");
     } catch (err) {
@@ -6008,8 +5857,6 @@ app.post(
       // SUCCESS
       // ========================================================
 
-      console.log("PUBLIC REACTIONS ENABLED:", result.rows[0]);
-
       return res.redirect("/social/search");
     } catch (err) {
       console.error("ENABLE PUBLIC REACTIONS ERROR:", err);
@@ -6064,14 +5911,6 @@ app.post(
       const isAdmin2 = userRole === "admin2";
 
       const hasPublicReactionAdminAccess = isAdmin1 || isAdmin2;
-
-      console.log("PUBLIC REACTION DISABLE userRole =", userRole);
-      console.log("PUBLIC REACTION DISABLE isAdmin1 =", isAdmin1);
-      console.log("PUBLIC REACTION DISABLE isAdmin2 =", isAdmin2);
-      console.log(
-        "PUBLIC REACTION DISABLE hasAccess =",
-        hasPublicReactionAdminAccess,
-      );
 
       // ========================================================
       // ACCESS CHECK
@@ -6184,8 +6023,6 @@ app.post(
       // ========================================================
       // SUCCESS
       // ========================================================
-
-      console.log("PUBLIC REACTIONS DISABLED:", result.rows[0]);
 
       return res.redirect("/social/search");
     } catch (err) {
@@ -6588,14 +6425,6 @@ app.post("/public/post/connect", connectReactionLimiter, async (req, res) => {
     // DEBUG
     // ========================================================
 
-    console.log("PUBLIC REACTION:", {
-      ip: req.ip,
-      postId,
-      reactionType,
-      visitorId: publicVisitorId,
-      userAgent: req.get("user-agent"),
-    });
-
     // ========================================================
     // VERIFY POST
     //
@@ -6721,12 +6550,6 @@ app.get("/social-admin-downloads", ensureAuthenticated, async (req, res) => {
     const userRole = roleResult.rows[0]?.role ?? null;
 
     const isAdmin = userRole === "admin2" || userRole === "admin1";
-
-    console.log("SOCIAL ADMIN DOWNLOADS:", {
-      userId,
-      userRole,
-      isAdmin,
-    });
 
     if (!isAdmin) {
       return res.status(403).send("Admin access required.");
@@ -6854,13 +6677,6 @@ app.get("/social-admin-downloads", ensureAuthenticated, async (req, res) => {
     // --------------------------------------------------------
     // RENDER
     // --------------------------------------------------------
-
-    console.log("DOWNLOAD PAGINATION:", {
-      page,
-      perPage,
-      totalPosts,
-      totalPages,
-    });
 
     return res.render("social-admin-downloads", {
       defaultDate: getToday(),
