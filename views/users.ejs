@@ -319,8 +319,11 @@
   <% if (currentPage > 1) { %>
 
   
-  <a>  href="/users/loveme?page=<%= currentPage - 1 %><%= groupId ? '&group_id=' + groupId : '' %><%= role ? '&role=' + encodeURIComponent(role) : '' %>"
-
+ 
+     <a
+      href="/users/loveme?page=<%= currentPage - 1 %><%= groupId ? '&group_id=' + groupId : '' %><%= role ? '&role=' + encodeURIComponent(role) : '' %>"
+      class="social-search-page-button social-search-page-prev"
+    >
       ← Previous
     </a>
 
