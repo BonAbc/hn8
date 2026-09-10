@@ -8363,12 +8363,11 @@ app.post(
   },
 );
 
-//
 // POST /live/:id/start
 //
 // This route ONLY starts an EXISTING broadcast.
 //
-app.get("/live/:id", ensureAuthenticated, async (req, res) => {
+app.get("/live/:id", async (req, res) => {
   try {
     const broadcastId = String(req.params.id || "").trim();
 
