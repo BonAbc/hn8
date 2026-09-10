@@ -9313,17 +9313,21 @@ app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
       return res.status(400).send("Invalid live broadcast ID.");
     }
 
+    // =====================================================
+    // GET RECORDING
+    // =====================================================
+
     const result = await db.query(
       `
-      SELECT
-        id,
-        title,
-        recording_path
-      FROM live_broadcasts
-      WHERE id = $1
-        AND recording_path IS NOT NULL
-      LIMIT 1
-      `,
+        SELECT
+          id,
+          title,
+          recording_path
+        FROM live_broadcasts
+        WHERE id = $1
+          AND recording_path IS NOT NULL
+        LIMIT 1
+        `,
       [broadcastId],
     );
 
@@ -9333,38 +9337,50 @@ app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
 
     const broadcast = result.rows[0];
 
-    const recordingPath = String(broadcast.recording_path).trim();
+    const recordingPath = String(broadcast.recording_path || "").trim();
 
-    // --------------------------------------------------------
-    // GET FILENAME ONLY
-    // --------------------------------------------------------
+    if (!recordingPath) {
+      return res.status(404).send("Recording path is empty.");
+    }
+
+    // =====================================================
+    // BUILD PHYSICAL FILE PATH
+    // =====================================================
+
+    const uploadDir = path.resolve(process.cwd(), "public", "uploads", "live");
 
     const filename = path.basename(recordingPath);
 
-    // --------------------------------------------------------
-    // BUILD REAL FILE PATH
-    // --------------------------------------------------------
+    const filePath = path.resolve(uploadDir, filename);
 
-    const liveDirectory = path.resolve(
-      process.cwd(),
-      "public",
-      "uploads",
-      "live",
-    );
-
-    const filePath = path.resolve(liveDirectory, filename);
-
-    // --------------------------------------------------------
+    // =====================================================
     // SECURITY
-    // --------------------------------------------------------
+    // =====================================================
 
-    if (!filePath.startsWith(liveDirectory + path.sep)) {
+    if (!filePath.startsWith(uploadDir + path.sep)) {
+      console.error("❌ INVALID RECORDING PATH:", {
+        recordingPath,
+        filePath,
+      });
+
       return res.status(403).send("Invalid recording path.");
     }
 
-    // --------------------------------------------------------
-    // CHECK FILE
-    // --------------------------------------------------------
+    // =====================================================
+    // DEBUG
+    // =====================================================
+
+    console.log("==========================================");
+    console.log("LIVE DOWNLOAD");
+    console.log("==========================================");
+    console.log("Broadcast ID:", broadcast.id);
+    console.log("DB recording_path:", recordingPath);
+    console.log("Filename:", filename);
+    console.log("Upload directory:", uploadDir);
+    console.log("Physical file:", filePath);
+    console.log("Exists:", fs.existsSync(filePath));
+
+    // =====================================================
 
     if (!fs.existsSync(filePath)) {
       console.error("❌ FILE NOT FOUND:", filePath);
@@ -9372,21 +9388,47 @@ app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
       return res.status(404).send("Recording file not found.");
     }
 
-    // --------------------------------------------------------
-    // DOWNLOAD
-    // --------------------------------------------------------
+    // =====================================================
+    // GET REAL EXTENSION
+    // =====================================================
 
-    return res.download(filePath, `live-${broadcast.id}.webm`, (err) => {
+    const extension = path.extname(filename).toLowerCase();
+
+    const downloadName = `live-${broadcast.id}${extension || ".webm"}`;
+
+    console.log("Download filename:", downloadName);
+
+    // =====================================================
+    // DOWNLOAD
+    // =====================================================
+
+    return res.download(filePath, downloadName, (err) => {
       if (err) {
-        console.error("❌ DOWNLOAD ERROR:", err);
-      } else {
-        console.log("✅ RECORDING DOWNLOADED.");
+        console.error("==========================================");
+        console.error("❌ DOWNLOAD ERROR");
+        console.error("==========================================");
+        console.error(err);
+
+        // Don't attempt another response if Express
+        // already sent the download response.
+        if (!res.headersSent) {
+          res.status(500).send("Unable to download recording.");
+        }
+
+        return;
       }
+
+      console.log("✅ RECORDING DOWNLOADED:", downloadName);
     });
   } catch (err) {
-    console.error("❌ LIVE DOWNLOAD ERROR:", err);
+    console.error("==========================================");
+    console.error("❌ LIVE DOWNLOAD ROUTE ERROR");
+    console.error("==========================================");
+    console.error(err);
 
-    return res.status(500).send("Unable to download live recording.");
+    if (!res.headersSent) {
+      return res.status(500).send("Unable to download live recording.");
+    }
   }
 });
 
