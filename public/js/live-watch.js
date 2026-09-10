@@ -617,22 +617,24 @@ document.addEventListener("DOMContentLoaded", () => {
   // RECORDING MIME TYPE
   // ============================================================
 
+  // ============================================================
+  // RECORDING MIME TYPE
+  // ============================================================
+
   function getRecordingMimeType() {
     if (!window.MediaRecorder) {
       return "";
     }
 
-    /*
-     * MICROPHONE ONLY
-     *
-     * Safari commonly supports audio/mp4.
-     * Chrome/Firefox commonly support audio/webm.
-     */
+    // ----------------------------------------------------------
+    // MICROPHONE ONLY
+    // ----------------------------------------------------------
+
     if (broadcastMode === "microphone") {
       const audioTypes = [
-        "audio/mp4",
         "audio/webm;codecs=opus",
         "audio/webm",
+        "audio/mp4",
         "audio/ogg;codecs=opus",
       ];
 
@@ -642,27 +644,39 @@ document.addEventListener("DOMContentLoaded", () => {
             typeof MediaRecorder.isTypeSupported === "function" &&
             MediaRecorder.isTypeSupported(type)
           ) {
+            console.log("LIVE RECORDING: Supported audio MIME:", type);
+
             return type;
           }
-        } catch {}
+        } catch (error) {
+          console.warn("LIVE RECORDING: MIME test failed:", type, error);
+        }
       }
 
       return "";
     }
 
-    /*
-     * CAMERA ONLY
-     *
-     * BOTH CAMERA + MICROPHONE
-     *
-     * Both produce a video container.
-     */
+    // ----------------------------------------------------------
+    // CAMERA / CAMERA + MICROPHONE
+    // ----------------------------------------------------------
+    //
+    // IMPORTANT:
+    //
+    // Chrome / Edge / Firefox:
+    //     WebM is preferred.
+    //
+    // Safari:
+    //     MP4 is used when supported.
+    //
+    // We do NOT force MP4 on Chrome/Edge.
+    // ----------------------------------------------------------
+
     const videoTypes = [
-      "video/mp4;codecs=h264,aac",
-      "video/mp4",
       "video/webm;codecs=vp9,opus",
       "video/webm;codecs=vp8,opus",
       "video/webm",
+      "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+      "video/mp4",
     ];
 
     for (const type of videoTypes) {
@@ -671,9 +685,13 @@ document.addEventListener("DOMContentLoaded", () => {
           typeof MediaRecorder.isTypeSupported === "function" &&
           MediaRecorder.isTypeSupported(type)
         ) {
+          console.log("LIVE RECORDING: Supported video MIME:", type);
+
           return type;
         }
-      } catch {}
+      } catch (error) {
+        console.warn("LIVE RECORDING: MIME test failed:", type, error);
+      }
     }
 
     return "";
@@ -689,31 +707,32 @@ document.addEventListener("DOMContentLoaded", () => {
       .split(";")[0]
       .trim();
 
-    if (type === "video/mp4") {
-      return "mp4";
-    }
+    switch (type) {
+      case "video/mp4":
+        return "mp4";
 
-    if (type === "audio/mp4") {
-      return "m4a";
-    }
+      case "audio/mp4":
+        return "m4a";
 
-    if (type === "video/quicktime") {
-      return "mov";
-    }
+      case "video/quicktime":
+        return "mov";
 
-    if (type === "audio/mpeg") {
-      return "mp3";
-    }
+      case "audio/mpeg":
+        return "mp3";
 
-    if (type === "audio/ogg" || type === "video/ogg") {
-      return "ogg";
-    }
+      case "video/ogg":
+        return "ogv";
 
-    if (type.includes("webm")) {
-      return "webm";
-    }
+      case "audio/ogg":
+        return "ogg";
 
-    return "webm";
+      case "video/webm":
+      case "audio/webm":
+        return "webm";
+
+      default:
+        return "webm";
+    }
   }
 
   // ============================================================
@@ -722,76 +741,189 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function startRecording() {
     if (!canControlLive || !localStream) {
-      return;
+      console.warn("LIVE RECORDING: Cannot start.", {
+        canControlLive,
+        hasLocalStream: !!localStream,
+      });
+
+      return false;
     }
 
     if (!window.MediaRecorder) {
-      console.warn("MediaRecorder is not supported by this browser.");
+      console.error("LIVE RECORDING: MediaRecorder is not supported.");
 
-      return;
+      setStatus("This browser does not support live recording.", "error");
+
+      return false;
     }
+
+    // ----------------------------------------------------------
+    // Prevent duplicate recorder
+    // ----------------------------------------------------------
 
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
       console.log("LIVE RECORDING: Already recording.");
 
-      return;
+      return true;
     }
 
     recordedChunks = [];
 
-    const mimeType = getRecordingMimeType();
+    const selectedMimeType = getRecordingMimeType();
 
-    console.log("LIVE RECORDING: Selected MIME type:", {
+    console.log("==========================================");
+
+    console.log("LIVE RECORDING: CREATE RECORDER");
+
+    console.log("==========================================");
+
+    console.log({
       mode: broadcastMode,
-      mimeType: mimeType || "browser default",
+      selectedMimeType: selectedMimeType || "browser default",
+      tracks: localStream.getTracks().map((track) => ({
+        kind: track.kind,
+        enabled: track.enabled,
+        readyState: track.readyState,
+      })),
     });
 
+    // ----------------------------------------------------------
+    // Create MediaRecorder
+    // ----------------------------------------------------------
+
     try {
-      /*
-       * IMPORTANT:
-       *
-       * Only provide mimeType when the browser explicitly
-       * says it supports it.
-       */
-      mediaRecorder = mimeType
-        ? new MediaRecorder(localStream, {
-            mimeType,
-            audioBitsPerSecond: 128000,
-          })
-        : new MediaRecorder(localStream, {
-            audioBitsPerSecond: 128000,
-          });
+      if (selectedMimeType) {
+        mediaRecorder = new MediaRecorder(localStream, {
+          mimeType: selectedMimeType,
+
+          /*
+           * Audio bitrate is useful for microphone
+           * and video+audio recordings.
+           *
+           * Browser controls video bitrate.
+           */
+          audioBitsPerSecond: 128000,
+        });
+      } else {
+        /*
+         * Let browser choose its native format.
+         */
+        mediaRecorder = new MediaRecorder(localStream);
+      }
     } catch (error) {
-      console.error("MEDIA RECORDER ERROR:", error);
+      console.warn("LIVE RECORDING: Selected MIME failed.", {
+        selectedMimeType,
+        error,
+      });
 
-      mediaRecorder = null;
+      /*
+       * Second attempt:
+       * completely browser-controlled recorder.
+       */
 
-      return;
+      try {
+        mediaRecorder = new MediaRecorder(localStream);
+      } catch (fallbackError) {
+        console.error(
+          "LIVE RECORDING: Could not create recorder.",
+          fallbackError,
+        );
+
+        mediaRecorder = null;
+
+        setStatus("Unable to start recording in this browser.", "error");
+
+        return false;
+      }
     }
 
+    // ----------------------------------------------------------
+    // Actual MIME
+    // ----------------------------------------------------------
+
+    console.log(
+      "LIVE RECORDING: Actual MediaRecorder MIME:",
+      mediaRecorder.mimeType,
+    );
+
+    // ----------------------------------------------------------
+    // DATA AVAILABLE
+    // ----------------------------------------------------------
+
     mediaRecorder.ondataavailable = (event) => {
-      if (event.data && event.data.size > 0) {
+      if (!event.data) {
+        return;
+      }
+
+      console.log("LIVE RECORDING: Data chunk:", {
+        size: event.data.size,
+        type: event.data.type,
+      });
+
+      if (event.data.size > 0) {
         recordedChunks.push(event.data);
       }
     };
 
+    // ----------------------------------------------------------
+    // ERROR
+    // ----------------------------------------------------------
+
+    mediaRecorder.onerror = (event) => {
+      console.error(
+        "LIVE RECORDING: MediaRecorder error:",
+        event?.error || event,
+      );
+    };
+
+    // ----------------------------------------------------------
+    // STOP PROMISE
+    // ----------------------------------------------------------
+
     recordingPromise = new Promise((resolve) => {
       mediaRecorder.onstop = () => {
+        console.log("LIVE RECORDING: MediaRecorder stopped.");
+
         resolve();
       };
     });
 
-    mediaRecorder.onerror = (event) => {
-      console.error("MEDIA RECORDER ERROR:", event.error);
-    };
+    // ----------------------------------------------------------
+    // START
+    // ----------------------------------------------------------
 
-    mediaRecorder.start(1000);
+    try {
+      /*
+       * Request a chunk approximately every second.
+       *
+       * This avoids keeping the entire recording in one
+       * browser buffer.
+       */
 
-    console.log(
-      "LIVE RECORDING STARTED:",
-      broadcastMode,
-      mediaRecorder.mimeType,
-    );
+      mediaRecorder.start(1000);
+    } catch (error) {
+      console.error("LIVE RECORDING: start() failed:", error);
+
+      mediaRecorder = null;
+      recordingPromise = null;
+
+      setStatus("Unable to start live recording.", "error");
+
+      return false;
+    }
+
+    console.log("==========================================");
+
+    console.log("LIVE RECORDING STARTED");
+
+    console.log("==========================================");
+
+    console.log({
+      state: mediaRecorder.state,
+      mimeType: mediaRecorder.mimeType,
+    });
+
+    return true;
   }
 
   // ============================================================
@@ -800,52 +932,117 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function stopAndUploadRecording() {
     if (!mediaRecorder) {
-      console.log("LIVE RECORDING: No recorder to stop.");
+      console.warn("LIVE RECORDING: No recorder exists.");
 
       return null;
     }
 
     if (mediaRecorder.state === "inactive") {
-      console.log("LIVE RECORDING: Recorder already inactive.");
+      console.warn("LIVE RECORDING: Recorder already inactive.");
 
       return null;
     }
 
     setStatus("Finishing live recording...", "warning");
 
-    console.log("LIVE RECORDING: Stopping recorder...");
-
     const recorder = mediaRecorder;
 
-    recorder.stop();
+    console.log("==========================================");
+
+    console.log("LIVE RECORDING: STOPPING");
+
+    console.log("==========================================");
+
+    console.log({
+      state: recorder.state,
+      mimeType: recorder.mimeType,
+      chunksBeforeStop: recordedChunks.length,
+    });
+
+    // ----------------------------------------------------------
+    // Ask browser to flush buffered data
+    // ----------------------------------------------------------
+
+    try {
+      if (
+        recorder.state === "recording" &&
+        typeof recorder.requestData === "function"
+      ) {
+        recorder.requestData();
+      }
+    } catch (error) {
+      console.warn("LIVE RECORDING: requestData() failed:", error);
+    }
+
+    // ----------------------------------------------------------
+    // Stop
+    // ----------------------------------------------------------
+
+    try {
+      recorder.stop();
+    } catch (error) {
+      console.error("LIVE RECORDING: stop() failed:", error);
+
+      mediaRecorder = null;
+      recordingPromise = null;
+      recordedChunks = [];
+
+      throw new Error("Unable to stop the live recording.");
+    }
+
+    // ----------------------------------------------------------
+    // Wait for final stop event
+    // ----------------------------------------------------------
 
     if (recordingPromise) {
       await recordingPromise;
     }
 
-    /*
-     * Use the MIME type reported by the actual MediaRecorder.
-     *
-     * This is important on Safari/iPhone because the browser
-     * can choose the actual container format.
-     */
-    const actualMimeType =
-      recorder.mimeType ||
-      recordedChunks[0]?.type ||
-      getRecordingMimeType() ||
-      "";
+    // ----------------------------------------------------------
+    // Determine actual MIME type
+    // ----------------------------------------------------------
 
-    console.log("LIVE RECORDING: Actual MIME type:", actualMimeType);
+    const chunkMimeType =
+      recordedChunks.find((chunk) => chunk && chunk.type)?.type || "";
 
-    const recordingBlob = new Blob(recordedChunks, {
-      type: actualMimeType || undefined,
+    const actualMimeType = recorder.mimeType || chunkMimeType || "";
+
+    console.log("LIVE RECORDING: Final recording information:", {
+      recorderMimeType: recorder.mimeType,
+      chunkMimeType,
+      actualMimeType,
+      chunkCount: recordedChunks.length,
     });
 
-    console.log("LIVE RECORDING: Blob created:", {
+    // ----------------------------------------------------------
+    // Create Blob
+    // ----------------------------------------------------------
+
+    const recordingBlob = new Blob(
+      recordedChunks,
+      actualMimeType
+        ? {
+            type: actualMimeType,
+          }
+        : undefined,
+    );
+
+    console.log("==========================================");
+
+    console.log("LIVE RECORDING: FINAL BLOB");
+
+    console.log("==========================================");
+
+    console.log({
       size: recordingBlob.size,
       type: recordingBlob.type,
+      chunks: recordedChunks.length,
       mode: broadcastMode,
     });
+
+    // ----------------------------------------------------------
+    // Clear recording state
+    // ----------------------------------------------------------
 
     recordedChunks = [];
 
@@ -853,50 +1050,69 @@ document.addEventListener("DOMContentLoaded", () => {
 
     recordingPromise = null;
 
-    if (!recordingBlob.size) {
-      console.warn("LIVE RECORDING: Empty recording.");
+    // ----------------------------------------------------------
+    // NEVER upload an empty recording
+    // ----------------------------------------------------------
 
-      return null;
+    if (!recordingBlob.size) {
+      console.error("LIVE RECORDING: EMPTY RECORDING.");
+
+      throw new Error("The live recording was empty and could not be saved.");
     }
 
-    // ==========================================================
-    // FILE NAME
-    // ==========================================================
+    // ----------------------------------------------------------
+    // MIME
+    // ----------------------------------------------------------
 
-    const extension = getRecordingExtension(
-      recordingBlob.type || actualMimeType,
-    );
+    const uploadMimeType =
+      recordingBlob.type || actualMimeType || chunkMimeType || "";
+
+    // ----------------------------------------------------------
+    // Extension
+    // ----------------------------------------------------------
+
+    const extension = getRecordingExtension(uploadMimeType);
 
     const fileName = `live-${broadcastId}.${extension}`;
 
-    console.log("LIVE RECORDING: Upload file:", {
+    console.log("==========================================");
+
+    console.log("LIVE RECORDING: FILE");
+
+    console.log("==========================================");
+
+    console.log({
       fileName,
-      blobType: recordingBlob.type,
-      recorderType: actualMimeType,
+      mimeType: uploadMimeType,
+      extension,
+      size: recordingBlob.size,
     });
 
-    // ==========================================================
-    // FORM DATA
-    // ==========================================================
+    // ----------------------------------------------------------
+    // FormData
+    // ----------------------------------------------------------
 
     const formData = new FormData();
 
     /*
-     * DO NOT manually set Content-Type.
+     * IMPORTANT:
      *
-     * The browser must generate the multipart boundary.
+     * Keep this exactly as FormData.
+     *
+     * DO NOT manually set:
+     *
+     * Content-Type: multipart/form-data
+     *
+     * fetch() must create the multipart boundary.
      */
+
     formData.append("recording", recordingBlob, fileName);
 
-    // ==========================================================
+    // ----------------------------------------------------------
     // UPLOAD
-    // ==========================================================
+    // ----------------------------------------------------------
 
-    console.log("LIVE RECORDING: Uploading...", {
-      fileName,
-      blobType: recordingBlob.type,
-      size: recordingBlob.size,
-    });
+    console.log("LIVE RECORDING: Uploading...");
 
     const response = await fetch(
       `/live/${encodeURIComponent(broadcastId)}/recording`,
@@ -913,7 +1129,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const result = await readServerResponse(response);
 
-    console.log("RECORDING UPLOAD:", response.status, result);
+    console.log("LIVE RECORDING: Upload response:", {
+      status: response.status,
+      ok: response.ok,
+      result,
+    });
 
     if (!response.ok || result.success !== true) {
       throw new Error(
@@ -922,7 +1142,13 @@ document.addEventListener("DOMContentLoaded", () => {
       );
     }
 
-    console.log("LIVE RECORDING SAVED:", result);
+    console.log("==========================================");
+
+    console.log("✅ LIVE RECORDING SAVED");
+
+    console.log("==========================================");
+
+    console.log(result);
 
     return result;
   }
@@ -976,15 +1202,21 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       await displayLocalMedia();
-
-      startRecording();
+      const recordingStarted = startRecording();
 
       console.log("RECORDING STATE AFTER START:", {
+        started: recordingStarted,
         recorder: mediaRecorder,
         state: mediaRecorder?.state,
         mimeType: mediaRecorder?.mimeType,
         chunks: recordedChunks.length,
       });
+
+      if (!recordingStarted) {
+        throw new Error(
+          "Live started, but recording could not be started in this browser.",
+        );
+      }
 
       setStatus(
         broadcastMode === "microphone"

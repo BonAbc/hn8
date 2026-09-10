@@ -2,6 +2,10 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
+// ============================================================
+// UPLOAD DIRECTORY
+// ============================================================
+
 const uploadDir = "/uploads/live";
 
 // Make sure upload directory exists
@@ -9,30 +13,15 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-/*
- * Convert MIME type → extension.
- *
- * Recording modes:
- *
- * 1. Microphone only
- *    audio/mp4   → .m4a
- *    audio/webm  → .webm
- *    audio/mpeg  → .mp3
- *    audio/ogg   → .ogg
- *
- * 2. Video only
- *    video/mp4       → .mp4
- *    video/webm      → .webm
- *    video/quicktime → .mov
- *
- * 3. Microphone + Video
- *    video/mp4 / video/webm
- *
- * A file containing video + microphone is still video/*
- * because the container contains a video stream and an audio stream.
- */
+// ============================================================
+// MIME TYPE → EXTENSION
+// ============================================================
+
 const mimeToExtension = {
+  // ----------------------------------------------------------
   // VIDEO
+  // ----------------------------------------------------------
+
   "video/mp4": ".mp4",
   "video/webm": ".webm",
   "video/ogg": ".ogv",
@@ -40,7 +29,10 @@ const mimeToExtension = {
   "video/x-m4v": ".m4v",
   "video/x-matroska": ".mkv",
 
+  // ----------------------------------------------------------
   // AUDIO
+  // ----------------------------------------------------------
+
   "audio/mp4": ".m4a",
   "audio/webm": ".webm",
   "audio/mpeg": ".mp3",
@@ -49,11 +41,15 @@ const mimeToExtension = {
   "audio/x-mpeg": ".mp3",
 };
 
-/*
- * MIME types that are normally accepted.
- */
+// ============================================================
+// ALLOWED MIME TYPES
+// ============================================================
+
 const allowedMimeTypes = new Set([
+  // ----------------------------------------------------------
   // VIDEO
+  // ----------------------------------------------------------
+
   "video/mp4",
   "video/webm",
   "video/ogg",
@@ -61,7 +57,10 @@ const allowedMimeTypes = new Set([
   "video/x-m4v",
   "video/x-matroska",
 
+  // ----------------------------------------------------------
   // AUDIO
+  // ----------------------------------------------------------
+
   "audio/mp4",
   "audio/webm",
   "audio/mpeg",
@@ -70,12 +69,18 @@ const allowedMimeTypes = new Set([
   "audio/x-mpeg",
 ]);
 
-/*
- * Valid media extensions.
- *
- * These are also used for the Safari/iPhone fallback because
- * Safari can occasionally report a media upload as text/plain.
- */
+// ============================================================
+// ALLOWED EXTENSIONS
+// ============================================================
+//
+// Used as a safe fallback when a browser sends a generic MIME
+// type such as text/plain or application/octet-stream.
+//
+// IMPORTANT:
+// We only accept known media extensions here.
+// Arbitrary text/plain files are NOT accepted.
+//
+
 const allowedExtensions = new Set([
   // VIDEO
   ".mp4",
@@ -91,23 +96,31 @@ const allowedExtensions = new Set([
   ".ogg",
 ]);
 
+// ============================================================
+// STORAGE
+// ============================================================
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
   },
 
   filename: (req, file, cb) => {
-    /*
-     * First try to use the extension supplied by the client.
-     *
-     * Example:
-     * live-6.mp4 → .mp4
-     */
+    // --------------------------------------------------------
+    // Get extension from client filename first.
+    //
+    // Example:
+    //
+    // live-8.mp4
+    // live-8.webm
+    // --------------------------------------------------------
+
     let ext = path.extname(file.originalname || "").toLowerCase();
 
-    /*
-     * If there is no extension, derive it from the MIME type.
-     */
+    // --------------------------------------------------------
+    // If filename has no extension, derive from MIME type.
+    // --------------------------------------------------------
+
     if (!ext) {
       const mimeType = String(file.mimetype || "")
         .toLowerCase()
@@ -117,13 +130,28 @@ const storage = multer.diskStorage({
       ext = mimeToExtension[mimeType] || "";
     }
 
+    // --------------------------------------------------------
+    // Final generated filename.
+    // --------------------------------------------------------
+
     const filename = `live-${Date.now()}-${Math.random()
       .toString(36)
       .slice(2)}${ext}`;
 
+    console.log("LIVE RECORDING: Storage filename:", {
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      extension: ext,
+      filename,
+    });
+
     cb(null, filename);
   },
 });
+
+// ============================================================
+// MULTER UPLOAD
+// ============================================================
 
 const liveRecordingUpload = multer({
   storage,
@@ -132,94 +160,133 @@ const liveRecordingUpload = multer({
     // Maximum recording size: 2 GB
     fileSize: 2 * 1024 * 1024 * 1024,
 
-    // One recording per request
+    // Only one recording per request
     files: 1,
   },
 
-  fileFilter: (req, file, cb) => {
-    /*
-     * Normalize MIME.
-     *
-     * Examples:
-     *
-     * video/mp4
-     * video/mp4;codecs=avc1
-     *
-     * both become:
-     *
-     * video/mp4
-     */
-    const mimeType = String(file.mimetype || "")
-      .toLowerCase()
-      .split(";")[0]
-      .trim();
+  // ==========================================================
+  // FILE FILTER
+  // ==========================================================
 
-    /*
-     * Get extension from filename.
-     */
+  fileFilter: (req, file, cb) => {
+    // --------------------------------------------------------
+    // Normalize MIME type.
+    //
+    // Examples:
+    //
+    // video/mp4
+    // video/mp4;codecs=avc1
+    //
+    // become:
+    //
+    // video/mp4
+    // --------------------------------------------------------
+
+    const receivedMimeType = String(file.mimetype || "");
+
+    const mimeType = receivedMimeType.toLowerCase().split(";")[0].trim();
+
+    // --------------------------------------------------------
+    // Get filename extension.
+    // --------------------------------------------------------
+
     const extension = path.extname(file.originalname || "").toLowerCase();
 
-    console.log("LIVE RECORDING UPLOAD:", {
+    // --------------------------------------------------------
+    // DEBUG
+    // --------------------------------------------------------
+
+    console.log("==========================================");
+    console.log("LIVE RECORDING UPLOAD");
+    console.log("==========================================");
+
+    console.log({
       originalname: file.originalname,
-      mimetype: file.mimetype,
+      receivedMimeType,
       normalizedMimeType: mimeType,
       extension,
     });
 
-    /*
-     * =========================================================
-     * NORMAL CASE
-     * =========================================================
-     *
-     * Chrome / Firefox / Safari when MIME is reported correctly.
-     */
+    // ========================================================
+    // 1. NORMAL MEDIA MIME TYPE
+    // ========================================================
+    //
+    // Chrome
+    // Edge
+    // Firefox
+    // Safari
+    //
+    // Normal examples:
+    //
+    // video/webm
+    // video/mp4
+    // audio/webm
+    // audio/mp4
+    //
+
     if (allowedMimeTypes.has(mimeType)) {
       console.log("LIVE RECORDING: Accepted MIME type:", {
         mimeType,
         extension,
       });
 
+      console.log("==========================================");
+
       return cb(null, true);
     }
 
-    /*
-     * =========================================================
-     * SAFARI / IPHONE FALLBACK
-     * =========================================================
-     *
-     * Safari/iPhone can sometimes send:
-     *
-     *   filename = live-6.mp4
-     *   mimetype  = text/plain
-     *
-     * The actual recording can still be a valid media file.
-     *
-     * We ONLY accept text/plain when the filename has a known
-     * audio/video media extension.
-     *
-     * We do NOT accept arbitrary text/plain uploads.
-     */
-    if (mimeType === "text/plain" && allowedExtensions.has(extension)) {
-      console.warn("LIVE RECORDING: Safari/iPhone MIME fallback:", {
+    // ========================================================
+    // 2. GENERIC MIME FALLBACK
+    // ========================================================
+    //
+    // Some browsers/devices may incorrectly send:
+    //
+    // text/plain
+    // application/octet-stream
+    //
+    // while the filename still contains a known media
+    // extension.
+    //
+    // Example:
+    //
+    // live-8.mp4
+    // text/plain
+    //
+    // We allow this ONLY when the extension is known to be a
+    // supported audio/video format.
+    //
+
+    const genericMimeTypes = new Set([
+      "text/plain",
+      "application/octet-stream",
+      "",
+    ]);
+
+    if (genericMimeTypes.has(mimeType) && allowedExtensions.has(extension)) {
+      console.warn("LIVE RECORDING: Generic MIME fallback accepted:", {
         originalname: file.originalname,
-        receivedMimeType: file.mimetype,
+        receivedMimeType,
+        normalizedMimeType: mimeType,
         extension,
       });
 
+      console.log("==========================================");
+
       return cb(null, true);
     }
 
-    /*
-     * =========================================================
-     * REJECT
-     * =========================================================
-     */
+    // ========================================================
+    // 3. REJECT UNSUPPORTED FILE
+    // ========================================================
+
     console.error("LIVE RECORDING: Rejected unsupported file:", {
       originalname: file.originalname,
-      mimetype: file.mimetype,
+      receivedMimeType,
       normalizedMimeType: mimeType,
       extension,
     });
+
+    console.log("==========================================");
 
     return cb(
       new Error(
@@ -230,5 +297,9 @@ const liveRecordingUpload = multer({
     );
   },
 });
+
+// ============================================================
+// EXPORT
+// ============================================================
 
 export default liveRecordingUpload;
