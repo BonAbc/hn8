@@ -275,7 +275,7 @@ const liveRecordingUpload = multer({
       return cb(null, true);
     }
 
-    // ========================================================
+    //
     // 3. REJECT UNSUPPORTED FILE
     // ========================================================
 
