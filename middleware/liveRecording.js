@@ -6,7 +6,7 @@ import fs from "fs";
 // UPLOAD DIRECTORY
 // ============================================================
 
-const uploadDir = path.resolve(process.cwd(), "uploads", "live");
+const uploadDir = "/uploads/live";
 
 // Make sure upload directory exists
 if (!fs.existsSync(uploadDir)) {
