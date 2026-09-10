@@ -41,6 +41,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const broadcastId = String(data.id || "").trim();
 
+  /*
+   * Supported modes:
+   *
+   * microphone
+   * camera
+   * both
+   */
   const broadcastMode = String(data.mode || "both")
     .trim()
     .toLowerCase();
@@ -497,6 +504,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       showAudioPlaceholder("🎤 Your microphone is LIVE — speaking now.");
+
       return;
     }
 
@@ -606,10 +614,20 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ============================================================
-  // RECORDING
+  // RECORDING MIME TYPE
   // ============================================================
 
   function getRecordingMimeType() {
+    if (!window.MediaRecorder) {
+      return "";
+    }
+
+    /*
+     * MICROPHONE ONLY
+     *
+     * Safari commonly supports audio/mp4.
+     * Chrome/Firefox commonly support audio/webm.
+     */
     if (broadcastMode === "microphone") {
       const audioTypes = [
         "audio/mp4",
@@ -619,18 +637,26 @@ document.addEventListener("DOMContentLoaded", () => {
       ];
 
       for (const type of audioTypes) {
-        if (
-          window.MediaRecorder &&
-          typeof MediaRecorder.isTypeSupported === "function" &&
-          MediaRecorder.isTypeSupported(type)
-        ) {
-          return type;
-        }
+        try {
+          if (
+            typeof MediaRecorder.isTypeSupported === "function" &&
+            MediaRecorder.isTypeSupported(type)
+          ) {
+            return type;
+          }
+        } catch {}
       }
 
       return "";
     }
 
+    /*
+     * CAMERA ONLY
+     *
+     * BOTH CAMERA + MICROPHONE
+     *
+     * Both produce a video container.
+     */
     const videoTypes = [
       "video/mp4;codecs=h264,aac",
       "video/mp4",
@@ -640,17 +666,59 @@ document.addEventListener("DOMContentLoaded", () => {
     ];
 
     for (const type of videoTypes) {
-      if (
-        window.MediaRecorder &&
-        typeof MediaRecorder.isTypeSupported === "function" &&
-        MediaRecorder.isTypeSupported(type)
-      ) {
-        return type;
-      }
+      try {
+        if (
+          typeof MediaRecorder.isTypeSupported === "function" &&
+          MediaRecorder.isTypeSupported(type)
+        ) {
+          return type;
+        }
+      } catch {}
     }
 
     return "";
   }
+
+  // ============================================================
+  // RECORDING EXTENSION
+  // ============================================================
+
+  function getRecordingExtension(mimeType) {
+    const type = String(mimeType || "")
+      .toLowerCase()
+      .split(";")[0]
+      .trim();
+
+    if (type === "video/mp4") {
+      return "mp4";
+    }
+
+    if (type === "audio/mp4") {
+      return "m4a";
+    }
+
+    if (type === "video/quicktime") {
+      return "mov";
+    }
+
+    if (type === "audio/mpeg") {
+      return "mp3";
+    }
+
+    if (type === "audio/ogg" || type === "video/ogg") {
+      return "ogg";
+    }
+
+    if (type.includes("webm")) {
+      return "webm";
+    }
+
+    return "webm";
+  }
+
+  // ============================================================
+  // RECORDING
+  // ============================================================
 
   function startRecording() {
     if (!canControlLive || !localStream) {
@@ -673,7 +741,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const mimeType = getRecordingMimeType();
 
+    console.log("LIVE RECORDING: Selected MIME type:", {
+      mode: broadcastMode,
+      mimeType: mimeType || "browser default",
+    });
+
     try {
+      /*
+       * IMPORTANT:
+       *
+       * Only provide mimeType when the browser explicitly
+       * says it supports it.
+       */
       mediaRecorder = mimeType
         ? new MediaRecorder(localStream, {
             mimeType,
@@ -716,129 +795,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ============================================================
-  // SAFARI / IPHONE SAVE HELPERS
+  // STOP + UPLOAD RECORDING
   // ============================================================
-
-  function isIPhoneOrIPad() {
-    const userAgent = navigator.userAgent || "";
-
-    return (
-      /iPad|iPhone|iPod/.test(userAgent) ||
-      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
-    );
-  }
-
-  function getRecordingExtension(mimeType) {
-    const type = String(mimeType || "").toLowerCase();
-
-    if (type.includes("mp4")) {
-      return "mp4";
-    }
-
-    if (type.includes("ogg")) {
-      return "ogg";
-    }
-
-    return "webm";
-  }
-
-  function getRecordingFileName(mimeType) {
-    return `live-${broadcastId}.${getRecordingExtension(mimeType)}`;
-  }
-
-  function saveRecordingForSafari(recordingBlob, mimeType) {
-    if (!recordingBlob || !recordingBlob.size) {
-      return false;
-    }
-
-    const fileName = getRecordingFileName(mimeType);
-
-    // ----------------------------------------------------------
-    // iPhone / iPad Safari
-    //
-    // Safari can handle a Blob URL through a temporary anchor,
-    // but it may open the media instead of downloading it.
-    //
-    // Using a File object and Web Share when available lets the
-    // user use "Save to Files" / Share Sheet on iPhone.
-    // ----------------------------------------------------------
-
-    if (isIPhoneOrIPad()) {
-      try {
-        if (
-          typeof File !== "undefined" &&
-          navigator.share &&
-          navigator.canShare
-        ) {
-          const file = new File([recordingBlob], fileName, {
-            type: mimeType || recordingBlob.type || "application/octet-stream",
-          });
-
-          if (navigator.canShare({ files: [file] })) {
-            navigator
-              .share({
-                files: [file],
-                title: "Live Recording",
-              })
-              .then(() => {
-                console.log("SAFARI: Recording shared/saved.");
-              })
-              .catch((error) => {
-                // User cancellation is not an application error.
-                if (error?.name !== "AbortError") {
-                  console.warn("SAFARI SHARE ERROR:", error);
-                  fallbackBrowserDownload(recordingBlob, fileName);
-                }
-              });
-
-            return true;
-          }
-        }
-      } catch (error) {
-        console.warn("SAFARI FILE SHARE ERROR:", error);
-      }
-    }
-
-    return fallbackBrowserDownload(recordingBlob, fileName);
-  }
-
-  function fallbackBrowserDownload(recordingBlob, fileName) {
-    try {
-      const blobUrl = URL.createObjectURL(recordingBlob);
-
-      const link = document.createElement("a");
-
-      link.href = blobUrl;
-
-      link.download = fileName;
-
-      link.rel = "noopener";
-
-      link.style.display = "none";
-
-      document.body.appendChild(link);
-
-      link.click();
-
-      link.remove();
-
-      // Keep the URL alive briefly because Safari may need time
-      // to begin opening the Blob.
-      setTimeout(() => {
-        try {
-          URL.revokeObjectURL(blobUrl);
-        } catch {}
-      }, 60000);
-
-      console.log("RECORDING: Browser save/download triggered.");
-
-      return true;
-    } catch (error) {
-      console.error("RECORDING DOWNLOAD ERROR:", error);
-
-      return false;
-    }
-  }
 
   async function stopAndUploadRecording() {
     if (!mediaRecorder) {
@@ -857,19 +815,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("LIVE RECORDING: Stopping recorder...");
 
-    mediaRecorder.stop();
+    const recorder = mediaRecorder;
+
+    recorder.stop();
 
     if (recordingPromise) {
       await recordingPromise;
     }
 
-    const mimeType = mediaRecorder.mimeType || getRecordingMimeType();
+    /*
+     * Use the MIME type reported by the actual MediaRecorder.
+     *
+     * This is important on Safari/iPhone because the browser
+     * can choose the actual container format.
+     */
+    const actualMimeType =
+      recorder.mimeType ||
+      recordedChunks[0]?.type ||
+      getRecordingMimeType() ||
+      "";
+
+    console.log("LIVE RECORDING: Actual MIME type:", actualMimeType);
 
     const recordingBlob = new Blob(recordedChunks, {
-      type: mimeType,
+      type: actualMimeType || undefined,
     });
 
-    console.log("LIVE RECORDING: Blob created:", recordingBlob.size, mimeType);
+    console.log("LIVE RECORDING: Blob created:", {
+      size: recordingBlob.size,
+      type: recordingBlob.type,
+      mode: broadcastMode,
+    });
 
     recordedChunks = [];
 
@@ -884,23 +860,43 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================================
-    // RECORDING
+    // FILE NAME
+    // ==========================================================
+
+    const extension = getRecordingExtension(
+      recordingBlob.type || actualMimeType,
+    );
+
+    const fileName = `live-${broadcastId}.${extension}`;
+
+    console.log("LIVE RECORDING: Upload file:", {
+      fileName,
+      blobType: recordingBlob.type,
+      recorderType: actualMimeType,
+    });
+
+    // ==========================================================
+    // FORM DATA
     // ==========================================================
 
     const formData = new FormData();
 
-    const extension =
-      mimeType.startsWith("video/mp4") || mimeType.startsWith("audio/mp4")
-        ? "mp4"
-        : "webm";
+    /*
+     * DO NOT manually set Content-Type.
+     *
+     * The browser must generate the multipart boundary.
+     */
+    formData.append("recording", recordingBlob, fileName);
 
-    formData.append(
-      "recording",
-      recordingBlob,
-      `live-${broadcastId}.${extension}`,
-    );
+    // ==========================================================
+    // UPLOAD
+    // ==========================================================
 
-    console.log("LIVE RECORDING: Uploading...");
+    console.log("LIVE RECORDING: Uploading...", {
+      fileName,
+      blobType: recordingBlob.type,
+      size: recordingBlob.size,
+    });
 
     const response = await fetch(
       `/live/${encodeURIComponent(broadcastId)}/recording`,
@@ -927,24 +923,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     console.log("LIVE RECORDING SAVED:", result);
-
-    // ==========================================================
-    // SAFARI / IPHONE LOCAL SAVE
-    //
-    // IMPORTANT:
-    // This is intentionally AFTER the existing server upload.
-    // Therefore the original server-save behavior remains intact.
-    // ==========================================================
-
-    try {
-      if (isIPhoneOrIPad()) {
-        saveRecordingForSafari(recordingBlob, mimeType);
-      }
-    } catch (saveError) {
-      console.warn("SAFARI LOCAL SAVE ERROR:", saveError);
-      // Do NOT fail the broadcast because local browser saving
-      // was unavailable.
-    }
 
     return result;
   }
@@ -1004,6 +982,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("RECORDING STATE AFTER START:", {
         recorder: mediaRecorder,
         state: mediaRecorder?.state,
+        mimeType: mediaRecorder?.mimeType,
         chunks: recordedChunks.length,
       });
 
@@ -1746,13 +1725,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         return;
       }
-
-      // --------------------------------------------------------
-      // Some Socket.IO/server versions do not return an ack.
-      //
-      // Do not leave the input stuck forever in that case.
-      // The message itself is still sent exactly once.
-      // --------------------------------------------------------
 
       setTimeout(() => {
         if (!acknowledged) {
