@@ -318,23 +318,13 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // ----------------------------------------------------------
-    // VIEWER
-    // ----------------------------------------------------------
-
     if (!canControlLive) {
       controls.style.display = "none";
 
       return;
     }
 
-    // ----------------------------------------------------------
-    // BROADCASTER
-    // ----------------------------------------------------------
-
     controls.style.display = "block";
-
-    // START
 
     if (startButton) {
       startButton.style.display =
@@ -345,8 +335,6 @@ document.addEventListener("DOMContentLoaded", () => {
       startButton.textContent = startingLive ? "Starting..." : "🔴 Start Live";
     }
 
-    // PAUSE
-
     if (pauseButton) {
       pauseButton.style.display =
         liveStatus === "live" ? "inline-block" : "none";
@@ -356,8 +344,6 @@ document.addEventListener("DOMContentLoaded", () => {
       pauseButton.textContent = pausingLive ? "Pausing..." : "⏸ Pause";
     }
 
-    // RESUME
-
     if (resumeButton) {
       resumeButton.style.display =
         liveStatus === "paused" ? "inline-block" : "none";
@@ -366,8 +352,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       resumeButton.textContent = resumingLive ? "Resuming..." : "▶ Resume";
     }
-
-    // END
 
     if (endButton) {
       endButton.style.display =
@@ -490,8 +474,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // MICROPHONE
-
     if (broadcastMode === "microphone") {
       if (video) {
         try {
@@ -504,7 +486,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (audio) {
-        // DO NOT play local microphone back through headphones.
         try {
           audio.pause();
         } catch {}
@@ -515,12 +496,9 @@ document.addEventListener("DOMContentLoaded", () => {
         audio.style.display = "none";
       }
 
-      // Show microphone status without playing microphone audio.
       showAudioPlaceholder("🎤 Your microphone is LIVE — speaking now.");
       return;
     }
-
-    // CAMERA / BOTH
 
     if (audio) {
       try {
@@ -562,8 +540,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // MICROPHONE
-
     if (broadcastMode === "microphone") {
       if (video) {
         try {
@@ -597,8 +573,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       return;
     }
-
-    // VIDEO
 
     if (audio) {
       try {
@@ -636,16 +610,20 @@ document.addEventListener("DOMContentLoaded", () => {
   // ============================================================
 
   function getRecordingMimeType() {
-    // MICROPHONE ONLY
     if (broadcastMode === "microphone") {
       const audioTypes = [
+        "audio/mp4",
         "audio/webm;codecs=opus",
         "audio/webm",
         "audio/ogg;codecs=opus",
       ];
 
       for (const type of audioTypes) {
-        if (MediaRecorder.isTypeSupported(type)) {
+        if (
+          window.MediaRecorder &&
+          typeof MediaRecorder.isTypeSupported === "function" &&
+          MediaRecorder.isTypeSupported(type)
+        ) {
           return type;
         }
       }
@@ -653,15 +631,20 @@ document.addEventListener("DOMContentLoaded", () => {
       return "";
     }
 
-    // CAMERA / BOTH
     const videoTypes = [
+      "video/mp4;codecs=h264,aac",
+      "video/mp4",
       "video/webm;codecs=vp9,opus",
       "video/webm;codecs=vp8,opus",
       "video/webm",
     ];
 
     for (const type of videoTypes) {
-      if (MediaRecorder.isTypeSupported(type)) {
+      if (
+        window.MediaRecorder &&
+        typeof MediaRecorder.isTypeSupported === "function" &&
+        MediaRecorder.isTypeSupported(type)
+      ) {
         return type;
       }
     }
@@ -732,6 +715,131 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
+  // ============================================================
+  // SAFARI / IPHONE SAVE HELPERS
+  // ============================================================
+
+  function isIPhoneOrIPad() {
+    const userAgent = navigator.userAgent || "";
+
+    return (
+      /iPad|iPhone|iPod/.test(userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+    );
+  }
+
+  function getRecordingExtension(mimeType) {
+    const type = String(mimeType || "").toLowerCase();
+
+    if (type.includes("mp4")) {
+      return "mp4";
+    }
+
+    if (type.includes("ogg")) {
+      return "ogg";
+    }
+
+    return "webm";
+  }
+
+  function getRecordingFileName(mimeType) {
+    return `live-${broadcastId}.${getRecordingExtension(mimeType)}`;
+  }
+
+  function saveRecordingForSafari(recordingBlob, mimeType) {
+    if (!recordingBlob || !recordingBlob.size) {
+      return false;
+    }
+
+    const fileName = getRecordingFileName(mimeType);
+
+    // ----------------------------------------------------------
+    // iPhone / iPad Safari
+    //
+    // Safari can handle a Blob URL through a temporary anchor,
+    // but it may open the media instead of downloading it.
+    //
+    // Using a File object and Web Share when available lets the
+    // user use "Save to Files" / Share Sheet on iPhone.
+    // ----------------------------------------------------------
+
+    if (isIPhoneOrIPad()) {
+      try {
+        if (
+          typeof File !== "undefined" &&
+          navigator.share &&
+          navigator.canShare
+        ) {
+          const file = new File([recordingBlob], fileName, {
+            type: mimeType || recordingBlob.type || "application/octet-stream",
+          });
+
+          if (navigator.canShare({ files: [file] })) {
+            navigator
+              .share({
+                files: [file],
+                title: "Live Recording",
+              })
+              .then(() => {
+                console.log("SAFARI: Recording shared/saved.");
+              })
+              .catch((error) => {
+                // User cancellation is not an application error.
+                if (error?.name !== "AbortError") {
+                  console.warn("SAFARI SHARE ERROR:", error);
+                  fallbackBrowserDownload(recordingBlob, fileName);
+                }
+              });
+
+            return true;
+          }
+        }
+      } catch (error) {
+        console.warn("SAFARI FILE SHARE ERROR:", error);
+      }
+    }
+
+    return fallbackBrowserDownload(recordingBlob, fileName);
+  }
+
+  function fallbackBrowserDownload(recordingBlob, fileName) {
+    try {
+      const blobUrl = URL.createObjectURL(recordingBlob);
+
+      const link = document.createElement("a");
+
+      link.href = blobUrl;
+
+      link.download = fileName;
+
+      link.rel = "noopener";
+
+      link.style.display = "none";
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
+      // Keep the URL alive briefly because Safari may need time
+      // to begin opening the Blob.
+      setTimeout(() => {
+        try {
+          URL.revokeObjectURL(blobUrl);
+        } catch {}
+      }, 60000);
+
+      console.log("RECORDING: Browser save/download triggered.");
+
+      return true;
+    } catch (error) {
+      console.error("RECORDING DOWNLOAD ERROR:", error);
+
+      return false;
+    }
+  }
+
   async function stopAndUploadRecording() {
     if (!mediaRecorder) {
       console.log("LIVE RECORDING: No recorder to stop.");
@@ -755,9 +863,7 @@ document.addEventListener("DOMContentLoaded", () => {
       await recordingPromise;
     }
 
-    const mimeType =
-      mediaRecorder.mimeType ||
-      (broadcastMode === "microphone" ? "audio/webm" : "video/webm");
+    const mimeType = mediaRecorder.mimeType || getRecordingMimeType();
 
     const recordingBlob = new Blob(recordedChunks, {
       type: mimeType,
@@ -776,10 +882,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
       return null;
     }
-    // recording
+
+    // ==========================================================
+    // RECORDING
+    // ==========================================================
+
     const formData = new FormData();
 
-    formData.append("recording", recordingBlob, `live-${broadcastId}.webm`);
+    const extension =
+      mimeType.startsWith("video/mp4") || mimeType.startsWith("audio/mp4")
+        ? "mp4"
+        : "webm";
+
+    formData.append(
+      "recording",
+      recordingBlob,
+      `live-${broadcastId}.${extension}`,
+    );
 
     console.log("LIVE RECORDING: Uploading...");
 
@@ -808,6 +927,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     console.log("LIVE RECORDING SAVED:", result);
+
+    // ==========================================================
+    // SAFARI / IPHONE LOCAL SAVE
+    //
+    // IMPORTANT:
+    // This is intentionally AFTER the existing server upload.
+    // Therefore the original server-save behavior remains intact.
+    // ==========================================================
+
+    try {
+      if (isIPhoneOrIPad()) {
+        saveRecordingForSafari(recordingBlob, mimeType);
+      }
+    } catch (saveError) {
+      console.warn("SAFARI LOCAL SAVE ERROR:", saveError);
+      // Do NOT fail the broadcast because local browser saving
+      // was unavailable.
+    }
 
     return result;
   }
@@ -861,22 +998,14 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       await displayLocalMedia();
-      //
-
-      //
-      // ========================================================
-      // START RECORDING
-      // ========================================================
 
       startRecording();
-      //
+
       console.log("RECORDING STATE AFTER START:", {
         recorder: mediaRecorder,
         state: mediaRecorder?.state,
         chunks: recordedChunks.length,
       });
-
-      //
 
       setStatus(
         broadcastMode === "microphone"
@@ -945,13 +1074,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
 
-      // ========================================================
-      // IMPORTANT:
-      // DO NOT STOP MediaRecorder HERE.
-      //
-      // Recording remains one continuous recording.
-      // ========================================================
-
       setStatus("Live broadcast paused.", "warning");
     } catch (error) {
       console.error("PAUSE ERROR:", error);
@@ -1011,11 +1133,6 @@ document.addEventListener("DOMContentLoaded", () => {
       updateBroadcastStatus("live");
 
       await displayLocalMedia();
-
-      // ========================================================
-      // If the recorder somehow stopped, restart it.
-      // Normally it should still be recording through pause.
-      // ========================================================
 
       if (!mediaRecorder || mediaRecorder.state === "inactive") {
         startRecording();
@@ -1179,15 +1296,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const pc = new RTCPeerConnection(rtcConfiguration);
 
-    // BROADCASTER MEDIA
-
     if (canControlLive && localStream) {
       localStream.getTracks().forEach((track) => {
         pc.addTrack(track, localStream);
       });
     }
-
-    // ICE
 
     pc.onicecandidate = (event) => {
       if (!event.candidate) {
@@ -1207,8 +1320,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     };
 
-    // TRACK
-
     pc.ontrack = (event) => {
       if (canControlLive || liveStatus === "ended") {
         return;
@@ -1224,8 +1335,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       displayRemoteStream(remoteStream);
     };
-
-    // CONNECTION STATE
 
     pc.onconnectionstatechange = () => {
       const state = pc.connectionState;
@@ -1507,9 +1616,52 @@ document.addEventListener("DOMContentLoaded", () => {
   // CHAT
   // ============================================================
 
+  function appendChatMessage(data) {
+    if (!data || !chatMessages) {
+      return;
+    }
+
+    if (data.roomId && String(data.roomId) !== String(broadcastId)) {
+      return;
+    }
+
+    const message = String(data.message || "").trim();
+
+    if (!message) {
+      return;
+    }
+
+    const messageElement = document.createElement("div");
+
+    messageElement.className = "border-bottom py-2 live-chat-message";
+
+    const username = document.createElement("strong");
+
+    username.textContent =
+      data.username || data.user?.username || data.user?.name || "User";
+
+    const text = document.createElement("span");
+
+    text.textContent = message;
+
+    messageElement.appendChild(username);
+
+    messageElement.appendChild(document.createTextNode(": "));
+
+    messageElement.appendChild(text);
+
+    chatMessages.appendChild(messageElement);
+
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
   function setupChat() {
     if (!chatForm || !chatInput || !chatMessages) {
-      console.warn("LIVE WATCH: Chat elements missing.");
+      console.warn("LIVE WATCH: Chat elements missing.", {
+        chatForm,
+        chatInput,
+        chatMessages,
+      });
 
       return;
     }
@@ -1520,16 +1672,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     chatForm.dataset.ready = "true";
 
+    // ----------------------------------------------------------
+    // SEND MESSAGE
+    // ----------------------------------------------------------
+
     chatForm.addEventListener("submit", (event) => {
       event.preventDefault();
 
       if (!socket || !socket.connected) {
-        alert("Live connection is not ready.");
+        console.warn("CHAT: Socket is not connected.");
+
+        setStatus("Chat connection is not ready.", "warning");
 
         return;
       }
 
       if (liveStatus === "ended") {
+        console.warn("CHAT: Broadcast has ended.");
+
         return;
       }
 
@@ -1545,44 +1705,84 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      socket.emit("live:chat-message", {
-        roomId: broadcastId,
+      console.log("CHAT: Sending message:", message);
 
-        message,
-      });
+      let acknowledged = false;
 
-      chatInput.value = "";
+      const finishSend = (ack) => {
+        if (acknowledged) {
+          return;
+        }
 
-      chatInput.focus();
-    });
+        acknowledged = true;
 
-    socket.on("live:chat-message", (data) => {
-      if (!data || String(data.roomId) !== String(broadcastId)) {
+        console.log("CHAT: Server acknowledgment:", ack);
+
+        if (ack && ack.success === false) {
+          console.error("CHAT: Server rejected message:", ack);
+
+          setStatus(ack.message || "Unable to send chat message.", "error");
+
+          return;
+        }
+
+        chatInput.value = "";
+        chatInput.focus();
+      };
+
+      try {
+        socket.emit(
+          "live:chat-message",
+          {
+            roomId: broadcastId,
+            message,
+          },
+          finishSend,
+        );
+      } catch (error) {
+        console.error("CHAT SEND ERROR:", error);
+
+        setStatus("Unable to send chat message.", "error");
+
         return;
       }
 
-      const messageElement = document.createElement("div");
+      // --------------------------------------------------------
+      // Some Socket.IO/server versions do not return an ack.
+      //
+      // Do not leave the input stuck forever in that case.
+      // The message itself is still sent exactly once.
+      // --------------------------------------------------------
 
-      messageElement.className = "border-bottom py-2";
-
-      const username = document.createElement("strong");
-
-      username.textContent = data.username || "User";
-
-      const text = document.createElement("span");
-
-      text.textContent = data.message || "";
-
-      messageElement.appendChild(username);
-
-      messageElement.appendChild(document.createTextNode(": "));
-
-      messageElement.appendChild(text);
-
-      chatMessages.appendChild(messageElement);
-
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+      setTimeout(() => {
+        if (!acknowledged) {
+          chatInput.value = "";
+          chatInput.focus();
+        }
+      }, 1500);
     });
+
+    // ----------------------------------------------------------
+    // RECEIVE MESSAGE
+    // ----------------------------------------------------------
+
+    socket.on("live:chat-message", (data) => {
+      console.log("CHAT: Received message:", data);
+
+      appendChatMessage(data);
+    });
+
+    // ----------------------------------------------------------
+    // CHAT ERROR
+    // ----------------------------------------------------------
+
+    socket.on("live:chat-error", (data) => {
+      console.error("CHAT ERROR:", data);
+
+      setStatus(data?.message || "Chat error.", "error");
+    });
+
+    console.log("CHAT: Socket chat handlers initialized.");
   }
 
   // ============================================================
@@ -1866,10 +2066,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       await displayLocalMedia();
-
-      // ========================================================
-      // START RECORDING IF CURRENTLY LIVE
-      // ========================================================
 
       if (liveStatus === "live") {
         startRecording();
