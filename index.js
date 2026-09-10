@@ -9307,6 +9307,10 @@ app.get("/report/live", ensureAuthenticated, async (req, res) => {
 // Download them to local
 app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
   try {
+    // =====================================================
+    // VALIDATE BROADCAST ID
+    // =====================================================
+
     const broadcastId = String(req.params.id || "").trim();
 
     if (!broadcastId || !/^\d+$/.test(broadcastId)) {
@@ -9314,20 +9318,20 @@ app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
     }
 
     // =====================================================
-    // GET RECORDING
+    // GET RECORDING FROM DATABASE
     // =====================================================
 
     const result = await db.query(
       `
-        SELECT
-          id,
-          title,
-          recording_path
-        FROM live_broadcasts
-        WHERE id = $1
-          AND recording_path IS NOT NULL
-        LIMIT 1
-        `,
+      SELECT
+        id,
+        title,
+        recording_path
+      FROM live_broadcasts
+      WHERE id = $1
+        AND recording_path IS NOT NULL
+      LIMIT 1
+      `,
       [broadcastId],
     );
 
@@ -9337,6 +9341,10 @@ app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
 
     const broadcast = result.rows[0];
 
+    // =====================================================
+    // GET RECORDING PATH
+    // =====================================================
+
     const recordingPath = String(broadcast.recording_path || "").trim();
 
     if (!recordingPath) {
@@ -9344,12 +9352,29 @@ app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
     }
 
     // =====================================================
-    // BUILD PHYSICAL FILE PATH
+    // UPLOAD DIRECTORY
+    //
+    // IMPORTANT:
+    // NO "public" HERE
+    //
+    // /opt/render/project/src/uploads/live
     // =====================================================
 
-    const uploadDir = path.resolve(process.cwd(), "public", "uploads", "live");
+    const uploadDir = path.resolve(process.cwd(), "uploads", "live");
+
+    // =====================================================
+    // GET FILENAME ONLY
+    // =====================================================
 
     const filename = path.basename(recordingPath);
+
+    if (!filename) {
+      return res.status(404).send("Invalid recording filename.");
+    }
+
+    // =====================================================
+    // BUILD PHYSICAL FILE PATH
+    // =====================================================
 
     const filePath = path.resolve(uploadDir, filename);
 
@@ -9360,6 +9385,8 @@ app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
     if (!filePath.startsWith(uploadDir + path.sep)) {
       console.error("❌ INVALID RECORDING PATH:", {
         recordingPath,
+        uploadDir,
+        filename,
         filePath,
       });
 
@@ -9374,29 +9401,58 @@ app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
     console.log("LIVE DOWNLOAD");
     console.log("==========================================");
     console.log("Broadcast ID:", broadcast.id);
+    console.log("Title:", broadcast.title);
     console.log("DB recording_path:", recordingPath);
     console.log("Filename:", filename);
     console.log("Upload directory:", uploadDir);
     console.log("Physical file:", filePath);
-    console.log("Exists:", fs.existsSync(filePath));
 
     // =====================================================
+    // CHECK FILE
+    // =====================================================
 
-    if (!fs.existsSync(filePath)) {
-      console.error("❌ FILE NOT FOUND:", filePath);
+    let fileStats;
+
+    try {
+      fileStats = await fs.promises.stat(filePath);
+    } catch (err) {
+      if (err.code === "ENOENT") {
+        console.error("❌ FILE NOT FOUND:", filePath);
+
+        return res.status(404).send("Recording file not found.");
+      }
+
+      throw err;
+    }
+
+    // =====================================================
+    // MAKE SURE IT IS A FILE
+    // =====================================================
+
+    if (!fileStats.isFile()) {
+      console.error("❌ RECORDING PATH IS NOT A FILE:", filePath);
 
       return res.status(404).send("Recording file not found.");
     }
 
+    console.log("File size:", fileStats.size, "bytes");
+    console.log("File exists: YES");
+
     // =====================================================
-    // GET REAL EXTENSION
+    // GET EXTENSION
     // =====================================================
 
-    const extension = path.extname(filename).toLowerCase();
+    const extension = path.extname(filename).toLowerCase() || ".webm";
 
-    const downloadName = `live-${broadcast.id}${extension || ".webm"}`;
+    // =====================================================
+    // DOWNLOAD FILENAME
+    // =====================================================
+
+    const downloadName = `live-${broadcast.id}${extension}`;
 
     console.log("Download filename:", downloadName);
+
+    console.log("==========================================");
 
     // =====================================================
     // DOWNLOAD
@@ -9405,14 +9461,15 @@ app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
     return res.download(filePath, downloadName, (err) => {
       if (err) {
         console.error("==========================================");
+
         console.error("❌ DOWNLOAD ERROR");
+
         console.error("==========================================");
+
         console.error(err);
 
-        // Don't attempt another response if Express
-        // already sent the download response.
         if (!res.headersSent) {
-          res.status(500).send("Unable to download recording.");
+          return res.status(500).send("Unable to download recording.");
         }
 
         return;
@@ -9422,8 +9479,11 @@ app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
     });
   } catch (err) {
     console.error("==========================================");
+
     console.error("❌ LIVE DOWNLOAD ROUTE ERROR");
+
     console.error("==========================================");
+
     console.error(err);
 
     if (!res.headersSent) {
