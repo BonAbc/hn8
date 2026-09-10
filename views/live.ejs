@@ -1,0 +1,97 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+
+  <!---->
+  <h2 id="hm">Live Stream</h2>
+  <hr />
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+     <div class="container">
+<div class="text-center mb-4">
+  <h1>🔴 Live</h1>
+  <p class="text-muted">
+    Start or watch live broadcasts.
+  </p>
+</div> 
+ 
+<% if (currentUserRole === "admin1" || currentUserRole === "admin2") { %>
+
+  <div class="text-center">
+    <h3>Live access enabled</h3>
+    <p>You can broadcast without approval.</p>
+
+    <a href="/live/create" class="btn btn-danger">
+      Preparation: Schedule Live
+    </a>
+  </div>
+
+<% } else if (liveStatus === "approved") { %>
+
+  <div class="text-center">
+    <h3>Live access approved</h3>
+    <p>You are allowed to start a live broadcast.</p>
+
+    <a href="/live/create" class="btn btn-danger">
+      Preparation Schedule  Live
+    </a>
+  </div>
+
+<% } else if (liveStatus === "pending") { %>
+
+  <div class="text-center">
+    <h3>Live access pending</h3>
+    <p>
+      Your request has been sent to an administrator.
+      You will be able to go live once it is approved.
+    </p>
+  </div>
+
+<% } else if (liveStatus === "denied") { %>
+
+  <div class="text-center">
+    <h3>Live access denied</h3>
+    <p>
+      Your previous request was denied.
+    </p>
+
+    <form method="POST" action="/live/request-access">
+      <button type="submit" class="btn btn-primary">
+        Request Live Access Again
+      </button>
+    </form>
+  </div>
+ 
+<% } else { %>
+ 
+  <div class="text-center">
+    <h3>Want to go live?</h3>
+    <p>
+      You need administrator approval before you can broadcast.
+    </p>
+
+    <form method="POST" action="/live/request-access">
+      <button type="submit" class="btn btn-danger">
+        Request Live Access
+      </button>
+    </form>
+  </div>
+
+<% } %> 
+
+</div> 
+  </section>
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+    <a href="/admin/live-access">Live Access Requests</a>
+  </section>
+ 
+  <hr />
+  
+</main>
+
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->

@@ -1,0 +1,313 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+
+  <!---->
+  <h2 id="hm">Live Schedule</h2>
+  <hr />
+  <!-- Page Header -->
+  <div class="live-create-header text-center mb-4">
+    <h1>🔴 SCHEDULE LIVE</h1>
+    <p class="mb-0">Start your live broadcast.</p>
+  </div>
+ 
+   <!-- ======================================================
+       PREVIEW
+  ======================================================= -->
+
+  <div class="live-create-preview-section">
+    <div class="live-create-preview">
+
+      <video
+        id="liveCameraPreview"
+        class="live-create-video"
+        autoplay
+        muted
+        playsinline
+      ></video>
+
+      <div
+        id="liveCameraPlaceholder"
+        class="live-create-placeholder"
+      >
+        <div class="live-create-placeholder-icon">
+          📷
+        </div>
+
+        <h3>LIVE PREVIEW</h3>
+
+        <p class="mb-0">
+          Enable your camera or microphone to begin.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================
+       BROADCAST INFORMATION
+  ======================================================= -->
+
+  <div class="live-create-form">
+
+    <!-- Title -->
+    <div class="live-create-field">
+      <label
+        for="liveTitle"
+        class="form-label"
+      >
+        Title
+      </label>
+
+      <input
+        type="text"
+        id="liveTitle"
+        name="title"
+        class="form-control"
+        placeholder="CPA Q&A Live"
+        maxlength="200"
+        autocomplete="off"
+      />
+    </div>
+
+    <!-- Live Mode -->
+    <div class="live-create-field">
+      <label
+        for="liveMode"
+        class="form-label"
+      >
+        Live Mode
+      </label>
+
+      <select
+        id="liveMode"
+        name="liveMode"
+        class="form-select"
+      > 
+        <option value="both">
+          Camera + Microphone
+        </option>
+
+        <option value="camera">
+          Camera Only
+        </option>
+ 
+        <option value="microphone">
+          Microphone Only
+        </option>
+      </select>
+    </div>
+ 
+    <!-- Camera -->
+    <div class="live-create-field">
+      <label
+        for="liveCamera"
+        class="form-label"
+      >
+        Camera
+      </label>
+
+      <select
+        id="liveCamera"
+        name="camera"
+        class="form-select"
+      >
+        <option value="">
+          Default Camera
+        </option>
+      </select>
+    </div>
+
+    <!-- Microphone -->
+    <div class="live-create-field">
+      <label
+        for="liveMicrophone"
+        class="form-label"
+      >
+        Microphone
+      </label>
+
+      <select
+        id="liveMicrophone"
+        name="microphone"
+        class="form-select"
+      >
+        <option value="">
+          Default Microphone
+        </option>
+      </select>
+    </div>
+ 
+    <!-- Device Status -->
+    <div
+      id="liveDeviceStatus"
+      class="live-create-status"
+      role="status"
+      aria-live="polite"
+    >
+      Camera and microphone are not enabled.
+    </div>
+ 
+    <!-- ====================================================
+         ACTIONS
+    ===================================================== -->
+
+    <div class="live-create-actions">
+ 
+      <!-- Cancel -->
+      <a
+        href="/live"
+        class="btn btn-secondary"
+        id="cancelLiveCreate"
+      >
+        Cancel
+      </a>
+
+      <!-- Enable Devices -->
+      <button
+        type="button"
+        id="enableLiveCamera"
+        class="btn btn-outline-dark"
+      >
+        🎥 Enable Devices
+      </button>
+
+      <!-- Start Live -->
+    <%
+  const lastBroadcastStatus = String(
+    existingBroadcast?.status || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const broadcastNotEnded =
+    ["scheduled", "live", "paused"].includes(
+      lastBroadcastStatus
+    );
+%>
+
+<button
+  type="button"
+  id="scheduleLiveBroadcast"
+  class="btn btn-danger"
+  <%= broadcastNotEnded ? "disabled" : "" %>
+>
+  📅 Schedule Live
+</button>
+
+
+    </div>
+
+  </div>
+</div>
+
+  
+  <hr />
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+    <% if (existingBroadcast) { %>
+
+  <%
+    const lastStatus = String(
+      existingBroadcast.status || ""
+    )
+      .trim()
+      .toLowerCase();
+  %>
+
+  <% if (lastStatus === "ended") { %>
+
+    <!-- =====================================================
+         LAST BROADCAST ENDED
+    ====================================================== -->
+
+    <div class="alert alert-success border border-black mt-4 mb-4">
+
+      <h4 class="alert-heading">
+        ✅ Your last live broadcast has ended
+      </h4>
+
+      <p>
+        You can schedule a new live broadcast.
+      </p>
+
+      <hr />
+
+      <p class="mb-2">
+        <strong>Last Broadcast:</strong>
+        <%= existingBroadcast.title || "Untitled" %>
+      </p>
+
+      <p class="mb-3">
+        <strong>Status:</strong>
+        Ended
+      </p>
+
+      <a
+        href="/live/<%= existingBroadcast.id %>"
+        class="btn btn-secondary"
+      >
+        View Last Broadcast
+      </a>
+
+    </div>
+
+  <% } else if (
+    lastStatus === "scheduled" ||
+    lastStatus === "live" ||
+    lastStatus === "paused"
+  ) { %>
+
+    <!-- =====================================================
+         BROADCAST NOT ENDED
+    ====================================================== -->
+
+    <div class="alert alert-warning border border-black mt-4 mb-4">
+
+      <h4 class="alert-heading">
+        ⚠️ You already have a live broadcast
+      </h4>
+
+      <p>
+        You cannot schedule another broadcast until
+        this broadcast has ended.
+      </p>
+
+      <hr />
+
+      <p class="mb-2">
+        <strong>Title:</strong>
+        <%= existingBroadcast.title || "Untitled" %>
+      </p>
+
+      <p class="mb-3">
+        <strong>Status:</strong>
+        <%= lastStatus %>
+      </p>
+
+      <a
+        href="/live/<%= existingBroadcast.id %>"
+        class="btn btn-dark"
+      >
+        Manage Existing Live
+      </a>
+
+    </div>
+
+  <% } %>
+
+<% } %>
+
+
+  </section>
+  <section class="py-5 bg-light border border-black mt-4 mb-4"></section>
+  
+  <hr />
+</main>
+<script src="/js/live-create.js"></script>
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->

@@ -1,0 +1,398 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+
+  <!---->
+  <h2 id="hm">Hoa Mai</h2>
+  <hr />
+<section class="py-5 bg-light border border-black mt-4 mb-4">
+
+  <div class="container">
+ 
+    <!-- ======================================================
+         LIVE HEADER
+         ====================================================== -->
+
+    <div class="border border-black bg-white p-4 mb-4">
+
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+
+        <div>
+          <span class="badge bg-danger fs-6">
+            🔴 LIVE
+          </span>
+
+          <h1 class="mt-3 mb-2">
+            <%= broadcast.title %>
+          </h1>
+        </div>
+
+        <div id="liveHeaderStatus" class="text-muted">
+          <% if (broadcast.status === "scheduled") { %>
+            ⏰ Scheduled
+          <% } else if (broadcast.status === "live") { %>
+            🔴 Live
+          <% } else if (broadcast.status === "paused") { %>
+            ⏸ Paused
+          <% } else if (broadcast.status === "ended") { %>
+            ⛔ Ended
+          <% } else { %>
+            <%= broadcast.status || "Unknown" %>
+          <% } %>
+        </div>
+
+      </div>
+
+      <!-- ====================================================
+           SERVER STATUS MESSAGE
+           ==================================================== -->
+
+      <div id="liveServerStatusMessage">
+
+        <% if (broadcast.status === "scheduled") { %>
+
+          <div class="alert alert-warning mt-3 mb-0">
+            <strong>Scheduled.</strong>
+            Click Start Live when you are ready.
+          </div>
+
+        <% } else if (broadcast.status === "live") { %>
+
+          <div class="alert alert-danger mt-3 mb-0">
+            🔴 Your broadcast is currently live.
+          </div>
+
+        <% } else if (broadcast.status === "paused") { %>
+
+          <div class="alert alert-warning mt-3 mb-0">
+            ⏸ Your broadcast is currently paused.
+          </div>
+
+        <% } else if (broadcast.status === "ended") { %>
+
+          <div class="alert alert-secondary mt-3 mb-0">
+            ⛔ This broadcast has ended.
+          </div>
+
+        <% } %>
+
+      </div>
+
+    </div>
+
+
+    <!-- ======================================================
+         LIVE MEDIA
+         ====================================================== -->
+
+    <div class="border border-black bg-white p-4 mb-4">
+
+      <h3 id="liveMediaTitle" class="mb-3">
+        LIVE BROADCAST
+      </h3>
+
+      <div
+        id="liveMediaPlaceholder"
+        class="mb-3"
+      >
+        <% if (broadcast.status === "scheduled") { %>
+
+          Your broadcast is scheduled.
+          Click Start Live when ready.
+
+        <% } else if (broadcast.status === "live") { %>
+
+          Your broadcast is currently live.
+
+        <% } else if (broadcast.status === "paused") { %>
+
+          Your broadcast is currently paused.
+
+        <% } else if (broadcast.status === "ended") { %>
+
+          This broadcast has ended.
+
+        <% } %>
+      </div>
+
+
+      <!-- VIDEO -->
+
+      <video
+        id="liveVideo"
+        controls
+        autoplay
+        playsinline
+        class="w-100"
+        style="display:none;"
+      ></video>
+
+
+      <!-- AUDIO -->
+
+      <audio
+        id="liveAudio"
+        controls
+        autoplay
+        class="w-100"
+        style="display:none;"
+      >
+        Your browser does not support the audio player.
+      </audio>
+
+
+      <!-- JS PLACEHOLDER -->
+
+      <div
+        id="liveVideoPlaceholder"
+        class="text-center p-4"
+      ></div>
+
+
+      <!-- CONNECTION STATUS -->
+
+      <div
+        id="liveConnectionStatus"
+        class="mt-3"
+      >
+        Connecting...
+      </div>
+
+    </div>
+
+
+    <!-- ======================================================
+         BROADCAST CONTROLS
+         ====================================================== -->
+
+    <div
+      id="liveBroadcastControls"
+      class="border border-black bg-white p-4 mb-4"
+    >
+
+      <h3 class="mb-3">
+        Broadcast Controls
+      </h3>
+
+
+      <!-- CURRENT STATUS -->
+
+      <div
+        id="liveBroadcastStatus"
+        class="mb-3"
+      >
+        Broadcast status:
+        <%= broadcast.status || "scheduled" %>
+      </div>
+
+
+      <!-- ====================================================
+           START
+           ==================================================== -->
+
+      <button
+        type="button"
+        id="startLiveBroadcast"
+        class="btn btn-danger btn-lg me-2"
+      >
+        🔴 Start Live
+      </button>
+
+
+      <!-- ====================================================
+           PAUSE
+           ==================================================== -->
+
+      <button
+        type="button"
+        id="pauseLiveBroadcast"
+        class="btn btn-warning btn-lg me-2"
+      >
+        ⏸ Pause
+      </button>
+
+
+      <!-- ====================================================
+           RESUME
+           ==================================================== -->
+
+      <button
+        type="button"
+        id="resumeLiveBroadcast"
+        class="btn btn-success btn-lg me-2"
+      >
+        ▶ Resume
+      </button>
+
+
+      <!-- ====================================================
+           END
+           ==================================================== -->
+
+      <button
+        type="button"
+        id="endLiveBroadcast"
+        class="btn btn-dark btn-lg"
+      >
+        ⛔ End Live
+      </button>
+
+    </div>
+
+
+    <!-- ======================================================
+         CHAT
+         ====================================================== -->
+
+    <div class="border border-black bg-white p-4 mb-4">
+
+      <h3 class="mb-3">
+        CHAT
+      </h3>
+
+
+      <div
+        id="chatMessages"
+        class="border border-secondary p-3 mb-3"
+        style="min-height:120px; max-height:400px; overflow-y:auto;"
+      ></div>
+
+
+      <form id="chatForm">
+
+        <div class="input-group">
+
+          <input
+            type="text"
+            id="chatMessage"
+            name="message"
+            class="form-control"
+            placeholder="Write a message..."
+            autocomplete="off"
+            maxlength="500"
+          >
+
+          <button
+            type="submit"
+            class="btn btn-primary"
+          >
+            Send
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+
+    <!-- ======================================================
+         BROADCAST INFORMATION
+         ====================================================== -->
+
+    <div class="border border-black bg-white p-4">
+
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+        <div id="liveInformationStatus">
+
+          <% if (broadcast.status === "scheduled") { %>
+
+            ⏰ Scheduled
+
+          <% } else if (broadcast.status === "live") { %>
+
+            🔴 Live
+
+          <% } else if (broadcast.status === "paused") { %>
+
+            ⏸ Paused
+
+          <% } else if (broadcast.status === "ended") { %>
+
+            ⛔ Ended
+
+          <% } %>
+
+        </div>
+
+
+        <div>
+          👁
+          <span id="viewerCount">0</span>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ==========================================================
+     LIVE BROADCAST DATA
+     ========================================================== -->
+
+
+
+<hr>
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+    
+  </section>
+  <section class="py-5 bg-light border border-black mt-4 mb-4"></section>
+  <section class="py-5 bg-light border border-black mt-4 mb-4"></section>
+  <hr />
+  <!--Refer to index.ejs how to include header and footer.ejs-->
+</main>
+  
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/live-watch.js"></script>
+  
+<!-- ========================================================
+       PAGE JAVASCRIPT 
+       ======================================================== -->
+<script>
+  window.liveBroadcastData = {
+    id: <%- JSON.stringify(String(broadcast.id || "")) %>,
+
+    mode: <%- JSON.stringify(
+      String(
+        broadcast.mode ||
+        broadcast.broadcastMode ||
+        "both"
+      )
+        .trim()
+        .toLowerCase()
+    ) %>,
+ 
+    status: <%- JSON.stringify(
+      String(
+        broadcast.status ||
+        "scheduled"
+      )
+        .trim()
+        .toLowerCase()
+    ) %>,
+
+    canControlLive: <%- JSON.stringify(Boolean(canControlLive)) %>
+  };
+
+  console.log(
+    "LIVE EJS DATA:",
+    window.liveBroadcastData
+  );
+</script>
+ 
+<!-- ========================================================
+       PAGE JAVASCRIPT
+       ======================================================== -->
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->

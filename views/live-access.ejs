@@ -1,0 +1,167 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+
+  <!---->
+  <h2 id="hm">Live Access</h2>
+  <hr />
+ <section class="py-5 bg-light border border-black mt-4 mb-4"> <div class="container">
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">🔴 Live Access Requests</h2>
+    <p class="text-muted mb-0">
+      Review and manage users who want permission to go live.
+    </p>
+  </div>
+
+  <a href="/live" class="btn btn-outline-dark">
+    Back to Live
+  </a>
+</div> 
+  
+<% if (!requests || requests.length === 0) { %>
+
+  <div class="alert alert-info text-center">
+    There are currently no live access requests.
+  </div>
+
+<% } else { %>
+
+  <div class="card border-black shadow-sm">
+    <div class="card-body p-0">
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+
+          <thead class="table-dark">
+            <tr>
+              <th>User ID</th>
+              <th>Status</th>
+              <th>Requested</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            <% requests.forEach(request => { %>
+
+              <tr>
+
+                <td>
+                  <strong>#<%= request.user_id %></strong>
+                </td>
+
+                <td>
+
+                  <% if (request.status === "pending") { %>
+
+                    <span class="badge bg-warning text-dark">
+                      Pending
+                    </span>
+
+                  <% } else if (request.status === "approved") { %>
+
+                    <span class="badge bg-success">
+                      Approved
+                    </span>
+
+                  <% } else if (request.status === "denied") { %>
+
+                    <span class="badge bg-danger">
+                      Denied
+                    </span>
+
+                  <% } else { %>
+
+                    <span class="badge bg-secondary">
+                      <%= request.status %>
+                    </span>
+
+                  <% } %>
+
+                </td>
+
+                <td>
+                  <%= request.requested_at
+                    ? new Date(request.requested_at).toLocaleString()
+                    : "—" %>
+                </td>
+
+                <td>
+
+                  <% if (request.status === "pending") { %>
+
+                    <div class="d-flex gap-2">
+
+                      <form
+                        method="POST"
+                       action="/admin/live-access/<%= request.id %>/approve" 
+
+                      >
+                        <button
+                          type="submit"
+                          class="btn btn-success btn-sm"
+                        >
+                          ✓ Approve
+                        </button>
+                      </form>
+
+                      <form
+                        method="POST"
+                        action="/admin/live-access/<%= request.id %>/deny"
+                      >
+                        <button
+                          type="submit"
+                          class="btn btn-danger btn-sm"
+                        >
+                          ✕ Deny
+                        </button>
+                      </form>
+
+                    </div>
+
+                  <% } else if (request.status === "approved") { %>
+
+                    <span class="text-success">
+                      User can go live
+                    </span>
+
+                  <% } else if (request.status === "denied") { %>
+
+                    <span class="text-danger">
+                      Access denied
+                    </span>
+
+                  <% } %>
+
+                </td>
+
+              </tr>
+
+            <% }) %>
+
+          </tbody>
+
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+<% } %>
+
+</div>
+ </section>
+ 
+  <hr />
+  
+</main>
+
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->

@@ -32,6 +32,9 @@ import { ensureAdmin } from "./middleware/author.js";
 
 import socialFileUpload from "./middleware/socialImageUpload.js";
 import profileFileUpload from "./middleware/proupload.js";
+//live stream
+import liveRecordingUpload from "./middleware/liveRecording.js";
+//
 import methodOverride from "method-override";
 
 import ffmpeg from "fluent-ffmpeg";
@@ -169,7 +172,9 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 liveSocket(io);
-
+//
+app.set("io", io);
+//
 app.use(webtraffic(db, io));
 
 const secret = authenticator.generateSecret();
@@ -7584,7 +7589,2013 @@ app.get("/social/profile/:userId", async (req, res) => {
     return res.status(500).send("Unable to load user profile.");
   }
 });
+// ============================================================
+// LIVE PAGE ✌✌✌✌✌✌
+// ============================================================
 
+app.get("/live", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+
+    const role = String(req.user?.role || "")
+      .trim()
+      .toLowerCase();
+
+    let liveStatus = null;
+
+    // Admins are automatically approved.
+    if (role === "admin1" || role === "admin2") {
+      liveStatus = "approved";
+    } else if (userId) {
+      const result = await db.query(
+        `
+        SELECT status
+        FROM live_access
+        WHERE user_id = $1
+        ORDER BY id DESC
+        LIMIT 1
+        `,
+        [userId],
+      );
+
+      liveStatus = result.rows[0]?.status || null;
+    }
+
+    return res.render("live", {
+      currentUserId: userId,
+      currentUserRole: role,
+      liveStatus,
+      defaultDate: getToday(),
+    });
+  } catch (err) {
+    console.error("LIVE PAGE ERROR:", err);
+    return res.status(500).send("Unable to load Live page.");
+  }
+});
+
+// ============================================================
+// REQUEST LIVE ACCESS
+// ============================================================
+
+app.post("/live/request-access", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+
+    const role = String(req.user?.role || "")
+      .trim()
+      .toLowerCase();
+
+    if (!userId) {
+      return res.redirect("/login");
+    }
+
+    // Admins don't need approval.
+    if (role === "admin1" || role === "admin2") {
+      return res.redirect("/live");
+    }
+
+    // ----------------------------------------------------------
+    // CHECK LATEST ACCESS REQUEST
+    // ----------------------------------------------------------
+
+    const existingResult = await db.query(
+      `
+      SELECT
+        id,
+        status
+      FROM live_access
+      WHERE user_id = $1
+      ORDER BY id DESC
+      LIMIT 1
+      `,
+      [userId],
+    );
+
+    const existing = existingResult.rows[0] || null;
+
+    if (existing) {
+      const status = String(existing.status || "")
+        .trim()
+        .toLowerCase();
+
+      // Don't create another request while one is pending.
+      if (status === "pending") {
+        return res.redirect("/live");
+      }
+
+      // Don't create another request while this approval
+      // is still available.
+      if (status === "approved") {
+        return res.redirect("/live");
+      }
+
+      // If status is "used" or "denied",
+      // fall through and create a NEW record.
+    }
+
+    // ----------------------------------------------------------
+    // CREATE NEW ACCESS REQUEST
+    // ----------------------------------------------------------
+
+    await db.query(
+      `
+      INSERT INTO live_access (
+        user_id,
+        status,
+        requested_at,
+        updated_at
+      )
+      VALUES (
+        $1,
+        'pending',
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+      )
+      `,
+      [userId],
+    );
+
+    return res.redirect("/live");
+  } catch (err) {
+    console.error("LIVE ACCESS REQUEST ERROR:", err);
+    return res.status(500).send("Unable to request live access.");
+  }
+});
+
+// ============================================================
+// ADMIN - LIVE ACCESS
+// ============================================================
+
+app.get(
+  "/admin/live-access",
+  ensureAuthenticated,
+  ensureAdmin,
+  async (req, res) => {
+    try {
+      const role = String(req.user?.role || "")
+        .trim()
+        .toLowerCase();
+
+      if (role !== "admin1" && role !== "admin2") {
+        return res.status(403).send("Access denied.");
+      }
+
+      const result = await db.query(`
+      SELECT
+        la.id,
+        la.user_id,
+        la.status,
+        la.requested_at,
+        la.approved_at,
+        la.approved_by,
+        la.used_at,
+        la.updated_at
+      FROM live_access la
+      ORDER BY 
+        CASE
+          WHEN la.status = 'pending' THEN 0
+          WHEN la.status = 'approved' THEN 1
+          WHEN la.status = 'used' THEN 2
+          ELSE 3
+        END,
+        la.requested_at DESC
+    `);
+
+      return res.render("live-access", {
+        defaultDate: getToday(),
+        requests: result.rows,
+      });
+    } catch (err) {
+      console.error("ADMIN LIVE ACCESS ERROR:", err);
+      return res.status(500).send("Unable to load live access requests.");
+    }
+  },
+);
+
+// ============================================================
+// ADMIN - APPROVE
+// ============================================================
+
+app.post(
+  "/admin/live-access/:accessId/approve",
+  ensureAuthenticated,
+  ensureAdmin,
+  async (req, res) => {
+    try {
+      const adminId = req.user?.id;
+
+      const role = String(req.user?.role || "")
+        .trim()
+        .toLowerCase();
+
+      if (role !== "admin1" && role !== "admin2") {
+        return res.status(403).send("Access denied.");
+      }
+
+      const accessId = String(req.params.accessId || "").trim();
+
+      if (!accessId || !/^\d+$/.test(accessId)) {
+        return res.status(400).send("Invalid live access ID.");
+      }
+
+      const result = await db.query(
+        `
+        UPDATE live_access
+        SET
+          status = 'approved',
+          approved_at = CURRENT_TIMESTAMP,
+          approved_by = $1,
+          used_at = NULL,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2
+          AND status = 'pending'
+        RETURNING
+          id,
+          user_id,
+          status
+        `,
+        [adminId, accessId],
+      );
+
+      if (result.rows.length === 0) {
+        return res
+          .status(409)
+          .send(
+            "This request cannot be approved. It may already be approved, denied, or used.",
+          );
+      }
+
+      return res.redirect("/admin/live-access");
+    } catch (err) {
+      console.error("APPROVE LIVE ACCESS ERROR:", err);
+      return res.status(500).send("Unable to approve live access.");
+    }
+  },
+);
+
+// ============================================================
+// ADMIN - DENY
+// ============================================================
+
+app.post(
+  "/admin/live-access/:accessId/deny",
+  ensureAuthenticated,
+  ensureAdmin,
+  async (req, res) => {
+    try {
+      const adminId = req.user?.id;
+
+      const role = String(req.user?.role || "")
+        .trim()
+        .toLowerCase();
+
+      if (role !== "admin1" && role !== "admin2") {
+        return res.status(403).send("Access denied.");
+      }
+
+      const accessId = String(req.params.accessId || "").trim();
+
+      if (!accessId || !/^\d+$/.test(accessId)) {
+        return res.status(400).send("Invalid live access ID.");
+      }
+
+      const result = await db.query(
+        `
+        UPDATE live_access
+        SET
+          status = 'denied',
+          approved_at = NULL,
+          approved_by = $1,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2
+          AND status = 'pending'
+        RETURNING
+          id,
+          user_id,
+          status
+        `,
+        [adminId, accessId],
+      );
+
+      if (result.rows.length === 0) {
+        return res
+          .status(409)
+          .send(
+            "This request cannot be denied because it is no longer pending.",
+          );
+      }
+
+      return res.redirect("/admin/live-access");
+    } catch (err) {
+      console.error("DENY LIVE ACCESS ERROR:", err);
+      return res.status(500).send("Unable to deny live access.");
+    }
+  },
+);
+
+// Creates nothing.
+// The actual broadcast ID is created only by /live/schedule.
+// ============================================================
+
+// ============================================================
+// LIVE CREATE PAGE
+// ============================================================
+
+app.get("/live/create", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+
+    const role = String(req.user?.role || "")
+      .trim()
+      .toLowerCase();
+
+    const isAdmin = role === "admin1" || role === "admin2";
+
+    if (!userId) {
+      return res.redirect("/live");
+    }
+
+    // ----------------------------------------------------------
+    // LIVE ACCESS
+    // ----------------------------------------------------------
+
+    if (!isAdmin) {
+      const accessResult = await db.query(
+        `
+        SELECT status
+        FROM live_access
+        WHERE user_id = $1
+        LIMIT 1
+        `,
+        [userId],
+      );
+
+      const accessStatus = String(accessResult.rows[0]?.status || "")
+        .trim()
+        .toLowerCase();
+
+      if (accessStatus !== "approved") {
+        return res.redirect("/live");
+      }
+    }
+
+    // ----------------------------------------------------------
+    // CURRENT USER'S LAST BROADCAST
+    // ----------------------------------------------------------
+
+    const lastBroadcastResult = await db.query(
+      `
+      SELECT
+        id,
+        user_id,
+        title,
+        status,
+        scheduled_at,
+        started_at,
+        paused_at,
+        ended_at
+      FROM live_broadcasts
+      WHERE user_id = $1
+      ORDER BY id DESC
+      LIMIT 1
+      `,
+      [userId],
+    );
+
+    const lastBroadcast = lastBroadcastResult.rows[0] || null;
+
+    // ----------------------------------------------------------
+    // COMPARE USER
+    // ----------------------------------------------------------
+
+    let existingBroadcast = null;
+
+    if (lastBroadcast) {
+      const broadcastUserId = String(lastBroadcast.user_id);
+      const currentUserId = String(userId);
+
+      if (broadcastUserId === currentUserId) {
+        existingBroadcast = lastBroadcast;
+      }
+    }
+
+    // ----------------------------------------------------------
+    // RENDER
+    // ----------------------------------------------------------
+
+    return res.render("live-create", {
+      currentUserId: userId,
+      currentUserRole: role,
+      defaultDate: getToday(),
+      existingBroadcast,
+    });
+  } catch (err) {
+    console.error("LIVE CREATE PAGE ERROR:", err);
+
+    return res.status(500).send("Unable to load Live setup page.");
+  }
+});
+
+// ============================================================
+// SCHEDULE LIVE BROADCAST
+// ============================================================
+//
+// POST /live/schedule
+//
+// IMPORTANT:
+// This route ONLY creates the scheduled broadcast.
+//
+// It does NOT:
+//   - start the broadcast
+//   - set started_at
+//   - change status to live
+//
+// After this request:
+//   status = scheduled
+//   scheduled_at = saved
+//   started_at = NULL
+//
+// Then redirect to:
+//   /live/:id
+// ============================================================
+
+app.post("/live/schedule", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+
+    const role = String(req.user?.role || "")
+      .trim()
+      .toLowerCase();
+
+    const isAdmin = role === "admin1" || role === "admin2";
+
+    // ----------------------------------------------------------
+    // AUTH
+    // ----------------------------------------------------------
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "You must be logged in.",
+      });
+    }
+
+    // ----------------------------------------------------------
+    // INPUT
+    // ----------------------------------------------------------
+
+    const cleanTitle = String(req.body?.title || "").trim();
+
+    const liveMode = String(req.body?.mode || "both")
+      .trim()
+      .toLowerCase();
+
+    const scheduledAtRaw = String(
+      req.body?.scheduledAt || req.body?.scheduled_at || "",
+    ).trim();
+
+    // ----------------------------------------------------------
+    // TITLE
+    // ----------------------------------------------------------
+
+    if (!cleanTitle) {
+      return res.status(400).json({
+        success: false,
+        message: "Live title is required.",
+      });
+    }
+
+    if (cleanTitle.length > 200) {
+      return res.status(400).json({
+        success: false,
+        message: "Live title is too long.",
+      });
+    }
+
+    // ----------------------------------------------------------
+    // MODE
+    // ----------------------------------------------------------
+
+    if (!["camera", "microphone", "both"].includes(liveMode)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid live mode.",
+      });
+    }
+
+    // ----------------------------------------------------------
+    // SCHEDULED TIME
+    // ----------------------------------------------------------
+
+    let scheduledDate;
+
+    if (scheduledAtRaw) {
+      scheduledDate = new Date(scheduledAtRaw);
+
+      if (Number.isNaN(scheduledDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid scheduled date and time.",
+        });
+      }
+    } else {
+      // If no schedule time was supplied, save the current time.
+      scheduledDate = new Date();
+    }
+
+    // ----------------------------------------------------------
+    // ACCESS
+    // ----------------------------------------------------------
+
+    if (!isAdmin) {
+      const accessResult = await db.query(
+        `
+        SELECT status
+        FROM live_access
+        WHERE user_id = $1
+        LIMIT 1
+        `,
+        [userId],
+      );
+
+      const accessStatus = String(accessResult.rows[0]?.status || "")
+        .trim()
+        .toLowerCase();
+
+      if (accessStatus !== "approved") {
+        return res.status(403).json({
+          success: false,
+          message: "You are not approved to schedule a live broadcast.",
+        });
+      }
+    }
+
+    // ----------------------------------------------------------
+    // ONE ACTIVE/SCHEDULED LIVE PER USER
+    // ----------------------------------------------------------
+
+    const existingResult = await db.query(
+      `
+      SELECT
+        id,
+        title,
+        mode,
+        status,
+        scheduled_at,
+        started_at,
+        paused_at
+      FROM live_broadcasts
+      WHERE user_id = $1
+        AND status IN ('scheduled', 'live', 'paused')
+      ORDER BY id DESC
+      LIMIT 1
+      `,
+      [userId],
+    );
+
+    if (existingResult.rows.length > 0) {
+      const existing = existingResult.rows[0];
+
+      return res.status(409).json({
+        success: false,
+        message: "You already have an active or scheduled live broadcast.",
+        broadcastId: String(existing.id),
+        title: existing.title,
+        mode: existing.mode,
+        status: existing.status,
+        scheduledAt: existing.scheduled_at,
+        startedAt: existing.started_at,
+        pausedAt: existing.paused_at,
+        // redirect: `/live/${encodeURIComponent(String(existing.id))}`,
+      });
+    }
+
+    // ----------------------------------------------------------
+    // CREATE SCHEDULED BROADCAST
+    // ----------------------------------------------------------
+
+    const result = await db.query(
+      `
+      INSERT INTO live_broadcasts (
+        user_id,
+        title,
+        mode,
+        status,
+        recording_path,
+        scheduled_at,
+        started_at,
+        paused_at,
+        ended_at
+      )
+      VALUES (
+        $1,
+        $2,
+        $3,
+        'scheduled',
+        NULL,
+        $4,
+        NULL,
+        NULL,
+        NULL
+      )
+      RETURNING
+        id,
+        user_id,
+        title,
+        mode,
+        status,
+        recording_path,
+        scheduled_at,
+        started_at,
+        paused_at,
+        ended_at,
+        created_at
+      `,
+      [userId, cleanTitle, liveMode, scheduledDate],
+    );
+
+    if (result.rows.length === 0) {
+      throw new Error("Scheduled broadcast was not created.");
+    }
+
+    const broadcast = result.rows[0];
+
+    const broadcastId = String(broadcast.id);
+
+    // ----------------------------------------------------------
+    // SOCKET.IO
+    // ----------------------------------------------------------
+
+    const io = req.app.get("io");
+
+    if (io) {
+      io.emit("live:broadcast-scheduled", {
+        broadcastId,
+        title: broadcast.title,
+        mode: broadcast.mode,
+        status: "scheduled",
+        userId: String(broadcast.user_id),
+        scheduledAt: broadcast.scheduled_at,
+      });
+    }
+
+    console.log(
+      "LIVE BROADCAST SCHEDULED:",
+      broadcastId,
+      "user:",
+      broadcast.user_id,
+      "mode:",
+      broadcast.mode,
+      "scheduledAt:",
+      broadcast.scheduled_at,
+    );
+
+    // ----------------------------------------------------------
+    // RESPONSE
+    // ----------------------------------------------------------
+
+    return res.status(201).json({
+      success: true,
+      message: "Live broadcast scheduled.",
+      broadcastId,
+      title: broadcast.title,
+      mode: broadcast.mode,
+      status: "scheduled",
+      scheduledAt: broadcast.scheduled_at,
+      startedAt: null,
+
+      // This is the ONLY redirect after scheduling.
+      redirect: `/live/${encodeURIComponent(broadcastId)}`,
+    });
+  } catch (err) {
+    if (err?.code === "23505") {
+      return res.status(409).json({
+        success: false,
+        message: "You already have an active or scheduled live broadcast.",
+      });
+    }
+
+    console.error("SCHEDULE LIVE ERROR:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to schedule live broadcast.",
+      error:
+        process.env.NODE_ENV !== "production"
+          ? String(err?.message || err)
+          : undefined,
+    });
+  }
+});
+//
+
+// ============================================================
+// START GO LIVE
+// ============================================================
+//
+app.post(
+  "/live/:id/recording",
+  ensureAuthenticated,
+  liveRecordingUpload.single("recording"),
+  async (req, res) => {
+    try {
+      console.log("========== LIVE RECORDING UPLOAD ==========");
+      console.log("Broadcast ID:", req.params.id);
+      console.log("User ID:", req.user?.id);
+      console.log("FILE:", req.file);
+      console.log("BODY:", req.body);
+      console.log("===========================================");
+
+      const userId = req.user?.id;
+      const broadcastId = String(req.params.id || "").trim();
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: "You must be logged in.",
+        });
+      }
+
+      if (!broadcastId || !/^\d+$/.test(broadcastId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid live broadcast ID.",
+        });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: "No recording received.",
+        });
+      }
+
+      const recordingPath = `/uploads/live/${req.file.filename}`;
+
+      const result = await db.query(
+        `
+        UPDATE live_broadcasts
+        SET recording_path = $1
+        WHERE id = $2
+          AND user_id = $3
+        RETURNING id, recording_path
+        `,
+        [recordingPath, broadcastId, userId],
+      );
+
+      if (result.rows.length === 0) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (unlinkError) {
+          console.error("Unable to remove orphan recording:", unlinkError);
+        }
+
+        return res.status(404).json({
+          success: false,
+          message: "Broadcast not found.",
+        });
+      }
+
+      console.log("✅ LIVE RECORDING SAVED:", broadcastId, recordingPath);
+
+      return res.status(200).json({
+        success: true,
+        message: "Live recording saved.",
+        broadcastId,
+        recordingPath,
+      });
+    } catch (err) {
+      console.error("❌ SAVE LIVE RECORDING ERROR:", err);
+
+      if (req.file?.path) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (unlinkError) {
+          console.error("Unable to remove failed recording:", unlinkError);
+        }
+      }
+
+      return res.status(500).json({
+        success: false,
+        message: "Unable to save live recording.",
+      });
+    }
+  },
+);
+
+//
+// POST /live/:id/start
+//
+// This route ONLY starts an EXISTING broadcast.
+//
+app.get("/live/:id", ensureAuthenticated, async (req, res) => {
+  try {
+    const broadcastId = String(req.params.id || "").trim();
+
+    if (!broadcastId || !/^\d+$/.test(broadcastId)) {
+      return res.status(400).send("Invalid live broadcast ID.");
+    }
+
+    const result = await db.query(
+      `
+    SELECT
+      id,
+      user_id,
+      title,
+      mode,
+      status,
+      recording_path,
+      scheduled_at,
+      started_at,
+      paused_at,
+      ended_at,
+      created_at
+    FROM live_broadcasts
+    WHERE id = $1
+    LIMIT 1
+  `,
+      [broadcastId],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).send("Live broadcast not found.");
+    }
+
+    const broadcast = result.rows[0];
+
+    // --------------------------------------------------------
+    // CURRENT USER
+    // --------------------------------------------------------
+
+    const currentUserId = req.user?.id;
+
+    const currentUserRole = String(req.user?.role || "")
+      .trim()
+      .toLowerCase();
+
+    // --------------------------------------------------------
+    // PERMISSIONS
+    // --------------------------------------------------------
+
+    const isOwner = String(broadcast.user_id) === String(currentUserId);
+
+    const isAdmin =
+      currentUserRole === "admin1" || currentUserRole === "admin2";
+
+    const canControlLive = isOwner || isAdmin;
+
+    // --------------------------------------------------------
+    // DEBUG
+    // --------------------------------------------------------
+
+    console.log("========== LIVE WATCH PERMISSION ==========");
+    console.log("broadcast.id:", broadcast.id);
+    console.log("broadcast.user_id:", broadcast.user_id);
+    console.log("req.user.id:", req.user?.id);
+    console.log("req.user.role:", req.user?.role);
+    console.log("currentUserId:", currentUserId);
+    console.log("currentUserRole:", currentUserRole);
+    console.log("isOwner:", isOwner);
+    console.log("isAdmin:", isAdmin);
+    console.log("canControlLive:", canControlLive);
+    console.log("broadcast.status:", broadcast.status);
+    console.log("broadcast.mode:", broadcast.mode);
+    console.log("==========================================");
+
+    // --------------------------------------------------------
+    // RENDER
+    // --------------------------------------------------------
+
+    return res.render("live-watch", {
+      broadcast,
+
+      currentUserId,
+      currentUserRole,
+
+      isOwner,
+      isAdmin,
+      canControlLive,
+
+      defaultDate: getToday(),
+    });
+  } catch (err) {
+    console.error("LIVE WATCH ERROR:", err);
+
+    return res.status(500).send("Unable to load live broadcast.");
+  }
+});
+
+// scheduled -> live
+//
+// It saves:
+//   started_at
+//
+// It does NOT create another row.
+// ============================================================
+
+app.post("/live/:id/start", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+
+    const role = String(req.user?.role || "")
+      .trim()
+      .toLowerCase();
+
+    const isAdmin = role === "admin1" || role === "admin2";
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "You must be logged in.",
+      });
+    }
+
+    // ----------------------------------------------------------
+    // ID
+    // ----------------------------------------------------------
+
+    const broadcastId = String(req.params.id || "").trim();
+
+    if (!broadcastId || !/^\d+$/.test(broadcastId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid live broadcast ID.",
+      });
+    }
+
+    // ----------------------------------------------------------
+    // FIND BROADCAST
+    // ----------------------------------------------------------
+
+    const result = await db.query(
+      `
+      SELECT
+        id,
+        user_id,
+        title,
+        mode,
+        status,
+        recording_path,
+        scheduled_at,
+        started_at,
+        paused_at,
+        ended_at
+      FROM live_broadcasts
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [broadcastId],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Live broadcast not found.",
+      });
+    }
+
+    const broadcast = result.rows[0];
+
+    // ----------------------------------------------------------
+    // OWNER / ADMIN
+    // ----------------------------------------------------------
+
+    const isOwner = String(broadcast.user_id) === String(userId);
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "You cannot start this live broadcast.",
+      });
+    }
+
+    const status = String(broadcast.status || "")
+      .trim()
+      .toLowerCase();
+
+    // ----------------------------------------------------------
+    // ALREADY LIVE
+    // ----------------------------------------------------------
+
+    if (status === "live") {
+      return res.status(200).json({
+        success: true,
+        alreadyLive: true,
+        message: "This live broadcast is already live.",
+        broadcastId: String(broadcast.id),
+        title: broadcast.title,
+        mode: broadcast.mode,
+        status: "live",
+        scheduledAt: broadcast.scheduled_at,
+        startedAt: broadcast.started_at,
+        redirect: `/live/${encodeURIComponent(String(broadcast.id))}`,
+      });
+    }
+
+    // ----------------------------------------------------------
+    // ENDED
+    // ----------------------------------------------------------
+
+    if (status === "ended") {
+      return res.status(410).json({
+        success: false,
+        message: "This live broadcast has already ended.",
+      });
+    }
+
+    // ----------------------------------------------------------
+    // ONLY SCHEDULED OR PAUSED
+    // ----------------------------------------------------------
+
+    if (!["scheduled", "paused"].includes(status)) {
+      return res.status(409).json({
+        success: false,
+        message: `Cannot start broadcast with status "${broadcast.status}".`,
+      });
+    }
+
+    // ----------------------------------------------------------
+    // START EXISTING ROW
+    // ----------------------------------------------------------
+
+    const updateResult = await db.query(
+      `
+      UPDATE live_broadcasts
+      SET
+        status = 'live',
+        started_at = COALESCE(started_at, CURRENT_TIMESTAMP),
+        paused_at = NULL
+      WHERE id = $1
+        AND status IN ('scheduled', 'paused')
+      RETURNING
+        id,
+        user_id,
+        title,
+        mode,
+        status,
+        recording_path,
+        scheduled_at,
+        started_at,
+        paused_at,
+        ended_at
+      `,
+      [broadcastId],
+    );
+
+    if (updateResult.rows.length === 0) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "The broadcast could not be started because its status changed. Refresh the page and try again.",
+      });
+    }
+
+    const startedBroadcast = updateResult.rows[0];
+
+    const startedBroadcastId = String(startedBroadcast.id);
+
+    // ----------------------------------------------------------
+    // SOCKET.IO
+    // ----------------------------------------------------------
+
+    const io = req.app.get("io");
+
+    if (io) {
+      io.to(startedBroadcastId).emit("live:broadcast-started", {
+        broadcastId: startedBroadcastId,
+        title: startedBroadcast.title,
+        mode: startedBroadcast.mode,
+        status: "live",
+        userId: String(startedBroadcast.user_id),
+        scheduledAt: startedBroadcast.scheduled_at,
+        startedAt: startedBroadcast.started_at,
+      });
+
+      // Also notify the general live list.
+      io.emit("live:broadcast-started", {
+        broadcastId: startedBroadcastId,
+        title: startedBroadcast.title,
+        mode: startedBroadcast.mode,
+        status: "live",
+        userId: String(startedBroadcast.user_id),
+        scheduledAt: startedBroadcast.scheduled_at,
+        startedAt: startedBroadcast.started_at,
+      });
+    }
+
+    console.log(
+      "LIVE BROADCAST STARTED:",
+      startedBroadcastId,
+      "user:",
+      startedBroadcast.user_id,
+      "mode:",
+      startedBroadcast.mode,
+      "startedAt:",
+      startedBroadcast.started_at,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Live broadcast started.",
+      broadcastId: startedBroadcastId,
+      title: startedBroadcast.title,
+      mode: startedBroadcast.mode,
+      status: "live",
+      scheduledAt: startedBroadcast.scheduled_at,
+      startedAt: startedBroadcast.started_at,
+      redirect: `/live/${encodeURIComponent(startedBroadcastId)}`,
+    });
+  } catch (err) {
+    console.error("START LIVE ERROR:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: err?.detail || err?.message || "Unable to start live broadcast.",
+      code: err?.code || null,
+    });
+  }
+});
+
+// ============================================================
+// PAUSE LIVE
+// POST /live/:id/pause
+// ============================================================
+
+app.post("/live/:id/pause", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+
+    const role = String(req.user?.role || "")
+      .trim()
+      .toLowerCase();
+
+    const isAdmin = role === "admin1" || role === "admin2";
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "You must be logged in.",
+      });
+    }
+
+    // ----------------------------------------------------------
+    // ID
+    // ----------------------------------------------------------
+
+    const broadcastId = String(req.params.id || "").trim();
+
+    if (!broadcastId || !/^\d+$/.test(broadcastId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid live broadcast ID.",
+      });
+    }
+
+    // ----------------------------------------------------------
+    // FIND BROADCAST
+    // ----------------------------------------------------------
+
+    const result = await db.query(
+      `
+      SELECT
+        id,
+        user_id,
+        title,
+        mode,
+        status,
+        scheduled_at,
+        started_at,
+        paused_at,
+        ended_at
+      FROM live_broadcasts
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [broadcastId],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Live broadcast not found.",
+      });
+    }
+
+    const broadcast = result.rows[0];
+
+    // ----------------------------------------------------------
+    // OWNER / ADMIN
+    // ----------------------------------------------------------
+
+    const isOwner = String(broadcast.user_id) === String(userId);
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "You cannot pause this live broadcast.",
+      });
+    }
+
+    // ----------------------------------------------------------
+    // STATUS
+    // ----------------------------------------------------------
+
+    const status = String(broadcast.status || "")
+      .trim()
+      .toLowerCase();
+
+    if (status !== "live") {
+      return res.status(409).json({
+        success: false,
+        message: `Cannot pause broadcast with status "${broadcast.status}".`,
+      });
+    }
+
+    // ----------------------------------------------------------
+    // PAUSE
+    // ----------------------------------------------------------
+
+    const updateResult = await db.query(
+      `
+      UPDATE live_broadcasts
+      SET
+        status = 'paused',
+        paused_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+        AND status = 'live'
+      RETURNING
+        id,
+        user_id,
+        title,
+        mode,
+        status,
+        scheduled_at,
+        started_at,
+        paused_at,
+        ended_at
+      `,
+      [broadcastId],
+    );
+
+    if (updateResult.rows.length === 0) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "The broadcast could not be paused because its status changed.",
+      });
+    }
+
+    const pausedBroadcast = updateResult.rows[0];
+
+    const pausedBroadcastId = String(pausedBroadcast.id);
+
+    // ----------------------------------------------------------
+    // SOCKET.IO
+    // ----------------------------------------------------------
+
+    const io = req.app.get("io");
+
+    if (io) {
+      io.to(pausedBroadcastId).emit("live:broadcast-paused", {
+        broadcastId: pausedBroadcastId,
+        title: pausedBroadcast.title,
+        mode: pausedBroadcast.mode,
+        status: "paused",
+        userId: String(pausedBroadcast.user_id),
+        pausedAt: pausedBroadcast.paused_at,
+      });
+
+      io.emit("live:broadcast-paused", {
+        broadcastId: pausedBroadcastId,
+        title: pausedBroadcast.title,
+        mode: pausedBroadcast.mode,
+        status: "paused",
+        userId: String(pausedBroadcast.user_id),
+        pausedAt: pausedBroadcast.paused_at,
+      });
+    }
+
+    // ----------------------------------------------------------
+    // RESPONSE
+    // ----------------------------------------------------------
+
+    return res.status(200).json({
+      success: true,
+      message: "Live broadcast paused.",
+      broadcastId: pausedBroadcastId,
+      title: pausedBroadcast.title,
+      mode: pausedBroadcast.mode,
+      status: "paused",
+      pausedAt: pausedBroadcast.paused_at,
+    });
+  } catch (err) {
+    console.error("PAUSE LIVE ERROR:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: err?.detail || err?.message || "Unable to pause live broadcast.",
+    });
+  }
+});
+
+// ============================================================
+// RESUME LIVE
+// POST /live/:id/resume
+// ============================================================
+
+// ============================================================
+// RESUME LIVE
+// POST /live/:id/resume
+// ============================================================
+
+app.post("/live/:id/resume", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+
+    const role = String(req.user?.role || "")
+      .trim()
+      .toLowerCase();
+
+    const isAdmin = role === "admin1" || role === "admin2";
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "You must be logged in.",
+      });
+    }
+
+    // ----------------------------------------------------------
+    // ID
+    // ----------------------------------------------------------
+
+    const broadcastId = String(req.params.id || "").trim();
+
+    if (!broadcastId || !/^\d+$/.test(broadcastId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid live broadcast ID.",
+      });
+    }
+
+    // ----------------------------------------------------------
+    // FIND BROADCAST
+    // ----------------------------------------------------------
+
+    const result = await db.query(
+      `
+      SELECT
+        id,
+        user_id,
+        title,
+        mode,
+        status,
+        scheduled_at,
+        started_at,
+        paused_at,
+        ended_at
+      FROM live_broadcasts
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [broadcastId],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Live broadcast not found.",
+      });
+    }
+
+    const broadcast = result.rows[0];
+
+    // ----------------------------------------------------------
+    // OWNER / ADMIN
+    // ----------------------------------------------------------
+
+    const isOwner = String(broadcast.user_id) === String(userId);
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "You cannot resume this live broadcast.",
+      });
+    }
+
+    // ----------------------------------------------------------
+    // STATUS
+    // ----------------------------------------------------------
+
+    const status = String(broadcast.status || "")
+      .trim()
+      .toLowerCase();
+
+    if (status !== "paused") {
+      return res.status(409).json({
+        success: false,
+        message: `Cannot resume broadcast with status "${broadcast.status}".`,
+      });
+    }
+
+    // ----------------------------------------------------------
+    // RESUME
+    // ----------------------------------------------------------
+
+    const updateResult = await db.query(
+      `
+      UPDATE live_broadcasts
+      SET
+        status = 'live',
+        paused_at = NULL
+      WHERE id = $1
+        AND status = 'paused'
+      RETURNING
+        id,
+        user_id,
+        title,
+        mode,
+        status,
+        scheduled_at,
+        started_at,
+        paused_at,
+        ended_at
+      `,
+      [broadcastId],
+    );
+
+    if (updateResult.rows.length === 0) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "The broadcast could not be resumed because its status changed.",
+      });
+    }
+
+    const resumedBroadcast = updateResult.rows[0];
+
+    const resumedBroadcastId = String(resumedBroadcast.id);
+
+    // ----------------------------------------------------------
+    // SOCKET.IO
+    // ----------------------------------------------------------
+
+    const io = req.app.get("io");
+
+    if (io) {
+      io.to(resumedBroadcastId).emit("live:broadcast-resumed", {
+        broadcastId: resumedBroadcastId,
+        title: resumedBroadcast.title,
+        mode: resumedBroadcast.mode,
+        status: "live",
+        userId: String(resumedBroadcast.user_id),
+      });
+
+      io.emit("live:broadcast-resumed", {
+        broadcastId: resumedBroadcastId,
+        title: resumedBroadcast.title,
+        mode: resumedBroadcast.mode,
+        status: "live",
+        userId: String(resumedBroadcast.user_id),
+      });
+    }
+
+    // ----------------------------------------------------------
+    // RESPONSE
+    // ----------------------------------------------------------
+
+    return res.status(200).json({
+      success: true,
+      message: "Live broadcast resumed.",
+      broadcastId: resumedBroadcastId,
+      title: resumedBroadcast.title,
+      mode: resumedBroadcast.mode,
+      status: "live",
+    });
+  } catch (err) {
+    console.error("RESUME LIVE ERROR:", err);
+
+    return res.status(500).json({
+      success: false,
+      message:
+        err?.detail || err?.message || "Unable to resume live broadcast.",
+    });
+  }
+});
+
+// ============================================================
+// END LIVE
+// POST /live/:id/end
+// ============================================================
+
+app.post("/live/:id/end", ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+
+    const role = String(req.user?.role || "")
+      .trim()
+      .toLowerCase();
+
+    const isAdmin = role === "admin1" || role === "admin2";
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "You must be logged in.",
+      });
+    }
+
+    // ----------------------------------------------------------
+    // ID
+    // ----------------------------------------------------------
+
+    const broadcastId = String(req.params.id || "").trim();
+
+    if (!broadcastId || !/^\d+$/.test(broadcastId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid live broadcast ID.",
+      });
+    }
+
+    // ----------------------------------------------------------
+    // FIND BROADCAST
+    // ----------------------------------------------------------
+
+    const result = await db.query(
+      `
+      SELECT
+        id,
+        user_id,
+        title,
+        mode,
+        status,
+        scheduled_at,
+        started_at,
+        paused_at,
+        ended_at
+      FROM live_broadcasts
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [broadcastId],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Live broadcast not found.",
+      });
+    }
+
+    const broadcast = result.rows[0];
+
+    // ----------------------------------------------------------
+    // OWNER / ADMIN
+    // ----------------------------------------------------------
+
+    const isOwner = String(broadcast.user_id) === String(userId);
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "You cannot end this live broadcast.",
+      });
+    }
+
+    // ----------------------------------------------------------
+    // STATUS
+    // ----------------------------------------------------------
+
+    const status = String(broadcast.status || "")
+      .trim()
+      .toLowerCase();
+
+    if (!["scheduled", "live", "paused"].includes(status)) {
+      return res.status(409).json({
+        success: false,
+        message: `Cannot end broadcast with status "${broadcast.status}".`,
+      });
+    }
+
+    // ----------------------------------------------------------
+    // END
+    // ----------------------------------------------------------
+
+    const updateResult = await db.query(
+      `
+      UPDATE live_broadcasts
+      SET
+        status = 'ended',
+        ended_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+        AND status IN ('scheduled', 'live', 'paused')
+      RETURNING
+        id,
+        user_id,
+        title,
+        mode,
+        status,
+        scheduled_at,
+        started_at,
+        paused_at,
+        ended_at
+      `,
+      [broadcastId],
+    );
+
+    if (updateResult.rows.length === 0) {
+      return res.status(409).json({
+        success: false,
+        message: "The broadcast could not be ended because its status changed.",
+      });
+    }
+
+    const endedBroadcast = updateResult.rows[0];
+
+    const endedBroadcastId = String(endedBroadcast.id);
+    //
+    if (!isAdmin) {
+      await db.query(
+        `
+    UPDATE live_access
+    SET
+      status = 'used',
+      used_at = CURRENT_TIMESTAMP,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE user_id = $1
+      AND status = 'approved'
+    `,
+        [endedBroadcast.user_id],
+      );
+    }
+    //
+    // ----------------------------------------------------------
+    // SOCKET.IO
+    // ----------------------------------------------------------
+
+    const io = req.app.get("io");
+
+    if (io) {
+      io.to(endedBroadcastId).emit("live:broadcast-ended", {
+        broadcastId: endedBroadcastId,
+        title: endedBroadcast.title,
+        mode: endedBroadcast.mode,
+        status: "ended",
+        userId: String(endedBroadcast.user_id),
+        endedAt: endedBroadcast.ended_at,
+      });
+
+      io.emit("live:broadcast-ended", {
+        broadcastId: endedBroadcastId,
+        title: endedBroadcast.title,
+        mode: endedBroadcast.mode,
+        status: "ended",
+        userId: String(endedBroadcast.user_id),
+        endedAt: endedBroadcast.ended_at,
+      });
+    }
+
+    // ----------------------------------------------------------
+    // RESPONSE
+    // ----------------------------------------------------------
+
+    return res.status(200).json({
+      success: true,
+      message: "Live broadcast ended.",
+      broadcastId: endedBroadcastId,
+      title: endedBroadcast.title,
+      mode: endedBroadcast.mode,
+      status: "ended",
+      endedAt: endedBroadcast.ended_at,
+    });
+  } catch (err) {
+    console.error("END LIVE ERROR:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: err?.detail || err?.message || "Unable to end live broadcast.",
+    });
+  }
+});
+
+// POST /live/:id/end
+// ============================================================
+
+// ============================================================
+// PLAY LIVE RECORDING
+// GET /live/:id/recording
+// ============================================================
+
+// Playback
+
+// ============================================================
+//
+//
+// /report/live
+app.get("/report/live", ensureAuthenticated, async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = 5;
+    const offset = (page - 1) * limit;
+
+    // Count all recordings
+    const countResult = await db.query(`
+      SELECT COUNT(*) AS total
+      FROM live_broadcasts
+      WHERE recording_path IS NOT NULL
+    `);
+
+    const total = parseInt(countResult.rows[0].total, 10);
+    const totalPages = Math.ceil(total / limit);
+
+    // If requested page is too high
+    const safePage = totalPages > 0 ? Math.min(page, totalPages) : 1;
+
+    const safeOffset = (safePage - 1) * limit;
+
+    const result = await db.query(
+      `
+      SELECT
+        id,
+        user_id,
+        title,
+        mode,
+        status,
+        recording_path,
+        scheduled_at,
+        started_at,
+        ended_at,
+        created_at
+      FROM live_broadcasts
+      WHERE recording_path IS NOT NULL
+      ORDER BY created_at DESC
+      LIMIT $1 OFFSET $2
+      `,
+      [limit, safeOffset],
+    );
+
+    console.log("TOTAL:", total);
+    console.log("PAGE:", safePage);
+    console.log("TOTAL PAGES:", totalPages);
+    console.log("ROWS:", result.rows.length);
+
+    return res.render("live-report", {
+      broadcasts: result.rows,
+      page: safePage,
+      totalPages: totalPages,
+      defaultDate: getToday(),
+    });
+  } catch (err) {
+    console.error("LIVE REPORT ERROR:", err);
+    return res.status(500).send("Unable to load live broadcast report.");
+  }
+});
+
+//
+// GET /live/report
+// Download them to local
+app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
+  console.log("==========================================");
+  console.log("⬇️ DOWNLOAD LIVE RECORDING");
+  console.log("⬇️ ID:", req.params.id);
+  console.log("==========================================");
+
+  try {
+    const broadcastId = String(req.params.id || "").trim();
+
+    if (!broadcastId || !/^\d+$/.test(broadcastId)) {
+      return res.status(400).send("Invalid live broadcast ID.");
+    }
+
+    const result = await db.query(
+      `
+      SELECT
+        id,
+        title,
+        recording_path
+      FROM live_broadcasts
+      WHERE id = $1
+        AND recording_path IS NOT NULL
+      LIMIT 1
+      `,
+      [broadcastId],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).send("Recording not found.");
+    }
+
+    const broadcast = result.rows[0];
+
+    const recordingPath = String(broadcast.recording_path).trim();
+
+    console.log("⬇️ RECORDING PATH:", recordingPath);
+
+    // --------------------------------------------------------
+    // GET FILENAME ONLY
+    // --------------------------------------------------------
+
+    const filename = path.basename(recordingPath);
+
+    // --------------------------------------------------------
+    // BUILD REAL FILE PATH
+    // --------------------------------------------------------
+
+    const liveDirectory = path.resolve(
+      process.cwd(),
+      "public",
+      "uploads",
+      "live",
+    );
+
+    const filePath = path.resolve(liveDirectory, filename);
+
+    console.log("⬇️ FILE PATH:", filePath);
+
+    // --------------------------------------------------------
+    // SECURITY
+    // --------------------------------------------------------
+
+    if (!filePath.startsWith(liveDirectory + path.sep)) {
+      return res.status(403).send("Invalid recording path.");
+    }
+
+    // --------------------------------------------------------
+    // CHECK FILE
+    // --------------------------------------------------------
+
+    if (!fs.existsSync(filePath)) {
+      console.error("❌ FILE NOT FOUND:", filePath);
+
+      return res.status(404).send("Recording file not found.");
+    }
+
+    // --------------------------------------------------------
+    // DOWNLOAD
+    // --------------------------------------------------------
+
+    return res.download(filePath, `live-${broadcast.id}.webm`, (err) => {
+      if (err) {
+        console.error("❌ DOWNLOAD ERROR:", err);
+      } else {
+        console.log("✅ RECORDING DOWNLOADED.");
+      }
+    });
+  } catch (err) {
+    console.error("❌ LIVE DOWNLOAD ERROR:", err);
+
+    return res.status(500).send("Unable to download live recording.");
+  }
+});
+
+// ============================================================
+
+//if /live/report : require login because above /live/:id 👆👌
+app.get("/report/live/:id/playback", ensureAuthenticated, async (req, res) => {
+  try {
+    const broadcastId = String(req.params.id || "").trim();
+
+    if (!broadcastId || !/^\d+$/.test(broadcastId)) {
+      return res.status(400).send("Invalid live broadcast ID.");
+    }
+
+    const result = await db.query(
+      `
+      SELECT
+        id,
+        user_id,
+        title,
+        mode,
+        status,
+        recording_path,
+        scheduled_at,
+        started_at,
+        ended_at,
+        created_at
+      FROM live_broadcasts
+      WHERE id = $1
+        AND recording_path IS NOT NULL
+      LIMIT 1
+      `,
+      [broadcastId],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).send("Recording not found.");
+    }
+
+    return res.render("live-playback", {
+      broadcast: result.rows[0],
+      defaultDate: getToday(),
+    });
+  } catch (err) {
+    console.error("LIVE PLAYBACK ERROR:", err);
+    return res.status(500).send("Unable to load live recording.");
+  }
+});
+//
+// ============================================================
+// DELETE LIVE BROADCAST + RECORDING
+// DELETE /report/live/:id
+// ============================================================
+
+//
+app.get("/report/live/:id/delete", ensureAuthenticated, async (req, res) => {
+  console.log("==========================================");
+  console.log("🗑️ DELETE LIVE RECORDING");
+  console.log("🗑️ ID:", req.params.id);
+  console.log("==========================================");
+
+  try {
+    const broadcastId = String(req.params.id || "").trim();
+
+    if (!broadcastId || !/^\d+$/.test(broadcastId)) {
+      return res.status(400).send("Invalid live broadcast ID.");
+    }
+
+    const result = await db.query(
+      `
+      SELECT
+        id,
+        recording_path
+      FROM live_broadcasts
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [broadcastId],
+    );
+
+    console.log("🗄️ DATABASE RESULT:", result.rows);
+
+    if (result.rows.length === 0) {
+      return res.status(404).send("Recording not found.");
+    }
+
+    const recordingPath = result.rows[0].recording_path;
+
+    console.log("🎥 RECORDING PATH:", recordingPath);
+
+    // =====================================================
+    // DELETE PHYSICAL FILE
+    // =====================================================
+
+    if (recordingPath) {
+      const filename = path.basename(String(recordingPath).trim());
+
+      // IMPORTANT:
+      // This is the actual physical directory
+      const uploadDir = path.join(process.cwd(), "public", "uploads", "live");
+
+      const filePath = path.join(uploadDir, filename);
+
+      console.log("📁 UPLOAD DIR:", uploadDir);
+      console.log("📄 FILENAME:", filename);
+      console.log("🗑️ FILE PATH:", filePath);
+
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+
+        console.log("✅ FILE DELETED:", filePath);
+      } else {
+        console.log("⚠️ FILE NOT FOUND:", filePath);
+      }
+    }
+
+    // =====================================================
+    // DELETE DATABASE ROW
+    // =====================================================
+
+    const deleteResult = await db.query(
+      `
+      DELETE FROM live_broadcasts
+      WHERE id = $1
+      RETURNING id
+      `,
+      [broadcastId],
+    );
+
+    console.log("✅ DATABASE ROW DELETED:", deleteResult.rows);
+
+    // =====================================================
+    // BACK TO REPORT
+    // =====================================================
+
+    return res.redirect("/report/live");
+  } catch (err) {
+    console.error("==========================================");
+    console.error("❌ DELETE LIVE ERROR:", err);
+    console.error("❌ MESSAGE:", err.message);
+    console.error("❌ STACK:", err.stack);
+    console.error("==========================================");
+
+    return res.status(500).send(`Unable to delete recording: ${err.message}`);
+  }
+});
+
+// ============================================================
+// END LIVE BROADCAST
+// ============================================================
 //
 
 // ----------------------------
@@ -7596,7 +9607,7 @@ app.use((err, req, res, next) => {
 // ----------------------------
 // Start Server for both production and local.
 // ----------------------------
-app.listen(port, () => {
+server.listen(port, () => {
   const mode = process.env.NODE_ENV || "production";
   console.log(`✅ Server running in ${mode} mode on port ${port}`);
 });

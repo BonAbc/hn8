@@ -3064,11 +3064,548 @@ button:hover {
 
 /*Pagination social-profile report END*/
 /*social-profile-view.ejs*/
-/**/
-
-/**/
-
 /*social-profile-view.ejs*/
+
+/*START live-create.ejs*/
+/**/
+/* =========================================================
+   LIVE CREATE PAGE
+   Page-specific: /live/create
+   ========================================================= */
+
+.live-create-page {
+  width: 100%;
+}
+
+.live-create-container {
+  max-width: 900px;
+}
+
+/* ---------------------------------------------------------
+   HEADER
+   --------------------------------------------------------- */
+
+.live-create-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111;
+}
+
+.live-create-header p {
+  margin-top: 8px;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+/* ---------------------------------------------------------
+   MAIN CARD
+   --------------------------------------------------------- */
+
+.live-create-card {
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto;
+
+  padding: 25px;
+
+  background: #fff;
+  border: 1px solid #000;
+  border-radius: 12px;
+
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+/* ---------------------------------------------------------
+   CAMERA PREVIEW
+   --------------------------------------------------------- */
+
+.live-create-preview-section {
+  width: 100%;
+  margin-bottom: 25px;
+}
+
+.live-create-preview {
+  position: relative;
+
+  width: 100%;
+  aspect-ratio: 16 / 9;
+
+  min-height: 300px;
+
+  background: #111;
+  border: 1px solid #000;
+  border-radius: 10px;
+
+  overflow: hidden;
+}
+
+.live-create-video {
+  display: none;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  background: #000;
+}
+
+.live-create-placeholder {
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  text-align: center;
+  color: #fff;
+}
+
+.live-create-placeholder-icon {
+  margin-bottom: 12px;
+  font-size: 3rem;
+}
+
+.live-create-placeholder h3 {
+  margin: 0 0 8px;
+
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.live-create-placeholder p {
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+/* ---------------------------------------------------------
+   FORM
+   --------------------------------------------------------- */
+
+.live-create-form {
+  width: 100%;
+}
+
+.live-create-field {
+  margin-bottom: 18px;
+}
+
+.live-create-field label {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #111;
+  font-weight: 600;
+}
+
+.live-create-field input,
+.live-create-field select {
+  width: 100%;
+  min-height: 46px;
+
+  border: 1px solid #000;
+  border-radius: 7px;
+
+  padding: 10px 13px;
+
+  background: #fff;
+  color: #111;
+
+  font-size: 15px;
+}
+
+.live-create-field input:focus,
+.live-create-field select:focus {
+  border-color: #dc3545;
+
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.12);
+
+  outline: none;
+}
+
+/* ---------------------------------------------------------
+   STATUS
+   --------------------------------------------------------- */
+
+.live-create-status {
+  width: 100%;
+
+  margin: 20px 0;
+
+  padding: 12px 14px;
+
+  border: 1px solid #ccc;
+  border-radius: 7px;
+
+  background: #f5f5f5;
+
+  color: #555;
+
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------
+   ACTIONS
+   --------------------------------------------------------- */
+
+.live-create-actions {
+  display: flex;
+
+  justify-content: center;
+  align-items: center;
+
+  gap: 12px;
+
+  margin-top: 25px;
+}
+
+.live-create-actions .btn {
+  min-height: 46px;
+
+  padding: 10px 24px;
+
+  border-radius: 7px;
+
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------
+   DISABLED GO LIVE
+   --------------------------------------------------------- */
+
+.live-create-actions .btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ---------------------------------------------------------
+   TABLET
+   --------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .live-create-page {
+    padding-top: 30px !important;
+    padding-bottom: 30px !important;
+  }
+
+  .live-create-header h1 {
+    font-size: 1.7rem;
+  }
+
+  .live-create-card {
+    padding: 20px;
+  }
+
+  .live-create-preview {
+    min-height: 250px;
+  }
+}
+
+/* ---------------------------------------------------------
+   MOBILE
+   --------------------------------------------------------- */
+
+@media (max-width: 576px) {
+  .live-create-page {
+    margin-top: 15px !important;
+    margin-bottom: 15px !important;
+
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .live-create-container {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+
+  .live-create-header {
+    margin-bottom: 20px !important;
+  }
+
+  .live-create-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .live-create-header p {
+    font-size: 0.85rem;
+  }
+
+  .live-create-card {
+    padding: 12px;
+
+    border-radius: 8px;
+  }
+
+  .live-create-preview {
+    min-height: 190px;
+
+    border-radius: 7px;
+  }
+
+  .live-create-placeholder-icon {
+    font-size: 2.2rem;
+  }
+
+  .live-create-placeholder h3 {
+    font-size: 1rem;
+  }
+
+  .live-create-placeholder p {
+    font-size: 0.8rem;
+  }
+
+  .live-create-field {
+    margin-bottom: 15px;
+  }
+
+  .live-create-field input,
+  .live-create-field select {
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  .live-create-status {
+    padding: 10px 12px;
+
+    font-size: 13px;
+  }
+
+  .live-create-actions {
+    flex-direction: column;
+
+    width: 100%;
+
+    gap: 10px;
+  }
+
+  .live-create-actions .btn {
+    width: 100%;
+    min-height: 45px;
+  }
+}
+
+/* ---------------------------------------------------------
+   SMALL PHONES
+   --------------------------------------------------------- */
+
+@media (max-width: 360px) {
+  .live-create-card {
+    padding: 10px;
+  }
+
+  .live-create-preview {
+    min-height: 170px;
+  }
+
+  .live-create-header h1 {
+    font-size: 1.25rem;
+  }
+}
+/*End live-create.ejs*/
+/**/
+/*BEGIN live-watch.ejs*/
+/**/
+.live-watch-section {
+  width: 100%;
+}
+
+.live-watch-header h1 {
+  font-weight: 700;
+  margin-bottom: 0;
+}
+
+/* Video + Chat */
+
+.live-watch-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 1rem;
+  width: 100%;
+}
+
+/* Video */
+
+.live-watch-video-panel {
+  min-width: 0;
+}
+
+.live-watch-video-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border: 2px solid #000;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.live-watch-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+  display: block;
+}
+
+.live-watch-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #fff;
+  background: #111;
+  padding: 1rem;
+}
+
+.live-watch-placeholder-icon {
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
+}
+
+.live-watch-placeholder h3 {
+  margin-bottom: 0.5rem;
+}
+
+/* Chat */
+
+.live-watch-chat {
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+  max-height: 500px;
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.live-watch-chat-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid #000;
+  background: #f8f9fa;
+}
+
+.live-watch-chat-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.live-watch-chat-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.live-watch-chat-input {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-top: 2px solid #000;
+  background: #f8f9fa;
+}
+
+.live-watch-chat-input .form-control {
+  min-width: 0;
+}
+
+/* Broadcast information */
+
+.live-watch-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 8px;
+}
+
+.live-watch-info h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.25rem;
+}
+
+.live-watch-status {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.live-watch-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------
+   MOBILE
+--------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .live-watch-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .live-watch-chat {
+    min-height: 350px;
+    max-height: 450px;
+  }
+
+  .live-watch-info {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .live-watch-actions {
+    justify-content: space-between;
+  }
+}
+
+/* Small phones */
+
+@media (max-width: 480px) {
+  .live-watch-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .live-watch-video-container {
+    aspect-ratio: 16 / 10;
+  }
+
+  .live-watch-chat {
+    min-height: 300px;
+  }
+
+  .live-watch-chat-input {
+    flex-direction: column;
+  }
+
+  .live-watch-chat-input .btn {
+    width: 100%;
+  }
+
+  .live-watch-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/**/
+/*End live-watch.ejs*/
 /* ============================================================
    END OF STYLESHEET
    ============================================================ */

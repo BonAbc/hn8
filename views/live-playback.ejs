@@ -1,0 +1,40 @@
+<%- include("partials/header.ejs") %>
+
+<main class="container">
+  <form>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+  </form>
+  <section class="py-5 bg-light border border-black mt-4 mb-4">
+    <h2><%= broadcast.title || "Live Recording" %></h2>
+
+    <p>Mode: <%= broadcast.mode || "" %></p>
+    <p>Broadcast ID: <%= broadcast.id || "" %></p>
+    <video
+      id="liveRecording"
+      controls
+      preload="metadata"
+      style="width: 100%; max-width: 1200px"
+    >
+      <source src="<%= broadcast.recording_path %>" type="video/webm" />
+
+      Your browser does not support video playback.
+    </video>
+
+    <br /><br />
+
+    <a href="/report/live" class="btn btn-secondary"> Back to Live Report </a>
+  </section>
+</main>
+<script>
+  const video = document.getElementById("liveRecording");
+
+  video.addEventListener("loadedmetadata", () => {
+    console.log("Video duration:", video.duration);
+  });
+
+  video.addEventListener("durationchange", () => {
+    console.log("Duration changed:", video.duration);
+  });
+</script>
+<%- include("partials/footer.ejs") %>
