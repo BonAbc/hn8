@@ -8239,17 +8239,6 @@ app.post("/live/schedule", ensureAuthenticated, async (req, res) => {
       });
     }
 
-    console.log(
-      "LIVE BROADCAST SCHEDULED:",
-      broadcastId,
-      "user:",
-      broadcast.user_id,
-      "mode:",
-      broadcast.mode,
-      "scheduledAt:",
-      broadcast.scheduled_at,
-    );
-
     // ----------------------------------------------------------
     // RESPONSE
     // ----------------------------------------------------------
@@ -8299,13 +8288,6 @@ app.post(
   liveRecordingUpload.single("recording"),
   async (req, res) => {
     try {
-      console.log("========== LIVE RECORDING UPLOAD ==========");
-      console.log("Broadcast ID:", req.params.id);
-      console.log("User ID:", req.user?.id);
-      console.log("FILE:", req.file);
-      console.log("BODY:", req.body);
-      console.log("===========================================");
-
       const userId = req.user?.id;
       const broadcastId = String(req.params.id || "").trim();
 
@@ -8355,8 +8337,6 @@ app.post(
           message: "Broadcast not found.",
         });
       }
-
-      console.log("✅ LIVE RECORDING SAVED:", broadcastId, recordingPath);
 
       return res.status(200).json({
         success: true,
@@ -8447,20 +8427,6 @@ app.get("/live/:id", ensureAuthenticated, async (req, res) => {
     // --------------------------------------------------------
     // DEBUG
     // --------------------------------------------------------
-
-    console.log("========== LIVE WATCH PERMISSION ==========");
-    console.log("broadcast.id:", broadcast.id);
-    console.log("broadcast.user_id:", broadcast.user_id);
-    console.log("req.user.id:", req.user?.id);
-    console.log("req.user.role:", req.user?.role);
-    console.log("currentUserId:", currentUserId);
-    console.log("currentUserRole:", currentUserRole);
-    console.log("isOwner:", isOwner);
-    console.log("isAdmin:", isAdmin);
-    console.log("canControlLive:", canControlLive);
-    console.log("broadcast.status:", broadcast.status);
-    console.log("broadcast.mode:", broadcast.mode);
-    console.log("==========================================");
 
     // --------------------------------------------------------
     // RENDER
@@ -8682,17 +8648,6 @@ app.post("/live/:id/start", ensureAuthenticated, async (req, res) => {
         startedAt: startedBroadcast.started_at,
       });
     }
-
-    console.log(
-      "LIVE BROADCAST STARTED:",
-      startedBroadcastId,
-      "user:",
-      startedBroadcast.user_id,
-      "mode:",
-      startedBroadcast.mode,
-      "startedAt:",
-      startedBroadcast.started_at,
-    );
 
     return res.status(200).json({
       success: true,
@@ -9335,11 +9290,6 @@ app.get("/report/live", ensureAuthenticated, async (req, res) => {
       [limit, safeOffset],
     );
 
-    console.log("TOTAL:", total);
-    console.log("PAGE:", safePage);
-    console.log("TOTAL PAGES:", totalPages);
-    console.log("ROWS:", result.rows.length);
-
     return res.render("live-report", {
       broadcasts: result.rows,
       page: safePage,
@@ -9356,11 +9306,6 @@ app.get("/report/live", ensureAuthenticated, async (req, res) => {
 // GET /live/report
 // Download them to local
 app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
-  console.log("==========================================");
-  console.log("⬇️ DOWNLOAD LIVE RECORDING");
-  console.log("⬇️ ID:", req.params.id);
-  console.log("==========================================");
-
   try {
     const broadcastId = String(req.params.id || "").trim();
 
@@ -9390,8 +9335,6 @@ app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
 
     const recordingPath = String(broadcast.recording_path).trim();
 
-    console.log("⬇️ RECORDING PATH:", recordingPath);
-
     // --------------------------------------------------------
     // GET FILENAME ONLY
     // --------------------------------------------------------
@@ -9410,8 +9353,6 @@ app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
     );
 
     const filePath = path.resolve(liveDirectory, filename);
-
-    console.log("⬇️ FILE PATH:", filePath);
 
     // --------------------------------------------------------
     // SECURITY
@@ -9502,11 +9443,6 @@ app.get("/report/live/:id/playback", ensureAuthenticated, async (req, res) => {
 
 //
 app.get("/report/live/:id/delete", ensureAuthenticated, async (req, res) => {
-  console.log("==========================================");
-  console.log("🗑️ DELETE LIVE RECORDING");
-  console.log("🗑️ ID:", req.params.id);
-  console.log("==========================================");
-
   try {
     const broadcastId = String(req.params.id || "").trim();
 
@@ -9526,15 +9462,11 @@ app.get("/report/live/:id/delete", ensureAuthenticated, async (req, res) => {
       [broadcastId],
     );
 
-    console.log("🗄️ DATABASE RESULT:", result.rows);
-
     if (result.rows.length === 0) {
       return res.status(404).send("Recording not found.");
     }
 
     const recordingPath = result.rows[0].recording_path;
-
-    console.log("🎥 RECORDING PATH:", recordingPath);
 
     // =====================================================
     // DELETE PHYSICAL FILE
@@ -9548,10 +9480,6 @@ app.get("/report/live/:id/delete", ensureAuthenticated, async (req, res) => {
       const uploadDir = path.join(process.cwd(), "public", "uploads", "live");
 
       const filePath = path.join(uploadDir, filename);
-
-      console.log("📁 UPLOAD DIR:", uploadDir);
-      console.log("📄 FILENAME:", filename);
-      console.log("🗑️ FILE PATH:", filePath);
 
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
