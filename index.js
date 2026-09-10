@@ -8282,7 +8282,7 @@ app.post("/live/schedule", ensureAuthenticated, async (req, res) => {
 // START GO LIVE
 // ============================================================
 //
-app.post(
+(app.post(
   "/live/:id/recording",
   ensureAuthenticated,
   liveRecordingUpload.single("recording"),
@@ -8361,22 +8361,21 @@ app.post(
       });
     }
   },
-);
+),
+  // POST /live/:id/start
+  //
+  // This route ONLY starts an EXISTING broadcast.
+  //
+  app.get("/live/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const broadcastId = String(req.params.id || "").trim();
 
-// POST /live/:id/start
-//
-// This route ONLY starts an EXISTING broadcast.
-//
-app.get("/live/:id", async (req, res) => {
-  try {
-    const broadcastId = String(req.params.id || "").trim();
+      if (!broadcastId || !/^\d+$/.test(broadcastId)) {
+        return res.status(400).send("Invalid live broadcast ID.");
+      }
 
-    if (!broadcastId || !/^\d+$/.test(broadcastId)) {
-      return res.status(400).send("Invalid live broadcast ID.");
-    }
-
-    const result = await db.query(
-      `
+      const result = await db.query(
+        `
     SELECT
       id,
       user_id,
@@ -8393,62 +8392,62 @@ app.get("/live/:id", async (req, res) => {
     WHERE id = $1
     LIMIT 1
   `,
-      [broadcastId],
-    );
+        [broadcastId],
+      );
 
-    if (result.rows.length === 0) {
-      return res.status(404).send("Live broadcast not found.");
+      if (result.rows.length === 0) {
+        return res.status(404).send("Live broadcast not found.");
+      }
+
+      const broadcast = result.rows[0];
+
+      // --------------------------------------------------------
+      // CURRENT USER
+      // --------------------------------------------------------
+
+      const currentUserId = req.user?.id;
+
+      const currentUserRole = String(req.user?.role || "")
+        .trim()
+        .toLowerCase();
+
+      // --------------------------------------------------------
+      // PERMISSIONS
+      // --------------------------------------------------------
+
+      const isOwner = String(broadcast.user_id) === String(currentUserId);
+
+      const isAdmin =
+        currentUserRole === "admin1" || currentUserRole === "admin2";
+
+      const canControlLive = isOwner || isAdmin;
+
+      // --------------------------------------------------------
+      // DEBUG
+      // --------------------------------------------------------
+
+      // --------------------------------------------------------
+      // RENDER
+      // --------------------------------------------------------
+
+      return res.render("live-watch", {
+        broadcast,
+
+        currentUserId,
+        currentUserRole,
+
+        isOwner,
+        isAdmin,
+        canControlLive,
+
+        defaultDate: getToday(),
+      });
+    } catch (err) {
+      console.error("LIVE WATCH ERROR:", err);
+
+      return res.status(500).send("Unable to load live broadcast.");
     }
-
-    const broadcast = result.rows[0];
-
-    // --------------------------------------------------------
-    // CURRENT USER
-    // --------------------------------------------------------
-
-    const currentUserId = req.user?.id;
-
-    const currentUserRole = String(req.user?.role || "")
-      .trim()
-      .toLowerCase();
-
-    // --------------------------------------------------------
-    // PERMISSIONS
-    // --------------------------------------------------------
-
-    const isOwner = String(broadcast.user_id) === String(currentUserId);
-
-    const isAdmin =
-      currentUserRole === "admin1" || currentUserRole === "admin2";
-
-    const canControlLive = isOwner || isAdmin;
-
-    // --------------------------------------------------------
-    // DEBUG
-    // --------------------------------------------------------
-
-    // --------------------------------------------------------
-    // RENDER
-    // --------------------------------------------------------
-
-    return res.render("live-watch", {
-      broadcast,
-
-      currentUserId,
-      currentUserRole,
-
-      isOwner,
-      isAdmin,
-      canControlLive,
-
-      defaultDate: getToday(),
-    });
-  } catch (err) {
-    console.error("LIVE WATCH ERROR:", err);
-
-    return res.status(500).send("Unable to load live broadcast.");
-  }
-});
+  }));
 
 // scheduled -> live
 //
