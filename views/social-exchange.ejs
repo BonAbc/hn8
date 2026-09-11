@@ -80,13 +80,14 @@
     · 👥 My Group 👥
   <% } %>
 
-  <% if (
-    post.updatedAt &&
-    post.createdAt &&
-    post.updatedAt !== post.createdAt
-  ) { %>
-    · edited
-  <% } %>
+ <% if (
+  post.updatedAt &&
+  post.createdAt &&
+  new Date(post.updatedAt).getTime() > new Date(post.createdAt).getTime()
+) { %>
+  · edited
+<% } %>
+
 
 </div>
               </div>
