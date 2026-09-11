@@ -850,7 +850,7 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
     `
     UPDATE my_user
     SET
-      failed_2fa_attempts = 0,
+      failed_2fa_attempts = 0,      
       two_fa_lock_until = NULL
     WHERE id = $1
     `,
@@ -878,7 +878,8 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
       UPDATE my_user
       SET 
       pw = $1,
-      pw_change_approved = false
+      pw_change_approved = false,
+      updated_password_date = CURRENT_DATE
       WHERE id = $2
       `,
       [hashedPassword, userId],
