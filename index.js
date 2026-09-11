@@ -7625,17 +7625,16 @@ app.get("/live", ensureAuthenticated, async (req, res) => {
       `
   SELECT id, status
   FROM live_broadcasts
-  WHERE user_id = $1
-    AND status IN ('scheduled', 'live', 'paused')
+  WHERE status IN ('scheduled', 'live')
   ORDER BY id DESC
   LIMIT 1
   `,
-      [userId],
     );
 
     const liveLink = broadcastResult.rows[0]
       ? `/live/${broadcastResult.rows[0].id}`
       : null;
+
     //
     return res.render("live", {
       currentUserId: userId,
