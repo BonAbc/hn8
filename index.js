@@ -9453,20 +9453,16 @@ app.get(
 // ============================================================
 
 //if /live/report : require login because above /live/:id 👆👌
-app.get(
-  "/report/live/:id/playback",
-  ensureAuthenticated,
-  ensureAdmin,
-  async (req, res) => {
-    try {
-      const broadcastId = String(req.params.id || "").trim();
+app.get("/report/live/:id/playback", ensureAuthenticated, async (req, res) => {
+  try {
+    const broadcastId = String(req.params.id || "").trim();
 
-      if (!broadcastId || !/^\d+$/.test(broadcastId)) {
-        return res.status(400).send("Invalid live broadcast ID.");
-      }
+    if (!broadcastId || !/^\d+$/.test(broadcastId)) {
+      return res.status(400).send("Invalid live broadcast ID.");
+    }
 
-      const result = await db.query(
-        `
+    const result = await db.query(
+      `
       SELECT
         id,
         user_id,
@@ -9483,23 +9479,22 @@ app.get(
         AND recording_path IS NOT NULL
       LIMIT 1
       `,
-        [broadcastId],
-      );
+      [broadcastId],
+    );
 
-      if (result.rows.length === 0) {
-        return res.status(404).send("Recording not found.");
-      }
-
-      return res.render("live-playback", {
-        broadcast: result.rows[0],
-        defaultDate: getToday(),
-      });
-    } catch (err) {
-      console.error("LIVE PLAYBACK ERROR:", err);
-      return res.status(500).send("Unable to load live recording.");
+    if (result.rows.length === 0) {
+      return res.status(404).send("Recording not found.");
     }
-  },
-);
+
+    return res.render("live-playback", {
+      broadcast: result.rows[0],
+      defaultDate: getToday(),
+    });
+  } catch (err) {
+    console.error("LIVE PLAYBACK ERROR:", err);
+    return res.status(500).send("Unable to load live recording.");
+  }
+});
 //
 // ============================================================
 // DELETE LIVE BROADCAST + RECORDING
