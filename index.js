@@ -7620,12 +7620,29 @@ app.get("/live", ensureAuthenticated, async (req, res) => {
 
       liveStatus = result.rows[0]?.status || null;
     }
+    //
+    const broadcastResult = await db.query(
+      `
+  SELECT id, status
+  FROM live_broadcasts
+  WHERE user_id = $1
+    AND status IN ('scheduled', 'live', 'paused')
+  ORDER BY id DESC
+  LIMIT 1
+  `,
+      [userId],
+    );
 
+    const liveLink = broadcastResult.rows[0]
+      ? `/live/${broadcastResult.rows[0].id}`
+      : null;
+    //
     return res.render("live", {
       currentUserId: userId,
       currentUserRole: role,
       liveStatus,
       defaultDate: getToday(),
+      liveLink,
     });
   } catch (err) {
     console.error("LIVE PAGE ERROR:", err);

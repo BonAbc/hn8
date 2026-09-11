@@ -305,21 +305,7 @@
 
 
   </section>
-  <section class="py-5 bg-light border border-black mt-4 mb-4">
-      <% if (existingBroadcast && existingBroadcast.status === "scheduled") { %>
-
-    <a href="/live/<%= encodeURIComponent(existingBroadcast.id) %>">
-      Go to Scheduled Live
-    </a>
-<h6> CLick the link to join</h6>
-  <% } else { %>
-
-    <a href="/live/create">
-      Create / Schedule Live
-    </a>
-
-  <% } %>
-  </section>
+ 
   <section class="py-5 bg-light border border-black mt-4 mb-4"></section>
   
   <hr />
