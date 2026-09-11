@@ -595,9 +595,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (video) {
       video.srcObject = remoteStream;
 
+      // VIEWER:
+      // Keep audio available, but start livestream volume at 0.
+      // This does NOT change the viewer's computer/system volume.
       video.muted = false;
-
-      video.volume = 1;
+      video.volume = 0;
 
       video.style.display = "block";
 
@@ -606,7 +608,10 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         await video.play();
 
-        setStatus("Connected to LIVE broadcast.", "success");
+        setStatus(
+          "Connected to LIVE broadcast. Set the volume to listen.",
+          "warning",
+        );
       } catch {
         setStatus("LIVE connected. Click Play to watch.", "warning");
       }
