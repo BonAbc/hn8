@@ -9325,16 +9325,20 @@ app.get("/report/live", ensureAuthenticated, async (req, res) => {
 // GET /report/live/:id/download
 // ============================================================
 
-app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
-  try {
-    const broadcastId = String(req.params.id || "").trim();
+app.get(
+  "/report/live/:id/download",
+  ensureAuthenticated,
+  ensureAdmin,
+  async (req, res) => {
+    try {
+      const broadcastId = String(req.params.id || "").trim();
 
-    if (!broadcastId || !/^\d+$/.test(broadcastId)) {
-      return res.status(400).send("Invalid live broadcast ID.");
-    }
+      if (!broadcastId || !/^\d+$/.test(broadcastId)) {
+        return res.status(400).send("Invalid live broadcast ID.");
+      }
 
-    const result = await db.query(
-      `
+      const result = await db.query(
+        `
       SELECT
         id,
         title,
@@ -9344,101 +9348,102 @@ app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
         AND recording_path IS NOT NULL
       LIMIT 1
       `,
-      [broadcastId],
-    );
+        [broadcastId],
+      );
 
-    if (result.rows.length === 0) {
-      return res.status(404).send("Recording not found.");
-    }
-
-    const broadcast = result.rows[0];
-
-    const recordingPath = String(broadcast.recording_path || "").trim();
-
-    if (!recordingPath) {
-      return res.status(404).send("Recording path is empty.");
-    }
-
-    // =====================================================
-    // RENDER PERSISTENT DISK
-    // =====================================================
-
-    const uploadDir = "/uploads/live";
-
-    const filename = path.basename(recordingPath);
-
-    if (!filename) {
-      return res.status(404).send("Invalid recording filename.");
-    }
-
-    const filePath = path.resolve(uploadDir, filename);
-
-    // =====================================================
-    // SECURITY
-    // =====================================================
-
-    if (!filePath.startsWith(uploadDir + path.sep)) {
-      return res.status(403).send("Invalid recording path.");
-    }
-
-    console.log("==========================================");
-    console.log("LIVE DOWNLOAD");
-    console.log("Broadcast ID:", broadcast.id);
-    console.log("DB recording_path:", recordingPath);
-    console.log("Filename:", filename);
-    console.log("Physical file:", filePath);
-
-    // =====================================================
-    // CHECK FILE
-    // =====================================================
-
-    let stats;
-
-    try {
-      stats = await fs.promises.stat(filePath);
-    } catch (err) {
-      console.error("❌ RECORDING FILE NOT FOUND:", filePath);
-      console.error("❌ ERROR:", err.message);
-
-      return res.status(404).send("Recording file not found.");
-    }
-
-    if (!stats.isFile()) {
-      return res.status(404).send("Recording file not found.");
-    }
-
-    console.log("✅ FILE EXISTS");
-    console.log("Size:", stats.size, "bytes");
-
-    // =====================================================
-    // DOWNLOAD
-    // =====================================================
-
-    const extension = path.extname(filename).toLowerCase() || ".webm";
-
-    const downloadName = `live-${broadcast.id}${extension}`;
-
-    return res.download(filePath, downloadName, (err) => {
-      if (err) {
-        console.error("❌ LIVE DOWNLOAD ERROR:", err);
-
-        if (!res.headersSent) {
-          return res.status(500).send("Unable to download live recording.");
-        }
-
-        return;
+      if (result.rows.length === 0) {
+        return res.status(404).send("Recording not found.");
       }
 
-      console.log("✅ RECORDING DOWNLOADED:", downloadName);
-    });
-  } catch (err) {
-    console.error("❌ LIVE DOWNLOAD ROUTE ERROR:", err);
+      const broadcast = result.rows[0];
 
-    if (!res.headersSent) {
-      return res.status(500).send("Unable to download live recording.");
+      const recordingPath = String(broadcast.recording_path || "").trim();
+
+      if (!recordingPath) {
+        return res.status(404).send("Recording path is empty.");
+      }
+
+      // =====================================================
+      // RENDER PERSISTENT DISK
+      // =====================================================
+
+      const uploadDir = "/uploads/live";
+
+      const filename = path.basename(recordingPath);
+
+      if (!filename) {
+        return res.status(404).send("Invalid recording filename.");
+      }
+
+      const filePath = path.resolve(uploadDir, filename);
+
+      // =====================================================
+      // SECURITY
+      // =====================================================
+
+      if (!filePath.startsWith(uploadDir + path.sep)) {
+        return res.status(403).send("Invalid recording path.");
+      }
+
+      console.log("==========================================");
+      console.log("LIVE DOWNLOAD");
+      console.log("Broadcast ID:", broadcast.id);
+      console.log("DB recording_path:", recordingPath);
+      console.log("Filename:", filename);
+      console.log("Physical file:", filePath);
+
+      // =====================================================
+      // CHECK FILE
+      // =====================================================
+
+      let stats;
+
+      try {
+        stats = await fs.promises.stat(filePath);
+      } catch (err) {
+        console.error("❌ RECORDING FILE NOT FOUND:", filePath);
+        console.error("❌ ERROR:", err.message);
+
+        return res.status(404).send("Recording file not found.");
+      }
+
+      if (!stats.isFile()) {
+        return res.status(404).send("Recording file not found.");
+      }
+
+      console.log("✅ FILE EXISTS");
+      console.log("Size:", stats.size, "bytes");
+
+      // =====================================================
+      // DOWNLOAD
+      // =====================================================
+
+      const extension = path.extname(filename).toLowerCase() || ".webm";
+
+      const downloadName = `live-${broadcast.id}${extension}`;
+
+      return res.download(filePath, downloadName, (err) => {
+        if (err) {
+          console.error("❌ LIVE DOWNLOAD ERROR:", err);
+
+          if (!res.headersSent) {
+            return res.status(500).send("Unable to download live recording.");
+          }
+
+          return;
+        }
+
+        console.log("✅ RECORDING DOWNLOADED:", downloadName);
+      });
+    } catch (err) {
+      console.error("❌ LIVE DOWNLOAD ROUTE ERROR:", err);
+
+      if (!res.headersSent) {
+        return res.status(500).send("Unable to download live recording.");
+      }
     }
-  }
-});
+  },
+);
 
 // ============================================================
 // PLAYBACK LIVE RECORDING
@@ -9448,16 +9453,20 @@ app.get("/report/live/:id/download", ensureAuthenticated, async (req, res) => {
 // ============================================================
 
 //if /live/report : require login because above /live/:id 👆👌
-app.get("/report/live/:id/playback", ensureAuthenticated, async (req, res) => {
-  try {
-    const broadcastId = String(req.params.id || "").trim();
+app.get(
+  "/report/live/:id/playback",
+  ensureAuthenticated,
+  ensureAdmin,
+  async (req, res) => {
+    try {
+      const broadcastId = String(req.params.id || "").trim();
 
-    if (!broadcastId || !/^\d+$/.test(broadcastId)) {
-      return res.status(400).send("Invalid live broadcast ID.");
-    }
+      if (!broadcastId || !/^\d+$/.test(broadcastId)) {
+        return res.status(400).send("Invalid live broadcast ID.");
+      }
 
-    const result = await db.query(
-      `
+      const result = await db.query(
+        `
       SELECT
         id,
         user_id,
@@ -9474,22 +9483,23 @@ app.get("/report/live/:id/playback", ensureAuthenticated, async (req, res) => {
         AND recording_path IS NOT NULL
       LIMIT 1
       `,
-      [broadcastId],
-    );
+        [broadcastId],
+      );
 
-    if (result.rows.length === 0) {
-      return res.status(404).send("Recording not found.");
+      if (result.rows.length === 0) {
+        return res.status(404).send("Recording not found.");
+      }
+
+      return res.render("live-playback", {
+        broadcast: result.rows[0],
+        defaultDate: getToday(),
+      });
+    } catch (err) {
+      console.error("LIVE PLAYBACK ERROR:", err);
+      return res.status(500).send("Unable to load live recording.");
     }
-
-    return res.render("live-playback", {
-      broadcast: result.rows[0],
-      defaultDate: getToday(),
-    });
-  } catch (err) {
-    console.error("LIVE PLAYBACK ERROR:", err);
-    return res.status(500).send("Unable to load live recording.");
-  }
-});
+  },
+);
 //
 // ============================================================
 // DELETE LIVE BROADCAST + RECORDING
@@ -9497,16 +9507,20 @@ app.get("/report/live/:id/playback", ensureAuthenticated, async (req, res) => {
 // ============================================================
 
 //
-app.get("/report/live/:id/delete", ensureAuthenticated, async (req, res) => {
-  try {
-    const broadcastId = String(req.params.id || "").trim();
+app.get(
+  "/report/live/:id/delete",
+  ensureAuthenticated,
+  ensureAdmin,
+  async (req, res) => {
+    try {
+      const broadcastId = String(req.params.id || "").trim();
 
-    if (!broadcastId || !/^\d+$/.test(broadcastId)) {
-      return res.status(400).send("Invalid live broadcast ID.");
-    }
+      if (!broadcastId || !/^\d+$/.test(broadcastId)) {
+        return res.status(400).send("Invalid live broadcast ID.");
+      }
 
-    const result = await db.query(
-      `
+      const result = await db.query(
+        `
       SELECT
         id,
         recording_path
@@ -9514,67 +9528,68 @@ app.get("/report/live/:id/delete", ensureAuthenticated, async (req, res) => {
       WHERE id = $1
       LIMIT 1
       `,
-      [broadcastId],
-    );
+        [broadcastId],
+      );
 
-    if (result.rows.length === 0) {
-      return res.status(404).send("Recording not found.");
-    }
-
-    const recordingPath = result.rows[0].recording_path;
-
-    // =====================================================
-    // DELETE PHYSICAL FILE
-    // =====================================================
-
-    if (recordingPath) {
-      const filename = path.basename(String(recordingPath).trim());
-
-      // IMPORTANT:
-      // This is the actual physical directory
-      const uploadDir = path.join(process.cwd(), "public", "uploads", "live");
-
-      const filePath = path.join(uploadDir, filename);
-
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-
-        console.log("✅ FILE DELETED:", filePath);
-      } else {
-        console.log("⚠️ FILE NOT FOUND:", filePath);
+      if (result.rows.length === 0) {
+        return res.status(404).send("Recording not found.");
       }
-    }
 
-    // =====================================================
-    // DELETE DATABASE ROW
-    // =====================================================
+      const recordingPath = result.rows[0].recording_path;
 
-    const deleteResult = await db.query(
-      `
+      // =====================================================
+      // DELETE PHYSICAL FILE
+      // =====================================================
+
+      if (recordingPath) {
+        const filename = path.basename(String(recordingPath).trim());
+
+        // IMPORTANT:
+        // This is the actual physical directory
+        const uploadDir = path.join(process.cwd(), "public", "uploads", "live");
+
+        const filePath = path.join(uploadDir, filename);
+
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+
+          console.log("✅ FILE DELETED:", filePath);
+        } else {
+          console.log("⚠️ FILE NOT FOUND:", filePath);
+        }
+      }
+
+      // =====================================================
+      // DELETE DATABASE ROW
+      // =====================================================
+
+      const deleteResult = await db.query(
+        `
       DELETE FROM live_broadcasts
       WHERE id = $1
       RETURNING id
       `,
-      [broadcastId],
-    );
+        [broadcastId],
+      );
 
-    console.log("✅ DATABASE ROW DELETED:", deleteResult.rows);
+      console.log("✅ DATABASE ROW DELETED:", deleteResult.rows);
 
-    // =====================================================
-    // BACK TO REPORT
-    // =====================================================
+      // =====================================================
+      // BACK TO REPORT
+      // =====================================================
 
-    return res.redirect("/report/live");
-  } catch (err) {
-    console.error("==========================================");
-    console.error("❌ DELETE LIVE ERROR:", err);
-    console.error("❌ MESSAGE:", err.message);
-    console.error("❌ STACK:", err.stack);
-    console.error("==========================================");
+      return res.redirect("/report/live");
+    } catch (err) {
+      console.error("==========================================");
+      console.error("❌ DELETE LIVE ERROR:", err);
+      console.error("❌ MESSAGE:", err.message);
+      console.error("❌ STACK:", err.stack);
+      console.error("==========================================");
 
-    return res.status(500).send(`Unable to delete recording: ${err.message}`);
-  }
-});
+      return res.status(500).send(`Unable to delete recording: ${err.message}`);
+    }
+  },
+);
 
 // ============================================================
 // END LIVE BROADCAST
