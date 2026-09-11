@@ -1519,7 +1519,8 @@ app.post("/complete-password-change", async (req, res) => {
       UPDATE my_user
       SET 
         pw = $1,
-        pw_change_approved = false
+        pw_change_approved = false,
+        updated_password_date = CURRENT_DATE
       WHERE id = $2
       `,
       [hashedPassword, pending.userId],
