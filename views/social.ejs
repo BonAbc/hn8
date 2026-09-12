@@ -384,36 +384,49 @@
   >
     <%= post.email %>
   </a>
-</div>
+</div> 
 
               <div class="social-date">
 
- <%= post.createdAt   
+  <%= post.createdAt
     ? new Date(post.createdAt).toLocaleDateString("en-US", {
-       timeZone: "America/Chicago",
+        timeZone: "America/Chicago",
         month: "short",
         day: "numeric",
         year: "numeric"
-      }) 
-    : "" 
-%>
+      })
+    : ""
+  %>
+
+  <% if (post.visibility === "loggedin users") { %>
+    · 👨‍👩‍👧‍👧👩‍👩‍👧‍👦 All Loggedin Users
+  <% } %>
+
+  <% if (post.visibility === "group_only") { %>
+    · 👥 My Group
+  <% } %>
 
   <% if (post.visibility === "admin_only") { %>
     · 🔒 Only me + Admin
   <% } %>
 
-  <% if ( 
-    post.updatedAt && 
-    post.createdAt && 
-    new Date(post.updatedAt).getTime() !==  
-    new Date(post.createdAt).getTime() 
+  <% if (post.visibility === "client_only") { %>
+    · 👤 Specific Client
+  <% } %>
+
+  <% if (
+    post.updatedAt &&
+    post.createdAt &&
+    new Date(post.updatedAt).getTime() !==
+    new Date(post.createdAt).getTime()
   ) { %>
 
     · edited
 
   <% } %>
- 
+
 </div>
+
 
             </div>
 
