@@ -1498,6 +1498,10 @@ button:hover {
    VIDEO — USE VIDEO'S OWN RATIO
    ================================ */
 
+/* ================================
+   VIDEO — DO NOT USE IMAGE RATIO
+   ================================ */
+
 .social-post-video {
   display: block;
   width: 100%;
@@ -1506,6 +1510,19 @@ button:hover {
   background: #000;
   border-radius: 10px;
   object-fit: contain;
+}
+.social-post-create-video {
+  display: block;
+
+  width: 100%;
+  height: auto;
+
+  max-height: 600px;
+
+  object-fit: contain;
+
+  background: #000;
+  border-radius: 10px;
 }
 
 /* ================================
