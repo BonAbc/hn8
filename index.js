@@ -8300,7 +8300,10 @@ app.post("/live/schedule", ensureAuthenticated, async (req, res) => {
 // START GO LIVE
 // ============================================================
 //
-(app.post(
+
+  // POST /live/:id/start
+  //
+  app.post(
   "/live/:id/recording",
   ensureAuthenticated,
   liveRecordingUpload.single("recording"),
@@ -8330,7 +8333,129 @@ app.post("/live/schedule", ensureAuthenticated, async (req, res) => {
         });
       }
 
-      const recordingPath = `/uploads/live/${req.file.filename}`;
+      // ========================================================
+      // ORIGINAL UPLOAD
+      // ========================================================
+
+      const originalPath = req.file.path;
+
+      // ========================================================
+      // FINAL 16:9 FILE
+      // ========================================================
+
+      const finalFilename = `live-${broadcastId}-16x9-${Date.now()}.mp4`;
+
+      const finalPath = path.join(
+        "/uploads/live",
+        finalFilename,
+      );
+
+      const recordingPath = `/uploads/live/${finalFilename}`;
+
+      console.log("==========================================");
+      console.log("LIVE RECORDING: CONVERTING TO 16:9");
+      console.log("==========================================");
+
+      console.log({
+        originalPath,
+        finalPath,
+        broadcastId,
+        originalMimeType: req.file.mimetype,
+      });
+
+      // ========================================================
+      // FFMPEG
+      // ========================================================
+      //
+      // scale + crop:
+      //
+      // - Keeps the original video proportional.
+      // - Produces exactly 16:9.
+      // - Does NOT stretch faces or objects.
+      //
+      // 1280x720 is a professional HD 16:9 output.
+      //
+      // For a 4:3 recording:
+      //
+      //     640x480
+      //
+      // becomes approximately:
+      //
+      //     640x360
+      //
+      // with the top/bottom cropped.
+      //
+      // For larger source video, FFmpeg scales appropriately.
+      //
+      // ========================================================
+
+      await new Promise((resolve, reject) => {
+        ffmpeg(originalPath)
+          .videoFilters([
+            "scale=1280:720:force_original_aspect_ratio=increase",
+            "crop=1280:720",
+            "setsar=1",
+          ])
+          .videoCodec("libx264")
+          .audioCodec("aac")
+          .audioBitrate("128k")
+          .outputOptions([
+            "-preset veryfast",
+            "-crf 23",
+            "-movflags +faststart",
+            "-pix_fmt yuv420p",
+          ])
+          .format("mp4")
+          .on("start", (commandLine) => {
+            console.log(
+              "LIVE RECORDING: FFmpeg command:",
+              commandLine,
+            );
+          })
+          .on("progress", (progress) => {
+            console.log(
+              `LIVE RECORDING: ${Math.round(progress.percent || 0)}%`,
+            );
+          })
+          .on("end", () => {
+            console.log(
+              "LIVE RECORDING: 16:9 conversion complete.",
+            );
+
+            resolve();
+          })
+          .on("error", (error) => {
+            console.error(
+              "LIVE RECORDING: FFmpeg conversion failed:",
+              error,
+            );
+
+            reject(error);
+          })
+          .save(finalPath);
+      });
+
+      // ========================================================
+      // REMOVE ORIGINAL WEBM/MP4/MOV
+      // ========================================================
+
+      try {
+        fs.unlinkSync(originalPath);
+
+        console.log(
+          "LIVE RECORDING: Original upload removed:",
+          originalPath,
+        );
+      } catch (unlinkError) {
+        console.warn(
+          "LIVE RECORDING: Could not remove original upload:",
+          unlinkError,
+        );
+      }
+
+      // ========================================================
+      // SAVE FINAL RECORDING PATH
+      // ========================================================
 
       const result = await db.query(
         `
@@ -8343,11 +8468,18 @@ app.post("/live/schedule", ensureAuthenticated, async (req, res) => {
         [recordingPath, broadcastId, userId],
       );
 
+      // ========================================================
+      // BROADCAST NOT FOUND
+      // ========================================================
+
       if (result.rows.length === 0) {
         try {
-          fs.unlinkSync(req.file.path);
+          fs.unlinkSync(finalPath);
         } catch (unlinkError) {
-          console.error("Unable to remove orphan recording:", unlinkError);
+          console.error(
+            "Unable to remove orphan 16:9 recording:",
+            unlinkError,
+          );
         }
 
         return res.status(404).json({
@@ -8356,20 +8488,40 @@ app.post("/live/schedule", ensureAuthenticated, async (req, res) => {
         });
       }
 
+      // ========================================================
+      // SUCCESS
+      // ========================================================
+
+      console.log("==========================================");
+      console.log("✅ LIVE RECORDING SAVED AS 16:9");
+      console.log("==========================================");
+
+      console.log({
+        broadcastId,
+        recordingPath,
+      });
+
       return res.status(200).json({
         success: true,
-        message: "Live recording saved.",
+        message: "Live recording saved as 16:9.",
         broadcastId,
         recordingPath,
       });
     } catch (err) {
       console.error("❌ SAVE LIVE RECORDING ERROR:", err);
 
+      // --------------------------------------------------------
+      // Remove uploaded source if conversion/database failed
+      // --------------------------------------------------------
+
       if (req.file?.path) {
         try {
           fs.unlinkSync(req.file.path);
         } catch (unlinkError) {
-          console.error("Unable to remove failed recording:", unlinkError);
+          console.error(
+            "Unable to remove failed original recording:",
+            unlinkError,
+          );
         }
       }
 
@@ -8379,9 +8531,8 @@ app.post("/live/schedule", ensureAuthenticated, async (req, res) => {
       });
     }
   },
-),
-  // POST /live/:id/start
-  //
+);
+
   // This route ONLY starts an EXISTING broadcast.
   //
   app.get("/live/:id", ensureAuthenticated, async (req, res) => {
@@ -8469,6 +8620,7 @@ app.post("/live/schedule", ensureAuthenticated, async (req, res) => {
 
 // scheduled -> live
 //
+
 // It saves:
 //   started_at
 //
