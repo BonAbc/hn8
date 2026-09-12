@@ -56,18 +56,23 @@
     })
   : ""
 %>
- 
-
-                  <% if (post.visibility === "loggedin users") { %>
-    · 👨‍👩‍👧‍👧👩‍👩‍👧‍👦 All Loggedin Users 👨‍👩‍👧‍👧👩‍👩‍👧‍👦
+ <% if (post.visibility === "loggedin users") { %>
+    · 👨‍👩‍👧‍👧👩‍👩‍👧‍👦 All Loggedin Users
   <% } %>
-
-  
 
   <% if (post.visibility === "group_only") { %>
-    · 👥 My Group 👥
+    · 👥 My Group
   <% } %>
 
+  <% if (post.visibility === "admin_only") { %>
+    · 🔒 Only me + Admin
+  <% } %>
+
+  <% if (post.visibility === "client_only") { %>
+    · 👤 Specific Client
+  <% } %>
+
+                  
 
                   <% if (
                     post.updatedAt &&
