@@ -8389,51 +8389,53 @@ app.post("/live/schedule", ensureAuthenticated, async (req, res) => {
       //
       // ========================================================
 
-      await new Promise((resolve, reject) => {
-        ffmpeg(originalPath)
-          .videoFilters([
-            "scale=1280:720:force_original_aspect_ratio=increase",
-            "crop=1280:720",
-            "setsar=1",
-          ])
-          .videoCodec("libx264")
-          .audioCodec("aac")
-          .audioBitrate("128k")
-          .outputOptions([
-            "-preset veryfast",
-            "-crf 23",
-            "-movflags +faststart",
-            "-pix_fmt yuv420p",
-          ])
-          .format("mp4")
-          .on("start", (commandLine) => {
-            console.log(
-              "LIVE RECORDING: FFmpeg command:",
-              commandLine,
-            );
-          })
-          .on("progress", (progress) => {
-            console.log(
-              `LIVE RECORDING: ${Math.round(progress.percent || 0)}%`,
-            );
-          })
-          .on("end", () => {
-            console.log(
-              "LIVE RECORDING: 16:9 conversion complete.",
-            );
+     
+      //
+await new Promise((resolve, reject) => {
+  ffmpeg(originalPath)
+    .videoFilters([
+      "scale=1280:720:force_original_aspect_ratio=decrease",
+      "pad=1280:720:(ow-iw)/2:(oh-ih)/2:black",
+      "setsar=1",
+    ])
+    .videoCodec("libx264")
+    .audioCodec("aac")
+    .audioBitrate("128k")
+    .outputOptions([
+      "-preset veryfast",
+      "-crf 23",
+      "-movflags +faststart",
+      "-pix_fmt yuv420p",
+    ])
+    .format("mp4")
+    .on("start", (commandLine) => {
+      console.log(
+        "LIVE RECORDING: FFmpeg command:",
+        commandLine,
+      );
+    })
+    .on("progress", (progress) => {
+      console.log(
+        `LIVE RECORDING: ${Math.round(progress.percent || 0)}%`,
+      );
+    })
+    .on("end", () => {
+      console.log(
+        "LIVE RECORDING: 16:9 conversion complete.",
+      );
 
-            resolve();
-          })
-          .on("error", (error) => {
-            console.error(
-              "LIVE RECORDING: FFmpeg conversion failed:",
-              error,
-            );
+      resolve();
+    })
+    .on("error", (error) => {
+      console.error(
+        "LIVE RECORDING: FFmpeg conversion failed:",
+        error,
+      );
 
-            reject(error);
-          })
-          .save(finalPath);
-      });
+      reject(error);
+    })
+    .save(finalPath);
+});
 
       // ========================================================
       // REMOVE ORIGINAL WEBM/MP4/MOV
