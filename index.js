@@ -2593,10 +2593,10 @@ app.post(
         });
       }
 
-      if (content.length > 5000) {
+      if (content.length > 10000) {
         return res.status(400).json({
           success: false,
-          error: "Post is too long. Maximum 5000 characters.",
+          error: "Post is too long. Maximum 10000 characters.",
         });
       }
 
