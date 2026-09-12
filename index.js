@@ -8301,13 +8301,16 @@ app.post("/live/schedule", ensureAuthenticated, async (req, res) => {
 // ============================================================
 //
 
-  // POST /live/:id/start
-  //
-  app.post(
+// POST /live/:id/start
+//
+app.post(
   "/live/:id/recording",
   ensureAuthenticated,
   liveRecordingUpload.single("recording"),
   async (req, res) => {
+    let originalPath = null;
+    let finalPath = null;
+
     try {
       const userId = req.user?.id;
       const broadcastId = String(req.params.id || "").trim();
@@ -8337,7 +8340,7 @@ app.post("/live/schedule", ensureAuthenticated, async (req, res) => {
       // ORIGINAL UPLOAD
       // ========================================================
 
-      const originalPath = req.file.path;
+      originalPath = req.file.path;
 
       // ========================================================
       // FINAL 16:9 FILE
@@ -8345,10 +8348,7 @@ app.post("/live/schedule", ensureAuthenticated, async (req, res) => {
 
       const finalFilename = `live-${broadcastId}-16x9-${Date.now()}.mp4`;
 
-      const finalPath = path.join(
-        "/uploads/live",
-        finalFilename,
-      );
+      finalPath = path.join("/uploads/live", finalFilename);
 
       const recordingPath = `/uploads/live/${finalFilename}`;
 
@@ -8367,92 +8367,72 @@ app.post("/live/schedule", ensureAuthenticated, async (req, res) => {
       // FFMPEG
       // ========================================================
       //
-      // scale + crop:
+      // Output:
       //
-      // - Keeps the original video proportional.
-      // - Produces exactly 16:9.
-      // - Does NOT stretch faces or objects.
+      // 1280 x 720
       //
-      // 1280x720 is a professional HD 16:9 output.
+      // Exact 16:9.
       //
-      // For a 4:3 recording:
+      // The original video is NOT stretched.
       //
-      //     640x480
-      //
-      // becomes approximately:
-      //
-      //     640x360
-      //
-      // with the top/bottom cropped.
-      //
-      // For larger source video, FFmpeg scales appropriately.
+      // If the source is 4:3, the entire picture is preserved
+      // and black bars are added on the left and right.
       //
       // ========================================================
 
-     
-      //
-await new Promise((resolve, reject) => {
-  ffmpeg(originalPath)
-    .videoFilters([
-      "scale=1280:720:force_original_aspect_ratio=decrease",
-      "pad=1280:720:(ow-iw)/2:(oh-ih)/2:black",
-      "setsar=1",
-    ])
-    .videoCodec("libx264")
-    .audioCodec("aac")
-    .audioBitrate("128k")
-    .outputOptions([
-      "-preset veryfast",
-      "-crf 23",
-      "-movflags +faststart",
-      "-pix_fmt yuv420p",
-    ])
-    .format("mp4")
-    .on("start", (commandLine) => {
-      console.log(
-        "LIVE RECORDING: FFmpeg command:",
-        commandLine,
-      );
-    })
-    .on("progress", (progress) => {
-      console.log(
-        `LIVE RECORDING: ${Math.round(progress.percent || 0)}%`,
-      );
-    })
-    .on("end", () => {
-      console.log(
-        "LIVE RECORDING: 16:9 conversion complete.",
-      );
+      await new Promise((resolve, reject) => {
+        ffmpeg(originalPath)
+          .videoFilters([
+            "scale=1280:720:force_original_aspect_ratio=decrease",
+            "pad=1280:720:(ow-iw)/2:(oh-ih)/2:black",
+            "setsar=1",
+          ])
+          .videoCodec("libx264")
+          .audioCodec("aac")
+          .audioBitrate("128k")
+          .outputOptions([
+            "-preset veryfast",
+            "-crf 23",
+            "-movflags +faststart",
+            "-pix_fmt yuv420p",
+          ])
+          .format("mp4")
+          .on("start", (commandLine) => {
+            console.log("LIVE RECORDING: FFmpeg command:", commandLine);
+          })
+          .on("progress", (progress) => {
+            console.log(
+              `LIVE RECORDING: ${Math.round(progress.percent || 0)}%`,
+            );
+          })
+          .on("end", () => {
+            console.log("LIVE RECORDING: 16:9 conversion complete.");
 
-      resolve();
-    })
-    .on("error", (error) => {
-      console.error(
-        "LIVE RECORDING: FFmpeg conversion failed:",
-        error,
-      );
+            resolve();
+          })
+          .on("error", (error) => {
+            console.error("LIVE RECORDING: FFmpeg conversion failed:", error);
 
-      reject(error);
-    })
-    .save(finalPath);
-});
+            reject(error);
+          })
+          .save(finalPath);
+      });
 
       // ========================================================
-      // REMOVE ORIGINAL WEBM/MP4/MOV
+      // REMOVE ORIGINAL UPLOAD
       // ========================================================
 
-      try {
-        fs.unlinkSync(originalPath);
+      if (originalPath && fs.existsSync(originalPath)) {
+        try {
+          fs.unlinkSync(originalPath);
 
-        console.log(
-          "LIVE RECORDING: Original upload removed:",
-          originalPath,
-        );
-      } catch (unlinkError) {
-        console.warn(
-          "LIVE RECORDING: Could not remove original upload:",
-          unlinkError,
-        );
+          console.log("LIVE RECORDING: Original upload removed:", originalPath);
+        } catch (unlinkError) {
+          console.warn(
+            "LIVE RECORDING: Could not remove original upload:",
+            unlinkError,
+          );
+        }
       }
 
       // ========================================================
@@ -8475,13 +8455,15 @@ await new Promise((resolve, reject) => {
       // ========================================================
 
       if (result.rows.length === 0) {
-        try {
-          fs.unlinkSync(finalPath);
-        } catch (unlinkError) {
-          console.error(
-            "Unable to remove orphan 16:9 recording:",
-            unlinkError,
-          );
+        if (finalPath && fs.existsSync(finalPath)) {
+          try {
+            fs.unlinkSync(finalPath);
+          } catch (unlinkError) {
+            console.error(
+              "Unable to remove orphan 16:9 recording:",
+              unlinkError,
+            );
+          }
         }
 
         return res.status(404).json({
@@ -8495,7 +8477,7 @@ await new Promise((resolve, reject) => {
       // ========================================================
 
       console.log("==========================================");
-      console.log("✅ LIVE RECORDING SAVED AS 16:9");
+      console.log("LIVE RECORDING SAVED AS 16:9");
       console.log("==========================================");
 
       console.log({
@@ -8512,18 +8494,30 @@ await new Promise((resolve, reject) => {
     } catch (err) {
       console.error("❌ SAVE LIVE RECORDING ERROR:", err);
 
-      // --------------------------------------------------------
-      // Remove uploaded source if conversion/database failed
-      // --------------------------------------------------------
+      // ========================================================
+      // CLEAN UP ORIGINAL
+      // ========================================================
 
-      if (req.file?.path) {
+      if (originalPath && fs.existsSync(originalPath)) {
         try {
-          fs.unlinkSync(req.file.path);
+          fs.unlinkSync(originalPath);
         } catch (unlinkError) {
           console.error(
             "Unable to remove failed original recording:",
             unlinkError,
           );
+        }
+      }
+
+      // ========================================================
+      // CLEAN UP CONVERTED FILE
+      // ========================================================
+
+      if (finalPath && fs.existsSync(finalPath)) {
+        try {
+          fs.unlinkSync(finalPath);
+        } catch (unlinkError) {
+          console.error("Unable to remove failed 16:9 recording:", unlinkError);
         }
       }
 
@@ -8535,90 +8529,88 @@ await new Promise((resolve, reject) => {
   },
 );
 
-  // This route ONLY starts an EXISTING broadcast.
-  //
-  app.get("/live/:id", ensureAuthenticated, async (req, res) => {
-    try {
-      const broadcastId = String(req.params.id || "").trim();
+// ============================================================
+// GET /live/:id
+// ============================================================
 
-      if (!broadcastId || !/^\d+$/.test(broadcastId)) {
-        return res.status(400).send("Invalid live broadcast ID.");
-      }
+app.get("/live/:id", ensureAuthenticated, async (req, res) => {
+  try {
+    const broadcastId = String(req.params.id || "").trim();
 
-      const result = await db.query(
-        `
-    SELECT
-      id,
-      user_id,
-      title,
-      mode,
-      status,
-      recording_path,
-      scheduled_at,
-      started_at,
-      paused_at,
-      ended_at,
-      created_at
-    FROM live_broadcasts
-    WHERE id = $1
-    LIMIT 1
-  `,
-        [broadcastId],
-      );
-
-      if (result.rows.length === 0) {
-        return res.status(404).send("Live broadcast not found.");
-      }
-
-      const broadcast = result.rows[0];
-
-      // --------------------------------------------------------
-      // CURRENT USER
-      // --------------------------------------------------------
-
-      const currentUserId = req.user?.id;
-
-      const currentUserRole = String(req.user?.role || "")
-        .trim()
-        .toLowerCase();
-
-      // --------------------------------------------------------
-      // PERMISSIONS
-      // --------------------------------------------------------
-
-      const isOwner = String(broadcast.user_id) === String(currentUserId);
-
-      const isAdmin =
-        currentUserRole === "admin1" || currentUserRole === "admin2";
-
-      const canControlLive = isOwner || isAdmin;
-
-      // --------------------------------------------------------
-      // DEBUG
-      // --------------------------------------------------------
-
-      // --------------------------------------------------------
-      // RENDER
-      // --------------------------------------------------------
-
-      return res.render("live-watch", {
-        broadcast,
-
-        currentUserId,
-        currentUserRole,
-
-        isOwner,
-        isAdmin,
-        canControlLive,
-
-        defaultDate: getToday(),
-      });
-    } catch (err) {
-      console.error("LIVE WATCH ERROR:", err);
-
-      return res.status(500).send("Unable to load live broadcast.");
+    if (!broadcastId || !/^\d+$/.test(broadcastId)) {
+      return res.status(400).send("Invalid live broadcast ID.");
     }
-  }));
+
+    const result = await db.query(
+      `
+        SELECT
+          id,
+          user_id,
+          title,
+          mode,
+          status,
+          recording_path,
+          scheduled_at,
+          started_at,
+          paused_at,
+          ended_at,
+          created_at
+        FROM live_broadcasts
+        WHERE id = $1
+        LIMIT 1
+        `,
+      [broadcastId],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).send("Live broadcast not found.");
+    }
+
+    const broadcast = result.rows[0];
+
+    // ========================================================
+    // CURRENT USER
+    // ========================================================
+
+    const currentUserId = req.user?.id;
+
+    const currentUserRole = String(req.user?.role || "")
+      .trim()
+      .toLowerCase();
+
+    // ========================================================
+    // PERMISSIONS
+    // ========================================================
+
+    const isOwner = String(broadcast.user_id) === String(currentUserId);
+
+    const isAdmin =
+      currentUserRole === "admin1" || currentUserRole === "admin2";
+
+    const canControlLive = isOwner || isAdmin;
+
+    // ========================================================
+    // RENDER
+    // ========================================================
+
+    return res.render("live-watch", {
+      broadcast,
+
+      currentUserId,
+      currentUserRole,
+
+      isOwner,
+      isAdmin,
+      canControlLive,
+
+      defaultDate: getToday(),
+    });
+  } catch (err) {
+    console.error("LIVE WATCH ERROR:", err);
+
+    return res.status(500).send("Unable to load live broadcast.");
+  }
+});
 
 // scheduled -> live
 //
