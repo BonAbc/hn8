@@ -332,7 +332,7 @@
   <div class="social-create-post-footer">
 
     <span class="social-character-count">
-      You can write up to 18000 characters
+      You can write up to 10000 characters
     </span>
 
     <button
@@ -413,7 +413,7 @@
   <% if (post.visibility === "client_only") { %>
     · 👤 Specific Client
   <% } %>
-
+ 
   <% if (
     post.updatedAt &&
     post.createdAt &&
@@ -470,7 +470,7 @@
 
         <textarea
           name="content"
-          maxlength="18000"
+          maxlength="10000"
           required
         ><%= post.content %></textarea>
 
@@ -2171,7 +2171,7 @@
 <% } %>
  
 </section>        
-
+ 
   
 
 </main>

@@ -64,8 +64,8 @@ function socialEditPost(postId) {
     return;
   }
 
-  if (trimmed.length > 18000) {
-    alert("Your post is too long. Please keep it under 18000 characters.");
+  if (trimmed.length > 10000) {
+    alert("Your post is too long. Please keep it under 10000 characters.");
     return;
   }
 
@@ -250,7 +250,7 @@ const SOCIAL_MAX_FILES = 10;
 
 const SOCIAL_MAX_FILE_SIZE = 100 * 1024 * 1024;
 
-const SOCIAL_MAX_CONTENT_LENGTH = 18000;
+const SOCIAL_MAX_CONTENT_LENGTH = 10000;
 
 const SOCIAL_ALLOWED_TYPES = [
   "image/jpeg",
@@ -612,7 +612,7 @@ if (!socialPostCreateForm) {
 
       if (content.length > SOCIAL_MAX_CONTENT_LENGTH) {
         throw new Error(
-          "Your post is too long. Please keep it under 18000 characters.",
+          "Your post is too long. Please keep it under 10000 characters.",
         );
       }
 
