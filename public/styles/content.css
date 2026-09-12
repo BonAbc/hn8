@@ -1512,34 +1512,25 @@ button:hover {
   object-fit: contain;
 }
 
-/* ================================
-   ONE MEDIA ITEM
-   ================================ */
+/* ============================================================
+   SINGLE MEDIA ITEM
+   ============================================================ */
 
 .social-post-media:has(.social-post-media-item:only-child) {
   grid-template-columns: 1fr;
   justify-items: center;
 }
 
-.social-post-media:has(.social-post-media-item:only-child)
-  .social-post-media-item {
-  width: 100%;
-}
-
-/* One IMAGE can remain 50% */
+/* Single IMAGE — keep it smaller */
 .social-post-media:has(.social-post-image:only-child) .social-post-media-item {
   width: 50%;
 }
 
-/* One VIDEO should be full width */
+/* Single VIDEO — full width */
 .social-post-media:has(.social-post-video:only-child) .social-post-media-item {
   width: 100%;
 }
-/* One media item social post media item */
-.social-post-media:has(.social-post-media-item:only-child)
-  .social-post-media-item {
-  width: 100%;
-}
+
 /* ---------- Media Text ---------- */
 
 .social-post-media-text {
