@@ -1486,18 +1486,10 @@ button:hover {
 .social-post-image {
   display: block;
   width: 100%;
-  height: auto;
-  max-height: 500px;
-  object-fit: contain;
+  aspect-ratio: var(--social-average-image-ratio, auto);
+  object-fit: cover;
   border-radius: 10px;
 }
-
-/* ================================
-   VIDEO — DO NOT USE IMAGE RATIO
-   ================================ */
-/* ================================
-   VIDEO — USE VIDEO'S OWN RATIO
-   ================================ */
 
 /* ================================
    VIDEO — DO NOT USE IMAGE RATIO
@@ -1507,31 +1499,39 @@ button:hover {
   display: block;
   width: 100%;
   height: auto;
-  max-height: 500px;
-  object-fit: contain;
+  max-width: 100%;
   background: #000;
   border-radius: 10px;
+  object-fit: contain;
 }
 
-/* ============================================================
-   SINGLE MEDIA ITEM
-   ============================================================ */
+/* ================================
+   ONE MEDIA ITEM
+   ================================ */
 
 .social-post-media:has(.social-post-media-item:only-child) {
   grid-template-columns: 1fr;
   justify-items: center;
 }
 
-/* Single IMAGE — keep it smaller */
+.social-post-media:has(.social-post-media-item:only-child)
+  .social-post-media-item {
+  width: 100%;
+}
+
+/* One IMAGE can remain 50% */
 .social-post-media:has(.social-post-image:only-child) .social-post-media-item {
   width: 50%;
 }
 
-/* Single VIDEO — full width */
+/* One VIDEO should be full width */
 .social-post-media:has(.social-post-video:only-child) .social-post-media-item {
   width: 100%;
 }
-
+.social-post-media:has(.social-post-media-item:only-child)
+  .social-post-media-item {
+  width: 100%;
+}
 /* ---------- Media Text ---------- */
 
 .social-post-media-text {
@@ -2107,9 +2107,6 @@ button:hover {
 
   cursor: not-allowed;
 }
-/* ============================================================
-   SOCIAL PAGE END
-   ============================================================ */
 
 /* ============================================================
    SOCIAL SEARCH
@@ -2310,20 +2307,6 @@ button:hover {
 
   .social-post-media {
     grid-template-columns: 1fr;
-  }
-
-  /* Single image — smaller/professional */
-  .social-post-media:has(.social-post-image:only-child)
-    .social-post-media-item {
-    width: 50%;
-    max-width: 50%;
-  }
-
-  /* Single video — controlled width */
-  .social-post-media:has(.social-post-video:only-child)
-    .social-post-media-item {
-    width: 70%;
-    max-width: 70%;
   }
 
   /* ---------- Action Bar ---------- */
@@ -2574,6 +2557,7 @@ button:hover {
   border-top: 2px solid #000;
   margin: 30px 0;
 }
+/* Social Page*/
 /* Social Page*/
 /* ============================================================
    SOCIAL NOTIFICATIONS
