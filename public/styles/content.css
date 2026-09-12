@@ -1486,9 +1486,8 @@ button:hover {
 .social-post-image {
   display: block;
   width: 100%;
-  height: auto;
-  aspect-ratio: auto;
-  object-fit: contain;
+  aspect-ratio: var(--social-average-image-ratio, auto);
+  object-fit: cover;
   border-radius: 10px;
 }
 
