@@ -1486,8 +1486,9 @@ button:hover {
 .social-post-image {
   display: block;
   width: 100%;
-  aspect-ratio: var(--social-average-image-ratio, auto);
-  object-fit: cover;
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: contain;
   border-radius: 10px;
 }
 
@@ -1535,6 +1536,7 @@ button:hover {
 .social-post-media:has(.social-post-video:only-child) .social-post-media-item {
   width: 100%;
 }
+/* One media item social post media item */
 .social-post-media:has(.social-post-media-item:only-child)
   .social-post-media-item {
   width: 100%;
