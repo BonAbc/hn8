@@ -1486,8 +1486,9 @@ button:hover {
 .social-post-image {
   display: block;
   width: 100%;
-  aspect-ratio: var(--social-average-image-ratio, auto);
-  object-fit: cover;
+  height: auto;
+  max-height: 500px;
+  object-fit: contain;
   border-radius: 10px;
 }
 
@@ -1506,10 +1507,10 @@ button:hover {
   display: block;
   width: 100%;
   height: auto;
-  max-width: 100%;
+  max-height: 500px;
+  object-fit: contain;
   background: #000;
   border-radius: 10px;
-  object-fit: contain;
 }
 
 /* ============================================================
@@ -2311,9 +2312,18 @@ button:hover {
     grid-template-columns: 1fr;
   }
 
-  .social-post-media:has(.social-post-media-item:only-child)
+  /* Single image — smaller/professional */
+  .social-post-media:has(.social-post-image:only-child)
     .social-post-media-item {
-    width: 100%;
+    width: 50%;
+    max-width: 50%;
+  }
+
+  /* Single video — controlled width */
+  .social-post-media:has(.social-post-video:only-child)
+    .social-post-media-item {
+    width: 70%;
+    max-width: 70%;
   }
 
   /* ---------- Action Bar ---------- */
