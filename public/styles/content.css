@@ -1458,14 +1458,9 @@ button:hover {
    SOCIAL POST MEDIA
    ============================================================ */
 
-/* ================================
-   MEDIA GRID
-   ================================ */
-
 .social-post-media {
   display: grid;
   width: 100%;
-  margin: 12px 0;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   box-sizing: border-box;
@@ -1479,21 +1474,21 @@ button:hover {
   overflow: hidden;
 }
 
-/* ================================
-   IMAGES — KEEP YOUR IMAGE SIZING
-   ================================ */
+/* ============================================================
+   IMAGES
+   ============================================================ */
 
 .social-post-image {
   display: block;
   width: 100%;
-  aspect-ratio: var(--social-average-image-ratio, auto);
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
   border-radius: 10px;
 }
 
-/* ================================
-   VIDEO — DO NOT USE IMAGE RATIO
-   ================================ */
+/* ============================================================
+   VIDEO
+   ============================================================ */
 
 .social-post-video {
   display: block;
@@ -1505,46 +1500,40 @@ button:hover {
   object-fit: contain;
 }
 
-/* ================================
+/* ============================================================
    ONE MEDIA ITEM
-   ================================ */
+   ============================================================ */
 
 .social-post-media:has(.social-post-media-item:only-child) {
   grid-template-columns: 1fr;
-  justify-items: center;
 }
 
-.social-post-media:has(.social-post-media-item:only-child)
-  .social-post-media-item {
-  width: 100%;
-}
+/* ============================================================
+   ONE IMAGE
+   ============================================================ */
 
-/* One IMAGE can remain 50% */
 .social-post-media:has(.social-post-image:only-child) .social-post-media-item {
   width: 100%;
   max-width: 700px;
 }
+
 .social-post-media:has(.social-post-image:only-child) .social-post-image {
   width: 100%;
   height: auto;
-
+  max-height: 500px;
   aspect-ratio: auto;
-
   object-fit: contain;
-
-  max-height: 600px;
-
-  border-radius: 10px;
   background: #f3f4f6;
 }
-/* One VIDEO should be full width */
+
+/* ============================================================
+   ONE VIDEO
+   ============================================================ */
+
 .social-post-media:has(.social-post-video:only-child) .social-post-media-item {
   width: 100%;
 }
-.social-post-media:has(.social-post-media-item:only-child)
-  .social-post-media-item {
-  width: 100%;
-}
+
 /* ---------- Media Text ---------- */
 
 .social-post-media-text {
