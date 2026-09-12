@@ -8299,18 +8299,11 @@ app.post("/live/schedule", ensureAuthenticated, async (req, res) => {
 // ============================================================
 // START GO LIVE
 // ============================================================
-//
-
-// POST /live/:id/start
-//
-app.post(
+(app.post(
   "/live/:id/recording",
   ensureAuthenticated,
   liveRecordingUpload.single("recording"),
   async (req, res) => {
-    let originalPath = null;
-    let finalPath = null;
-
     try {
       const userId = req.user?.id;
       const broadcastId = String(req.params.id || "").trim();
@@ -8336,108 +8329,7 @@ app.post(
         });
       }
 
-      // ========================================================
-      // ORIGINAL UPLOAD
-      // ========================================================
-
-      originalPath = req.file.path;
-
-      // ========================================================
-      // FINAL 16:9 FILE
-      // ========================================================
-
-      const finalFilename = `live-${broadcastId}-16x9-${Date.now()}.mp4`;
-
-      finalPath = path.join("/uploads/live", finalFilename);
-
-      const recordingPath = `/uploads/live/${finalFilename}`;
-
-      console.log("==========================================");
-      console.log("LIVE RECORDING: CONVERTING TO 16:9");
-      console.log("==========================================");
-
-      console.log({
-        originalPath,
-        finalPath,
-        broadcastId,
-        originalMimeType: req.file.mimetype,
-      });
-
-      // ========================================================
-      // FFMPEG
-      // ========================================================
-      //
-      // Output:
-      //
-      // 1280 x 720
-      //
-      // Exact 16:9.
-      //
-      // The original video is NOT stretched.
-      //
-      // If the source is 4:3, the entire picture is preserved
-      // and black bars are added on the left and right.
-      //
-      // ========================================================
-
-      await new Promise((resolve, reject) => {
-        ffmpeg(originalPath)
-          .videoFilters([
-            "scale=1280:720:force_original_aspect_ratio=decrease",
-            "pad=1280:720:(ow-iw)/2:(oh-ih)/2:black",
-            "setsar=1",
-          ])
-          .videoCodec("libx264")
-          .audioCodec("aac")
-          .audioBitrate("128k")
-          .outputOptions([
-            "-preset veryfast",
-            "-crf 23",
-            "-movflags +faststart",
-            "-pix_fmt yuv420p",
-          ])
-          .format("mp4")
-          .on("start", (commandLine) => {
-            console.log("LIVE RECORDING: FFmpeg command:", commandLine);
-          })
-          .on("progress", (progress) => {
-            console.log(
-              `LIVE RECORDING: ${Math.round(progress.percent || 0)}%`,
-            );
-          })
-          .on("end", () => {
-            console.log("LIVE RECORDING: 16:9 conversion complete.");
-
-            resolve();
-          })
-          .on("error", (error) => {
-            console.error("LIVE RECORDING: FFmpeg conversion failed:", error);
-
-            reject(error);
-          })
-          .save(finalPath);
-      });
-
-      // ========================================================
-      // REMOVE ORIGINAL UPLOAD
-      // ========================================================
-
-      if (originalPath && fs.existsSync(originalPath)) {
-        try {
-          fs.unlinkSync(originalPath);
-
-          console.log("LIVE RECORDING: Original upload removed:", originalPath);
-        } catch (unlinkError) {
-          console.warn(
-            "LIVE RECORDING: Could not remove original upload:",
-            unlinkError,
-          );
-        }
-      }
-
-      // ========================================================
-      // SAVE FINAL RECORDING PATH
-      // ========================================================
+      const recordingPath = `/uploads/live/${req.file.filename}`;
 
       const result = await db.query(
         `
@@ -8450,20 +8342,11 @@ app.post(
         [recordingPath, broadcastId, userId],
       );
 
-      // ========================================================
-      // BROADCAST NOT FOUND
-      // ========================================================
-
       if (result.rows.length === 0) {
-        if (finalPath && fs.existsSync(finalPath)) {
-          try {
-            fs.unlinkSync(finalPath);
-          } catch (unlinkError) {
-            console.error(
-              "Unable to remove orphan 16:9 recording:",
-              unlinkError,
-            );
-          }
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (unlinkError) {
+          console.error("Unable to remove orphan recording:", unlinkError);
         }
 
         return res.status(404).json({
@@ -8472,52 +8355,20 @@ app.post(
         });
       }
 
-      // ========================================================
-      // SUCCESS
-      // ========================================================
-
-      console.log("==========================================");
-      console.log("LIVE RECORDING SAVED AS 16:9");
-      console.log("==========================================");
-
-      console.log({
-        broadcastId,
-        recordingPath,
-      });
-
       return res.status(200).json({
         success: true,
-        message: "Live recording saved as 16:9.",
+        message: "Live recording saved.",
         broadcastId,
         recordingPath,
       });
     } catch (err) {
       console.error("❌ SAVE LIVE RECORDING ERROR:", err);
 
-      // ========================================================
-      // CLEAN UP ORIGINAL
-      // ========================================================
-
-      if (originalPath && fs.existsSync(originalPath)) {
+      if (req.file?.path) {
         try {
-          fs.unlinkSync(originalPath);
+          fs.unlinkSync(req.file.path);
         } catch (unlinkError) {
-          console.error(
-            "Unable to remove failed original recording:",
-            unlinkError,
-          );
-        }
-      }
-
-      // ========================================================
-      // CLEAN UP CONVERTED FILE
-      // ========================================================
-
-      if (finalPath && fs.existsSync(finalPath)) {
-        try {
-          fs.unlinkSync(finalPath);
-        } catch (unlinkError) {
-          console.error("Unable to remove failed 16:9 recording:", unlinkError);
+          console.error("Unable to remove failed recording:", unlinkError);
         }
       }
 
@@ -8527,22 +8378,21 @@ app.post(
       });
     }
   },
-);
+),
+  // ============================================================
+  // GET /live/:id
+  // ============================================================
 
-// ============================================================
-// GET /live/:id
-// ============================================================
+  app.get("/live/:id", ensureAuthenticated, async (req, res) => {
+    try {
+      const broadcastId = String(req.params.id || "").trim();
 
-app.get("/live/:id", ensureAuthenticated, async (req, res) => {
-  try {
-    const broadcastId = String(req.params.id || "").trim();
+      if (!broadcastId || !/^\d+$/.test(broadcastId)) {
+        return res.status(400).send("Invalid live broadcast ID.");
+      }
 
-    if (!broadcastId || !/^\d+$/.test(broadcastId)) {
-      return res.status(400).send("Invalid live broadcast ID.");
-    }
-
-    const result = await db.query(
-      `
+      const result = await db.query(
+        `
         SELECT
           id,
           user_id,
@@ -8559,58 +8409,58 @@ app.get("/live/:id", ensureAuthenticated, async (req, res) => {
         WHERE id = $1
         LIMIT 1
         `,
-      [broadcastId],
-    );
+        [broadcastId],
+      );
 
-    if (result.rows.length === 0) {
-      return res.status(404).send("Live broadcast not found.");
+      if (result.rows.length === 0) {
+        return res.status(404).send("Live broadcast not found.");
+      }
+
+      const broadcast = result.rows[0];
+
+      // ========================================================
+      // CURRENT USER
+      // ========================================================
+
+      const currentUserId = req.user?.id;
+
+      const currentUserRole = String(req.user?.role || "")
+        .trim()
+        .toLowerCase();
+
+      // ========================================================
+      // PERMISSIONS
+      // ========================================================
+
+      const isOwner = String(broadcast.user_id) === String(currentUserId);
+
+      const isAdmin =
+        currentUserRole === "admin1" || currentUserRole === "admin2";
+
+      const canControlLive = isOwner || isAdmin;
+
+      // ========================================================
+      // RENDER
+      // ========================================================
+
+      return res.render("live-watch", {
+        broadcast,
+
+        currentUserId,
+        currentUserRole,
+
+        isOwner,
+        isAdmin,
+        canControlLive,
+
+        defaultDate: getToday(),
+      });
+    } catch (err) {
+      console.error("LIVE WATCH ERROR:", err);
+
+      return res.status(500).send("Unable to load live broadcast.");
     }
-
-    const broadcast = result.rows[0];
-
-    // ========================================================
-    // CURRENT USER
-    // ========================================================
-
-    const currentUserId = req.user?.id;
-
-    const currentUserRole = String(req.user?.role || "")
-      .trim()
-      .toLowerCase();
-
-    // ========================================================
-    // PERMISSIONS
-    // ========================================================
-
-    const isOwner = String(broadcast.user_id) === String(currentUserId);
-
-    const isAdmin =
-      currentUserRole === "admin1" || currentUserRole === "admin2";
-
-    const canControlLive = isOwner || isAdmin;
-
-    // ========================================================
-    // RENDER
-    // ========================================================
-
-    return res.render("live-watch", {
-      broadcast,
-
-      currentUserId,
-      currentUserRole,
-
-      isOwner,
-      isAdmin,
-      canControlLive,
-
-      defaultDate: getToday(),
-    });
-  } catch (err) {
-    console.error("LIVE WATCH ERROR:", err);
-
-    return res.status(500).send("Unable to load live broadcast.");
-  }
-});
+  }));
 
 // scheduled -> live
 //
