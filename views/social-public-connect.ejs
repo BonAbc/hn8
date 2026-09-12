@@ -56,11 +56,18 @@
     })
   : ""
 %>
+ 
 
+                  <% if (post.visibility === "loggedin users") { %>
+    · 👨‍👩‍👧‍👧👩‍👩‍👧‍👦 All Loggedin Users 👨‍👩‍👧‍👧👩‍👩‍👧‍👦
+  <% } %>
 
-                  <% if (post.visibility === "admin_only") { %>
-                    · 🔒 Only me + Admin
-                  <% } %>
+  
+
+  <% if (post.visibility === "group_only") { %>
+    · 👥 My Group 👥
+  <% } %>
+
 
                   <% if (
                     post.updatedAt &&
@@ -74,7 +81,7 @@
                 </div>
 
               </div>
- 
+  
             </div>
 
           </div>
