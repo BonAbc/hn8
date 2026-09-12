@@ -1500,10 +1500,9 @@ button:hover {
 
 .social-post-video {
   display: block;
-
   width: 100%;
+  aspect-ratio: 16 / 9;
   height: auto;
-  max-width: 100%;
 
   background: #000;
   border-radius: 10px;
