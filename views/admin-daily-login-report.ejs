@@ -4,36 +4,52 @@
   <!--main should move to main page-->
   <!---->
   <form>
-    <label for="date">Date:</label>
-    <input type="date" id="date" name="date" value="<%= defaultDate %>"  readonly />
-  </form>
-
-  <!---->
-  <h2 id="hm">Login Dashboard</h2>
-  <section class="py-5 bg-light border border-black mt-4 mb-4">
-      <form method="GET" action="/admin/daily-login-report" class="mb-4">
-
-  <label for="date">Date:</label>
+  <label for="current-date">Date:</label>
 
   <input
     type="date"
-    id="date"
-    name="date"
-    value="<%= selectedDate || '' %>"
+    id="current-date"
+    name="current-date"
+    value="<%= defaultDate %>"
+    readonly
   />
-
-  <button type="submit" class="btn btn-primary">
-    Filter
-  </button>
-
-  <a
-    href="/admin/daily-login-report"
-    class="btn btn-secondary"
-  >
-    All Dates
-  </a>
-
 </form>
+
+<h2 id="hm">Login Dashboard</h2>
+
+<section class="py-5 bg-light border border-black mt-4 mb-4">
+
+  <form
+    method="GET"
+    action="/admin/daily-login-report"
+    class="mb-4"
+  >
+
+    <label for="filter-date">Date:</label>
+
+    <input
+      type="date"
+      id="filter-date"
+      name="date"
+      value="<%= typeof selectedDate !== 'undefined' ? selectedDate : '' %>"
+    />
+
+    <button
+      type="submit"
+      class="btn btn-primary"
+    >
+      Filter
+    </button>
+
+    <a
+      href="/admin/daily-login-report"
+      class="btn btn-secondary"
+    >
+      All Dates
+    </a>
+
+  </form>
+
     <table class="social-profile-table table table-bordered login-report-table">
 
 
