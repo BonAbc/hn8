@@ -9640,7 +9640,8 @@ app.get(
 // ============================================================
 // END LIVE BROADCAST
 // ============================================================
-//Add login report
+
+//
 app.get(
   "/admin/daily-login-report",
   ensureAuthenticated,
@@ -9658,13 +9659,32 @@ app.get(
       const offset = (page - 1) * limit;
 
       // =====================================================
+      // DATE FILTER
+      // =====================================================
+
+      const selectedDate =
+        typeof req.query.date === "string" ? req.query.date.trim() : "";
+
+      let dateCondition = "";
+      const queryValues = [];
+
+      if (selectedDate !== "") {
+        dateCondition = `WHERE d.login_date = $1`;
+        queryValues.push(selectedDate);
+      }
+
+      // =====================================================
       // TOTAL RECORDS
       // =====================================================
 
-      const countResult = await db.query(`
+      const countResult = await db.query(
+        `
         SELECT COUNT(*)
-        FROM daily_login_stats
-      `);
+        FROM daily_login_stats d
+        ${dateCondition}
+        `,
+        queryValues,
+      );
 
       const totalRecords = parseInt(countResult.rows[0].count, 10);
 
@@ -9672,41 +9692,46 @@ app.get(
 
       // =====================================================
       // LOGIN REPORT
+      // =====================================================
 
       const result = await db.query(
         `
-  SELECT
-    d.id,
-    d.user_id,
+        SELECT
+          d.id,
+          d.user_id,
 
-    mu.email,
-    mu.updated_password_date,
+          mu.email,
+          mu.updated_password_date,
 
-    sp.first_name,
-    sp.last_name,
+          sp.first_name,
+          sp.last_name,
 
-    d.login_date,
-    d.login_count
+          d.login_date,
+          d.login_count
 
-  FROM daily_login_stats d
+        FROM daily_login_stats d
 
-  JOIN my_user mu
-    ON mu.id = d.user_id
+        JOIN my_user mu
+          ON mu.id = d.user_id
 
-  LEFT JOIN social_profile sp
-    ON sp.user_id = d.user_id
+        LEFT JOIN social_profile sp
+          ON sp.user_id = d.user_id
 
-  ORDER BY
-    d.login_date DESC,
-    d.user_id ASC
+        ${dateCondition}
 
-  LIMIT $1
-  OFFSET $2
-  `,
-        [limit, offset],
+        ORDER BY
+          d.login_date DESC,
+          d.user_id ASC
+
+        LIMIT $${queryValues.length + 1}
+        OFFSET $${queryValues.length + 2}
+        `,
+        [...queryValues, limit, offset],
       );
 
-      //
+      // =====================================================
+      // RENDER
+      // =====================================================
 
       return res.render("admin-daily-login-report", {
         loginStats: result.rows,
@@ -9716,6 +9741,8 @@ app.get(
 
         totalRecords,
         totalPages,
+
+        selectedDate,
 
         defaultDate: getToday(),
       });
@@ -9728,7 +9755,11 @@ app.get(
     }
   },
 );
-//
+
+// =========================================================
+// DELETE DAILY LOGIN RECORD
+// =========================================================
+
 app.delete(
   "/admin/daily-login-report/:id",
   ensureAuthenticated,
