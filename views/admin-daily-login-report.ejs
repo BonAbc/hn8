@@ -3,7 +3,14 @@
 <main class="container">
   <!--main should move to main page-->
   <!---->
-  <form>
+  <%
+  const reportDate =
+    typeof selectedDate !== "undefined"
+      ? selectedDate
+      : "";
+%>
+
+<form>
   <label for="current-date">Date:</label>
 
   <input
@@ -19,6 +26,10 @@
 
 <section class="py-5 bg-light border border-black mt-4 mb-4">
 
+  <!-- ======================================================
+       DATE FILTER
+       ====================================================== -->
+
   <form
     method="GET"
     action="/admin/daily-login-report"
@@ -31,7 +42,7 @@
       type="date"
       id="filter-date"
       name="date"
-      value="<%= typeof selectedDate !== 'undefined' ? selectedDate : '' %>"
+      value="<%= reportDate %>"
     />
 
     <button
@@ -50,193 +61,209 @@
 
   </form>
 
-    <table class="social-profile-table table table-bordered login-report-table">
 
+  <!-- ======================================================
+       LOGIN REPORT TABLE
+       ====================================================== -->
 
+  <div class="table-responsive">
 
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>User ID</th>
-      <th>First Name</th>
-      <th>Last Name</th>
-      <th>Email</th>
-      <th>PW Update</th>
-      <th>Login Date</th>
-      <th>Login Count</th>
-      <th>Action</th>
-    </tr>
-  </thead>
+    <table
+      class="social-profile-table table table-bordered login-report-table"
+    >
 
-  <tbody>
-
-    <% if (loginStats && loginStats.length > 0) { %>
-
-      <% loginStats.forEach((login) => { %>
-
+      <thead>
         <tr>
-
-          <td>
-            <%= login.id %>
-          </td>
-
-          <td>
-            <%= login.user_id %>
-          </td>
-
-          <td>
-            <%= login.first_name || "" %>
-          </td>
-
-          <td>
-            <%= login.last_name || "" %>
-          </td>
-
-          <td>
-            <%= login.email || "" %>
-          </td>
-           <td>
-            <%= login.updated_password_date || "" %>
-          </td>
-
-          <td>
-            <%= login.login_date %>
-          </td>
-
-          <td>
-            <strong>
-              <%= login.login_count %>
-            </strong>
-          </td>
-
-          <td>
-
-            <form
-              action="/admin/daily-login-report/<%= login.id %>?_method=DELETE"
-              method="POST"
-              onsubmit="return confirm('Delete this login record?');"
-              class="d-inline"
-            >
-
-              <button
-                type="submit"
-                class="btn btn-danger btn-sm"
-              >
-                Delete
-              </button>
-
-            </form>
-
-          </td>
-
+          <th>ID</th>
+          <th>User ID</th>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Email</th>
+          <th>PW Update</th>
+          <th>Login Date</th>
+          <th>Login Count</th>
+          <th>Action</th>
         </tr>
- 
-      <% }); %>
+      </thead>
 
-    <% } else { %>
- 
-      <tr>
-        <td
-          colspan="8"
-          class="text-center"
-        >
-          No login records found.
-        </td>
-      </tr>
+      <tbody>
 
-    <% } %>
+        <% if (loginStats && loginStats.length > 0) { %>
 
-  </tbody>
+          <% loginStats.forEach((login) => { %>
 
-</table>
+            <tr>
 
-  </section>
-  <hr>
-   <section class="py-5 bg-light border border-black mt-4 mb-4">
+              <td data-label="ID">
+                <%= login.id %>
+              </td>
+
+              <td data-label="User ID">
+                <%= login.user_id %>
+              </td>
+
+              <td data-label="First Name">
+                <%= login.first_name || "" %>
+              </td>
+
+              <td data-label="Last Name">
+                <%= login.last_name || "" %>
+              </td>
+
+              <td data-label="Email">
+                <%= login.email || "" %>
+              </td>
+
+              <td data-label="PW Update">
+                <%= login.updated_password_date || "" %>
+              </td>
+
+              <td data-label="Login Date">
+                <%= login.login_date %>
+              </td>
+
+              <td data-label="Login Count">
+                <strong>
+                  <%= login.login_count %>
+                </strong>
+              </td>
+
+              <td data-label="Action">
+
+                <form
+                  action="/admin/daily-login-report/<%= login.id %>?_method=DELETE"
+                  method="POST"
+                  onsubmit="return confirm('Delete this login record?');"
+                  class="d-inline"
+                >
+
+                  <button
+                    type="submit"
+                    class="btn btn-danger btn-sm"
+                  >
+                    Delete
+                  </button>
+
+                </form>
+
+              </td>
+
+            </tr>
+
+          <% }); %>
+
+        <% } else { %>
+
+          <tr>
+            <td
+              colspan="9"
+              class="text-center"
+            >
+              No login records found.
+            </td>
+          </tr>
+
+        <% } %>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</section>
+
+
+<hr>
+
+
 <!-- ======================================================
      PAGINATION
      ====================================================== -->
 
+<section class="py-5 bg-light border border-black mt-4 mb-4">
 
+  <nav aria-label="Daily login report pagination">
 
- <nav aria-label="Daily login report pagination">
+    <ul class="pagination justify-content-center">
 
-  <ul class="pagination justify-content-center">
+      <!-- ==================================================
+           PREVIOUS
+           ================================================== -->
 
-    <!-- Previous -->
+      <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
 
-    <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
+        <% if (page > 1) { %>
 
-      <% if (page > 1) { %>
+          <a
+            class="page-link"
+            href="/admin/daily-login-report?page=<%= page - 1 %>&limit=<%= limit %><%= reportDate ? `&date=${encodeURIComponent(reportDate)}` : '' %>"
+          >
+            Previous
+          </a>
 
-        <a
-          class="page-link"
-          href="/admin/daily-login-report?page=<%= page - 1 %>&limit=<%= limit %><%= selectedDate ? `&date=${encodeURIComponent(selectedDate)}` : '' %>"
-        >
-          Previous
-        </a>
+        <% } else { %>
 
-      <% } else { %>
+          <span class="page-link">
+            Previous
+          </span>
 
-        <span class="page-link">
-          Previous
-        </span>
-
-      <% } %>
-
-    </li>
-
-
-    <!-- Page Numbers -->
-
-    <% for (let i = 1; i <= totalPages; i++) { %>
-
-      <li class="page-item <%= i === page ? 'active' : '' %>">
-
-        <a
-          class="page-link"
-          href="/admin/daily-login-report?page=<%= i %>&limit=<%= limit %><%= selectedDate ? `&date=${encodeURIComponent(selectedDate)}` : '' %>"
-        >
-          <%= i %>
-        </a>
+        <% } %>
 
       </li>
 
-    <% } %>
 
+      <!-- ==================================================
+           PAGE NUMBERS
+           ================================================== -->
 
-    <!-- Next -->
+      <% for (let i = 1; i <= totalPages; i++) { %>
 
-    <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
+        <li class="page-item <%= i === page ? 'active' : '' %>">
 
-      <% if (page < totalPages) { %>
+          <a
+            class="page-link"
+            href="/admin/daily-login-report?page=<%= i %>&limit=<%= limit %><%= reportDate ? `&date=${encodeURIComponent(reportDate)}` : '' %>"
+          >
+            <%= i %>
+          </a>
 
-        <a
-          class="page-link"
-          href="/admin/daily-login-report?page=<%= page + 1 %>&limit=<%= limit %><%= selectedDate ? `&date=${encodeURIComponent(selectedDate)}` : '' %>"
-        >
-          Next
-        </a>
-
-      <% } else { %>
-
-        <span class="page-link">
-          Next
-        </span>
+        </li>
 
       <% } %>
 
-    </li>
 
-  </ul>
+      <!-- ==================================================
+           NEXT
+           ================================================== -->
 
-</nav>
+      <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
 
+        <% if (page < totalPages) { %>
 
+          <a
+            class="page-link"
+            href="/admin/daily-login-report?page=<%= page + 1 %>&limit=<%= limit %><%= reportDate ? `&date=${encodeURIComponent(reportDate)}` : '' %>"
+          >
+            Next
+          </a>
 
+        <% } else { %>
 
-   </section>
- 
+          <span class="page-link">
+            Next
+          </span>
+
+        <% } %>
+
+      </li>
+
+    </ul>
+
+  </nav>
+
+</section>
+
   <!--👇👆👆👇👆👇-->
   <!--👇👆👆👇👆👇-->
   
