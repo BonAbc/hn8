@@ -9672,45 +9672,41 @@ app.get(
 
       // =====================================================
       // LOGIN REPORT
-      // ONE RECORD = ONE USER + ONE DATE
-      // =====================================================
 
       const result = await db.query(
         `
-        SELECT
-          d.id,
-          d.user_id,
+  SELECT
+    d.id,
+    d.user_id,
 
-          mu.email,
-          mu.updated_password_date
+    mu.email,
+    mu.updated_password_date,
 
-          sp.first_name,
-          sp.last_name,
+    sp.first_name,
+    sp.last_name,
 
-          d.login_date,
-          d.login_count
+    d.login_date,
+    d.login_count
 
-        FROM daily_login_stats d
+  FROM daily_login_stats d
 
-        JOIN my_user mu
-          ON mu.id = d.user_id
+  JOIN my_user mu
+    ON mu.id = d.user_id
 
-        LEFT JOIN social_profile sp
-          ON sp.user_id = d.user_id
+  LEFT JOIN social_profile sp
+    ON sp.user_id = d.user_id
 
-        ORDER BY
-          d.login_date DESC,
-          d.user_id ASC
+  ORDER BY
+    d.login_date DESC,
+    d.user_id ASC
 
-        LIMIT $1
-        OFFSET $2
-        `,
+  LIMIT $1
+  OFFSET $2
+  `,
         [limit, offset],
       );
 
-      // =====================================================
-      // RENDER
-      // =====================================================
+      //
 
       return res.render("admin-daily-login-report", {
         loginStats: result.rows,
