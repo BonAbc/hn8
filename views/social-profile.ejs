@@ -36,6 +36,35 @@
                 method="POST"
                 enctype="multipart/form-data"
               >
+               <!-- first name -->
+                <div class="mb-3">
+                  <label for="first_name" class="form-label"> First Name </label>
+
+                  <input
+                    type="text"
+                    id="first_name"
+                    name="first_name"
+                    class="form-control"
+                    placeholder="First Name Required"
+                    required
+                    value="<%= profile?.first_name || '' %>"
+                    
+                  />
+                </div>
+                <!-- Last Name -->
+                <div class="mb-3">
+                  <label for="last_name" class="form-label"> Last Name </label>
+
+                  <input
+                    type="text"
+                    id="last_name"
+                    name="last_name"
+                    class="form-control"
+                     placeholder="First Name Required"
+                    required
+                    value="<%= profile?.last_name || '' %>"
+                  />
+                </div>
                 <!-- Avatar -->
                 <div class="mb-3">
                   <label for="avatar" class="form-label"> Professional Picture </label>

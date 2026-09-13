@@ -531,7 +531,7 @@ app.post("/login", (req, res, next) => {
   const requestId =
     Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
 
-  passport.authenticate("local", (err, user, info) => {
+  passport.authenticate("local", async (err, user, info) => {
     if (err) {
       console.error("❌ PASSPORT ERROR:", err);
       return next(err);
@@ -542,7 +542,39 @@ app.post("/login", (req, res, next) => {
 
       return res.redirect("/login");
     }
+    // DAILY LOGIN STATISTICS
+    // ONE RECORD = ONE USER + ONE DATE
+    // ==================================================
 
+    try {
+      await db.query(
+        `
+        INSERT INTO daily_login_stats (
+          user_id,
+          login_date,
+          login_count
+        )
+        VALUES (
+          $1,
+          CURRENT_DATE,
+          1
+        )
+
+        ON CONFLICT (user_id, login_date)
+
+        DO UPDATE SET
+          login_count =
+            daily_login_stats.login_count + 1,
+          updated_at = CURRENT_TIMESTAMP
+        `,
+        [user.id],
+      );
+    } catch (loginStatsError) {
+      console.error("DAILY LOGIN STATS ERROR:", loginStatsError);
+
+      // Do not prevent the user from continuing
+      // to login if statistics recording fails.
+    }
     // ==========================================
     // FIRST-TIME 2FA
     // ==========================================
@@ -575,6 +607,8 @@ app.post("/login", (req, res, next) => {
     });
   })(req, res, next);
 });
+//
+// login new logic
 //Admin add user 👆
 
 app.get("/enable-2fa", (req, res) => {
@@ -1406,7 +1440,7 @@ app.get(
     });
   },
 );
-
+// message is Line 1452
 //✌✌✌ end sign up ✌✌✌
 //✌✌✌ end sign up ✌✌✌
 
@@ -7081,7 +7115,6 @@ app.get(
 );
 //
 //
-
 //
 app.get("/social/profile", ensureAuthenticated, async (req, res) => {
   try {
@@ -7093,6 +7126,8 @@ app.get("/social/profile", ensureAuthenticated, async (req, res) => {
         SELECT
           id,
           user_id,
+          first_name,
+          last_name,
           slogan,
           avatar,
           emailpr,
@@ -7134,7 +7169,15 @@ app.post(
     try {
       const userId = req.user.id;
 
-      const { slogan, emailpr, address, phone, website } = req.body;
+      const {
+        first_name,
+        last_name,
+        slogan,
+        emailpr,
+        address,
+        phone,
+        website,
+      } = req.body;
 
       const professionalEmail = emailpr?.trim().toLowerCase() || null;
 
@@ -7174,6 +7217,8 @@ app.post(
         `
         INSERT INTO social_profile (
           user_id,
+          first_name,
+          last_name, 
           slogan,
           avatar,
           emailpr,
@@ -7190,13 +7235,17 @@ app.post(
           $5,
           $6,
           $7,
-          $8
+          $8,
+          $9,
+          $10
         )
 
         ON CONFLICT (user_id)
 
         DO UPDATE SET
+          first_name = EXCLUDED.first_name,
 
+          last_name = EXCLUDED.last_name,
           slogan = EXCLUDED.slogan,
 
           -- Keep existing avatar when no new
@@ -7402,6 +7451,8 @@ app.get(
         SELECT
           sp.id,
           sp.user_id,
+          sp.first_name,
+          sp.last_name,
           sp.slogan,
           sp.avatar,
           sp.emailpr,
@@ -9589,6 +9640,130 @@ app.get(
 // ============================================================
 // END LIVE BROADCAST
 // ============================================================
+//Add login report
+app.get(
+  "/admin/daily-login-report",
+  ensureAuthenticated,
+  ensureAdmin,
+  async (req, res) => {
+    try {
+      // =====================================================
+      // PAGINATION
+      // =====================================================
+
+      const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+
+      const limit = 10;
+
+      const offset = (page - 1) * limit;
+
+      // =====================================================
+      // TOTAL RECORDS
+      // =====================================================
+
+      const countResult = await db.query(`
+        SELECT COUNT(*)
+        FROM daily_login_stats
+      `);
+
+      const totalRecords = parseInt(countResult.rows[0].count, 10);
+
+      const totalPages = Math.ceil(totalRecords / limit);
+
+      // =====================================================
+      // LOGIN REPORT
+      // ONE RECORD = ONE USER + ONE DATE
+      // =====================================================
+
+      const result = await db.query(
+        `
+        SELECT
+          d.id,
+          d.user_id,
+
+          mu.email,
+          mu.updated_password_date
+
+          sp.first_name,
+          sp.last_name,
+
+          d.login_date,
+          d.login_count
+
+        FROM daily_login_stats d
+
+        JOIN my_user mu
+          ON mu.id = d.user_id
+
+        LEFT JOIN social_profile sp
+          ON sp.user_id = d.user_id
+
+        ORDER BY
+          d.login_date DESC,
+          d.user_id ASC
+
+        LIMIT $1
+        OFFSET $2
+        `,
+        [limit, offset],
+      );
+
+      // =====================================================
+      // RENDER
+      // =====================================================
+
+      return res.render("admin-daily-login-report", {
+        loginStats: result.rows,
+
+        page,
+        limit,
+
+        totalRecords,
+        totalPages,
+
+        defaultDate: getToday(),
+      });
+    } catch (err) {
+      console.error("DAILY LOGIN REPORT ERROR:", err);
+
+      return res
+        .status(500)
+        .send(`Unable to load daily login report: ${err.message}`);
+    }
+  },
+);
+//
+app.delete(
+  "/admin/daily-login-report/:id",
+  ensureAuthenticated,
+  ensureAdmin,
+  async (req, res) => {
+    try {
+      const loginId = parseInt(req.params.id, 10);
+
+      if (!Number.isInteger(loginId)) {
+        return res.status(400).send("Invalid login record ID.");
+      }
+
+      await db.query(
+        `
+        DELETE FROM daily_login_stats
+        WHERE id = $1
+        `,
+        [loginId],
+      );
+
+      return res.redirect("/admin/daily-login-report");
+    } catch (err) {
+      console.error("DELETE DAILY LOGIN RECORD ERROR:", err);
+
+      return res
+        .status(500)
+        .send(`Unable to delete login record: ${err.message}`);
+    }
+  },
+);
+
 //
 
 // ----------------------------

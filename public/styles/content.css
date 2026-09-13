@@ -3610,3 +3610,25 @@ button:hover {
 /* ============================================================
    END OF STYLESHEET
    ============================================================ */
+/**BEGIN login-report.ejs*/
+/**/
+/* Daily login report table */
+
+/* Daily login report table */
+
+.login-report-table tbody tr:nth-child(odd) > td {
+  background-color: #ffffff;
+}
+
+.login-report-table tbody tr:nth-child(even) > td {
+  background-color: #f2f6fa;
+}
+
+.login-report-table tbody tr:hover > td {
+  background-color: #dbeafe !important;
+  cursor: pointer;
+}
+
+/**/
+/**END login-report.ejs*/
+/**/

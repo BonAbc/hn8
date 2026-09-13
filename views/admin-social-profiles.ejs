@@ -68,7 +68,7 @@
       </div>
 
     </form>
-
+ 
 
     <!-- CURRENT ALLOWED DOMAINS -->
 
@@ -116,6 +116,8 @@
           <tr>
             <th>ID</th>
             <th>User ID</th>
+             <th>First Name</th>
+            <th>Lat Name</th>
             <th>User Name</th>
             <th>Avatar</th>
             <th>Slogan</th>
@@ -145,7 +147,12 @@
                 <td data-label="User ID">
                   <%= profile.user_id %>
                 </td>
-
+                 <td data-label="First Name">
+                  <%= profile.first_name || '' %>
+                </td>
+                 <td data-label="Last Name">
+                  <%= profile.last_name || '' %>
+                </td>
                 <td data-label="User Email">
                   <%= profile.email || '' %>
                 </td>
@@ -286,7 +293,7 @@
     <% if (totalPages > 1) { %>
 
       <div class="social-profile-pagination mt-4">
-
+ 
         <!-- Previous -->
 
         <% if (page > 1) { %>
