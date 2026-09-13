@@ -11,6 +11,29 @@
   <!---->
   <h2 id="hm">Login Dashboard</h2>
   <section class="py-5 bg-light border border-black mt-4 mb-4">
+      <form method="GET" action="/admin/daily-login-report" class="mb-4">
+
+  <label for="date">Date:</label>
+
+  <input
+    type="date"
+    id="date"
+    name="date"
+    value="<%= selectedDate || '' %>"
+  />
+
+  <button type="submit" class="btn btn-primary">
+    Filter
+  </button>
+
+  <a
+    href="/admin/daily-login-report"
+    class="btn btn-secondary"
+  >
+    All Dates
+  </a>
+
+</form>
     <table class="social-profile-table table table-bordered login-report-table">
 
 
@@ -91,11 +114,11 @@
           </td>
 
         </tr>
-
+ 
       <% }); %>
 
     <% } else { %>
-
+ 
       <tr>
         <td
           colspan="8"
@@ -120,77 +143,78 @@
 
 
 
-  <nav aria-label="Daily login report pagination">
-    <ul class="pagination justify-content-center">
+ <nav aria-label="Daily login report pagination">
 
-      <!-- Previous -->
+  <ul class="pagination justify-content-center">
 
-      <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
+    <!-- Previous -->
 
-        <% if (page > 1) { %>
+    <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
 
-          <a
-            class="page-link"
-            href="/admin/daily-login-report?page=<%= page - 1 %>&limit=<%= limit %>"
-          >
-            Previous
-          </a>
+      <% if (page > 1) { %>
 
-        <% } else { %>
+        <a
+          class="page-link"
+          href="/admin/daily-login-report?page=<%= page - 1 %>&limit=<%= limit %><%= selectedDate ? `&date=${encodeURIComponent(selectedDate)}` : '' %>"
+        >
+          Previous
+        </a>
 
-          <span class="page-link">
-            Previous
-          </span>
+      <% } else { %>
 
-        <% } %>
-
-      </li>
-
-
-      <!-- Page Numbers -->
-
-      <% for (let i = 1; i <= totalPages; i++) { %>
-
-        <li class="page-item <%= i === page ? 'active' : '' %>">
-
-          <a
-            class="page-link"
-            href="/admin/daily-login-report?page=<%= i %>&limit=<%= limit %>"
-          >
-            <%= i %>
-          </a>
-
-        </li>
+        <span class="page-link">
+          Previous
+        </span>
 
       <% } %>
 
+    </li>
 
-      <!-- Next -->
 
-      <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
+    <!-- Page Numbers -->
 
-        <% if (page < totalPages) { %>
+    <% for (let i = 1; i <= totalPages; i++) { %>
 
-          <a
-            class="page-link"
-            href="/admin/daily-login-report?page=<%= page + 1 %>&limit=<%= limit %>"
-          >
-            Next
-          </a>
+      <li class="page-item <%= i === page ? 'active' : '' %>">
 
-        <% } else { %>
-
-          <span class="page-link">
-            Next
-          </span>
-
-        <% } %>
+        <a
+          class="page-link"
+          href="/admin/daily-login-report?page=<%= i %>&limit=<%= limit %><%= selectedDate ? `&date=${encodeURIComponent(selectedDate)}` : '' %>"
+        >
+          <%= i %>
+        </a>
 
       </li>
 
-    </ul>
-  </nav>
+    <% } %>
 
+
+    <!-- Next -->
+
+    <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
+
+      <% if (page < totalPages) { %>
+
+        <a
+          class="page-link"
+          href="/admin/daily-login-report?page=<%= page + 1 %>&limit=<%= limit %><%= selectedDate ? `&date=${encodeURIComponent(selectedDate)}` : '' %>"
+        >
+          Next
+        </a>
+
+      <% } else { %>
+
+        <span class="page-link">
+          Next
+        </span>
+
+      <% } %>
+
+    </li>
+
+  </ul>
+
+</nav>
 
 
 
