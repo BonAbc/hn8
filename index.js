@@ -1392,69 +1392,72 @@ app.post("/chapw", async (req, res) => {
     });
   }
 });
-
-//
-
-app.get("/admin/password-approval", (req, res) => {
-  if (!req.user || !adminEmails.includes(req.user.email)) {
-    return res.status(403).send("Access denied");
-  }
-
-  res.render("password-approval.ejs", {
-    defaultDate: getToday(),
-    message: req.query.message || "",
-  });
-});
 //✌✌✌ end sign up ✌✌✌
 //✌✌✌ end sign up ✌✌✌
-app.post("/admin/password-approval", async (req, res) => {
-  if (!req.user || !adminEmails.includes(req.user.email)) {
-    return res.status(403).send("Access denied");
-  }
+//✌✌✌ end sign up ✌✌✌
+app.get(
+  "/admin/password-approval",
+  ensureAuthenticated,
+  ensureAdmin,
+  async (req, res) => {
+    res.render("password-approval.ejs", {
+      defaultDate: getToday(),
+      message: req.query.message || "",
+    });
+  },
+);
 
-  const { email } = req.body;
+//✌✌✌ end sign up ✌✌✌
+//✌✌✌ end sign up ✌✌✌
 
-  try {
-    const checkUser = await db.query(
-      `
+app.post(
+  "/admin/password-approval",
+  ensureAuthenticated,
+  ensureAdmin,
+  async (req, res) => {
+    const { email } = req.body;
+
+    try {
+      const checkUser = await db.query(
+        `
   SELECT email, pw_change_approved
   FROM my_user
   WHERE email = $1
   `,
-      [email],
-    );
-
-    if (checkUser.rows.length === 0) {
-      return res.redirect(
-        "/admin/password-approval?message=User email not found",
+        [email],
       );
-    }
 
-    if (checkUser.rows[0].pw_change_approved) {
-      return res.redirect(
-        "/admin/password-approval?message=This password change is already approved",
-      );
-    }
+      if (checkUser.rows.length === 0) {
+        return res.redirect(
+          "/admin/password-approval?message=User email not found",
+        );
+      }
 
-    await db.query(
-      `
+      if (checkUser.rows[0].pw_change_approved) {
+        return res.redirect(
+          "/admin/password-approval?message=This password change is already approved",
+        );
+      }
+
+      await db.query(
+        `
   UPDATE my_user
   SET pw_change_approved = true
   WHERE email = $1
   `,
-      [email],
-    );
+        [email],
+      );
 
-    return res.redirect(
-      "/admin/password-approval?message=Password change approved",
-    );
-    // res.send("Password change approved");
-  } catch (err) {
-    console.error(err);
-    res.send("Error approving password change");
-  }
-});
-//✌✌✌ end sign up ✌✌✌
+      return res.redirect(
+        "/admin/password-approval?message=Password change approved",
+      );
+      // res.send("Password change approved");
+    } catch (err) {
+      console.error(err);
+      res.send("Error approving password change");
+    }
+  },
+);
 //✌✌✌ ✌✌✌
 //✌✌✌  ✌✌✌
 app.get("/complete-password-change", async (req, res) => {
