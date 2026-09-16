@@ -4754,12 +4754,13 @@ app.post("/social/reaction", ensureAuthenticated, async (req, res) => {
     // Non-client users cannot touch client posts here.
     // ========================================================
 
-    if (postOwnerRole === "client") {
-      if (userRole !== "client") {
-        return res.status(403).send("Access denied.");
-      }
+    // ========================================================
 
-      if (String(postOwnerId) !== String(userId)) {
+    if (postOwnerRole === "client") {
+      const isOwner = String(postOwnerId) === String(userId);
+      const isAllowedAdmin = userRole === "admin1" || userRole === "admin2";
+
+      if (!isOwner && !isAllowedAdmin) {
         return res.status(403).send("Access denied.");
       }
     }
