@@ -2466,6 +2466,20 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
 
       clients = clientsResult.rows;
     }
+    //
+    const broadcastResult = await db.query(
+      `
+  SELECT id, status
+  FROM live_broadcasts
+  WHERE status IN ('scheduled', 'live')
+  ORDER BY id DESC
+  LIMIT 1
+  `,
+    );
+
+    const liveLink = broadcastResult.rows[0]
+      ? `/live/${broadcastResult.rows[0].id}`
+      : null;
 
     // ========================================================
     // RENDER
@@ -2496,6 +2510,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
       page,
       totalPosts,
       totalPages,
+      liveLink,
     });
   } catch (err) {
     console.error("========================================");
