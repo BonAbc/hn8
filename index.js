@@ -188,11 +188,13 @@ const token = authenticator.generate(secret);
 
 const authLimiter = rateLimit({
   windowMs: 30 * 60 * 1000,
-  max: 30,
+  max: 10,
   message: "Too many login attempts. Try again later.",
 });
 
 app.use("/login", authLimiter);
+//
+app.use("/chapw", authLimiter);
 //
 const connectReactionLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
@@ -204,7 +206,7 @@ const connectReactionLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-
+//
 //
 
 app.use(
@@ -439,60 +441,204 @@ app.get("/logout", (req, res, next) => {
 });
 //
 passport.use(
-  new Strategy(async function verify(username, password, cb) {
-    try {
-      const result = await db.query(
-        `
-        SELECT
-          id,
-          email,
-          pw,
-          is_active,
-          two_factor_enabled
-        FROM my_user
-        WHERE email = $1
-        `,
-        [username],
-      );
+  new Strategy(
+    {
+      passReqToCallback: true,
+    },
 
-      if (result.rows.length === 0) {
-        return cb(null, false, {
-          message: "Invalid username or password.",
-        });
+    async function verify(req, username, password, cb) {
+      try {
+        const result = await db.query(
+          `
+          SELECT
+            id,
+            email,
+            pw,
+            is_active,
+            two_factor_enabled
+          FROM my_user
+          WHERE email = $1
+          `,
+          [username],
+        );
+
+        // ==================================================
+        // USER NOT FOUND
+        // ==================================================
+
+        if (result.rows.length === 0) {
+          try {
+            await db.query(
+              `
+              INSERT INTO login_attempts (
+                user_id,
+                attempted_email,
+                result,
+                ip_address,
+                user_agent
+              )
+              VALUES (
+                NULL,
+                $1,
+                $2,
+                $3,
+                $4
+              )
+              `,
+              [username, "USER_NOT_FOUND", req.ip, req.get("user-agent")],
+            );
+          } catch (logError) {
+            console.error("LOGIN ATTEMPT LOG ERROR:", logError);
+          }
+
+          return cb(null, false, {
+            message: "Invalid username or password.",
+          });
+        }
+
+        const user = result.rows[0];
+
+        // ==================================================
+        // ACCOUNT INACTIVE
+        // ==================================================
+
+        if (!user.is_active) {
+          try {
+            await db.query(
+              `
+              INSERT INTO login_attempts (
+                user_id,
+                attempted_email,
+                result,
+                ip_address,
+                user_agent
+              )
+              VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5
+              )
+              `,
+              [
+                user.id,
+                username,
+                "ACCOUNT_INACTIVE",
+                req.ip,
+                req.get("user-agent"),
+              ],
+            );
+          } catch (logError) {
+            console.error("LOGIN ATTEMPT LOG ERROR:", logError);
+          }
+
+          return cb(null, false, {
+            message: "Your account is inactive. Please contact admin.",
+          });
+        }
+
+        // ==================================================
+        // PASSWORD MISSING
+        // ==================================================
+
+        if (!user.pw) {
+          console.warn("User authentication failed: password missing");
+
+          try {
+            await db.query(
+              `
+              INSERT INTO login_attempts (
+                user_id,
+                attempted_email,
+                result,
+                ip_address,
+                user_agent
+              )
+              VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5
+              )
+              `,
+              [
+                user.id,
+                username,
+                "INVALID_PASSWORD",
+                req.ip,
+                req.get("user-agent"),
+              ],
+            );
+          } catch (logError) {
+            console.error("LOGIN ATTEMPT LOG ERROR:", logError);
+          }
+
+          return cb(null, false, {
+            message: "Invalid username or password.",
+          });
+        }
+
+        // ==================================================
+        // PASSWORD CHECK
+        // ==================================================
+
+        const match = await bcrypt.compare(password, user.pw);
+
+        // ==================================================
+        // WRONG PASSWORD
+        // ==================================================
+
+        if (!match) {
+          console.warn("User authentication failed");
+
+          try {
+            await db.query(
+              `
+              INSERT INTO login_attempts (
+                user_id,
+                attempted_email,
+                result,
+                ip_address,
+                user_agent
+              )
+              VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5
+              )
+              `,
+              [
+                user.id,
+                username,
+                "INVALID_PASSWORD",
+                req.ip,
+                req.get("user-agent"),
+              ],
+            );
+          } catch (logError) {
+            console.error("LOGIN ATTEMPT LOG ERROR:", logError);
+          }
+
+          return cb(null, false, {
+            message: "Invalid username or password.",
+          });
+        }
+
+        // ==================================================
+        // PASSWORD CORRECT
+        // ==================================================
+
+        return cb(null, user);
+      } catch (err) {
+        console.error("❌ PASSPORT STRATEGY ERROR:", err);
+        return cb(err);
       }
-
-      const user = result.rows[0];
-
-      if (!user.is_active) {
-        return cb(null, false, {
-          message: "Your account is inactive. Please contact admin.",
-        });
-      }
-
-      if (!user.pw) {
-        console.warn("User authentication failed: password missing");
-
-        return cb(null, false, {
-          message: "Invalid username or password.",
-        });
-      }
-
-      const match = await bcrypt.compare(password, user.pw);
-
-      if (!match) {
-        console.warn("User authentication failed");
-
-        return cb(null, false, {
-          message: "Invalid username or password.",
-        });
-      }
-
-      return cb(null, user);
-    } catch (err) {
-      console.error("❌ PASSPORT STRATEGY ERROR:", err);
-      return cb(err);
-    }
-  }),
+    },
+  ),
 );
 
 // store user id
@@ -841,24 +987,43 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
   // =====================================
 
   if (!isValid) {
-    const attempts = user.failed_2fa_attempts + 1;
-
-    // Third failed attempt = lock 1 hour
-    if (attempts >= 3) {
+    // Log failed 2FA attempt for admin report
+    try {
       await db.query(
         `
-        UPDATE my_user
-        SET
-          failed_2fa_attempts = $1,
-          two_fa_lock_until = NOW() + INTERVAL '1 minute'
-        WHERE id = $2
-        `,
+      INSERT INTO login_attempts (
+        user_id,
+        attempted_email,
+        result,
+        ip_address,
+        user_agent
+      )
+      VALUES ($1, $2, $3, $4, $5)
+      `,
+        [user.id, user.email, "INVALID_2FA", req.ip, req.get("user-agent")],
+      );
+    } catch (logError) {
+      console.error("LOGIN ATTEMPT LOG ERROR:", logError);
+    }
+
+    const attempts = user.failed_2fa_attempts + 1;
+
+    // 2nd failed attempt = lock
+    if (attempts >= 2) {
+      await db.query(
+        `
+      UPDATE my_user
+      SET
+        failed_2fa_attempts = $1,
+        two_fa_lock_until = NOW() + INTERVAL '1 day'
+      WHERE id = $2
+      `,
         [attempts, user.id],
       );
-      // interval ' 1 second'
+
       return res.render("verify-2fa.ejs", {
         message:
-          "Too many failed verification attempts. Account locked for 1 hour.",
+          "Too many failed verification attempts. Account locked for 1 day.",
         defaultDate: getToday(),
       });
     }
@@ -875,7 +1040,7 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
     );
 
     return res.render("verify-2fa.ejs", {
-      message: `Invalid verification code. ${2 - attempts} attempt(s) remaining. 2nd failure, your account will be locked for 1 hour`,
+      message: `Invalid verification code. ${2 - attempts} attempt(s) remaining. 2nd failure, your account will be locked for 1 day`,
       defaultDate: getToday(),
     });
   }

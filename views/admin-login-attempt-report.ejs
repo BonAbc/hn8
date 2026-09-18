@@ -1,0 +1,428 @@
+<%- include("partials/header.ejs") %>
+<!--Remember this include when add a new page-->
+<main class="container">
+  <!--main should move to main page-->
+  <!---->
+
+  <form>
+    <label for="current-date">Date:</label>
+
+    <input
+      type="date"
+      id="current-date"
+      name="current-date"
+      value="<%= defaultDate %>"
+      readonly
+    />
+  </form>
+
+  <h2 id="hm">Login Attempt Dashboard</h2>
+
+  <!--👇👆👆👇👆👇-->
+  <!--👇👆👆👇👆👇--> 
+<section class="py-5 bg-light border border-black mt-4 mb-4">
+
+  <!-- ======================================================
+       FILTERS
+       ====================================================== -->
+
+  <form
+    method="GET"
+    action="/admin/login-attempt-report"
+    class="mb-4"
+  >
+
+    <!-- DATE FILTER -->
+
+    <label for="filter-date">
+      Date:
+    </label>
+
+    <input
+      type="date"
+      id="filter-date"
+      name="date"
+      value="<%= selectedDate || '' %>"
+    />
+
+
+    <!-- USER FILTER -->
+
+    <label
+      for="filter-user"
+      class="ms-3"
+    >
+      User:
+    </label>
+
+    <select
+      id="filter-user"
+      name="user_id"
+    >
+
+      <option value="">
+        All Users
+      </option>
+
+      <% if (users && users.length > 0) { %>
+
+        <% users.forEach((user) => { %>
+
+          <option
+            value="<%= user.id %>"
+            <%= String(selectedUser || "") === String(user.id)
+              ? "selected"
+              : "" %>
+          >
+            <%= user.email %>
+
+            <% if (user.first_name || user.last_name) { %>
+              —
+              <%= user.first_name || "" %>
+              <%= user.last_name || "" %>
+            <% } %>
+          </option>
+
+        <% }); %>
+
+      <% } %>
+
+    </select>
+
+
+    <!-- RESULT FILTER -->
+
+    <label
+      for="filter-result"
+      class="ms-3"
+    >
+      Result:
+    </label>
+
+    <select
+      id="filter-result"
+      name="result"
+    >
+ 
+      <option
+        value=""
+        <%= !selectedResult ? "selected" : "" %>
+      >
+        All Results
+      </option>
+
+      <option
+        value="INVALID_PASSWORD"
+        <%= selectedResult === "INVALID_PASSWORD"
+          ? "selected"
+          : "" %>
+      >
+        Invalid Password
+      </option>
+
+      <option
+        value="USER_NOT_FOUND"
+        <%= selectedResult === "USER_NOT_FOUND"
+          ? "selected"
+          : "" %>
+      >
+        User Not Found
+      </option>
+
+      <option
+        value="ACCOUNT_INACTIVE"
+        <%= selectedResult === "ACCOUNT_INACTIVE"
+          ? "selected"
+          : "" %>
+      >
+        Account Inactive
+      </option>
+
+      <option
+        value="PASSWORD_MISSING"
+        <%= selectedResult === "PASSWORD_MISSING"
+          ? "selected"
+          : "" %>
+      >
+        Password Missing
+      </option>
+
+    </select>
+
+
+    <!-- FILTER BUTTON -->
+
+    <button
+      type="submit"
+      class="btn btn-primary ms-2"
+    >
+      Filter
+    </button>
+
+
+    <!-- CLEAR FILTERS -->
+
+    <a
+      href="/admin/login-attempt-report"
+      class="btn btn-secondary"
+    >
+      All Attempts
+    </a>
+
+  </form>
+
+
+  <!-- ======================================================
+       LOGIN ATTEMPT REPORT TABLE
+       ====================================================== -->
+
+  <div class="table-responsive">
+
+    <table
+      class="social-profile-table table table-bordered login-report-table"
+    >
+ 
+      <thead>
+
+        <tr>
+          <th>ID</th>
+          <th>User ID</th>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Email Entered</th>
+          <th>Account Email</th>
+          <th>Failed 2FA Attempts</th>
+          <th>Accounts Targeted 1 IP</th>
+          <th>Result</th>
+          <th>IP Address</th>
+          <th>User Agent</th>
+          <th>Date / Time</th>
+          <th>Action</th>
+        </tr>
+
+      </thead>
+
+
+      <tbody>
+
+        <% if (loginAttempts && loginAttempts.length > 0) { %>
+
+          <% loginAttempts.forEach((attempt) => { %>
+
+            <tr>
+
+              <td data-label="ID">
+                <%= attempt.id %>
+              </td>
+
+              <td data-label="User ID">
+                <%= attempt.user_id || "" %>
+              </td>
+
+              <td data-label="First Name">
+                <%= attempt.first_name || "" %>
+              </td>
+
+              <td data-label="Last Name">
+                <%= attempt.last_name || "" %>
+              </td>
+
+             <td data-label="Email Entered">
+  <%= attempt.attempted_email || "" %>
+</td>
+
+<td data-label="Account Email">
+  <%= attempt.email || "" %>
+</td>
+
+<td data-label="Failed 2FA Attempts">
+  <%= attempt.failed_2fa_attempts ?? 0 %>
+</td>
+
+<td data-label="Accounts Targeted">
+  <%= attempt.accounts_targeted ?? 0 %>
+</td>
+
+
+              <td data-label="Result">
+
+                <% if (attempt.result === "INVALID_PASSWORD") { %>
+
+                  <span class="text-danger fw-bold">
+                    Invalid Password
+                  </span>
+
+                <% } else if (attempt.result === "USER_NOT_FOUND") { %>
+
+                  <span class="text-warning fw-bold">
+                    User Not Found
+                  </span>
+
+                <% } else if (attempt.result === "ACCOUNT_INACTIVE") { %>
+
+                  <span class="text-secondary fw-bold">
+                    Account Inactive
+                  </span>
+
+                <% } else if (attempt.result === "PASSWORD_MISSING") { %>
+
+                  <span class="text-danger fw-bold">
+                    Password Missing
+                  </span>
+
+                <% } else { %>
+
+                  <%= attempt.result || "" %>
+
+                <% } %>
+
+              </td>
+
+              <td data-label="IP Address">
+                <%= attempt.ip_address || "" %>
+              </td>
+
+              <td data-label="User Agent">
+                <%= attempt.user_agent || "" %>
+              </td>
+
+              <td data-label="Date / Time">
+                <%= attempt.created_at
+                  ? new Date(attempt.created_at).toLocaleString()
+                  : "" %>
+              </td>
+
+              <td data-label="Action">
+
+               <form
+  action="/admin/login-attempt-report/<%= attempt.id %>?_method=DELETE&page=<%= page %>&date=<%= encodeURIComponent(selectedDate || '') %>&user_id=<%= encodeURIComponent(selectedUser || '') %>&result=<%= encodeURIComponent(selectedResult || '') %>"
+  method="POST"
+  onsubmit="return confirm('Delete this login attempt record?');"
+  class="d-inline"
+>
+  <button
+    type="submit"
+    class="btn btn-danger btn-sm"
+  >
+    Delete
+  </button>
+</form>
+
+              </td>
+
+            </tr>
+
+          <% }); %>
+
+        <% } else { %>
+
+          <tr>
+
+            <td
+              colspan="11"
+              class="text-center"
+            >
+              No login attempt records found.
+            </td>
+
+          </tr>
+
+        <% } %>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</section>
+
+
+<hr>
+
+
+<!-- ======================================================
+     PAGINATION
+     ====================================================== -->
+
+<section class="py-5 bg-light border border-black mt-4 mb-4">
+
+  <nav aria-label="Login attempt report pagination">
+
+    <ul class="pagination justify-content-center">
+
+      <!-- PREVIOUS -->
+
+      <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
+
+        <% if (page > 1) { %>
+
+          <a
+            class="page-link"
+            href="/admin/login-attempt-report?page=<%= page - 1 %>&limit=<%= limit %><%= selectedDate ? `&date=${encodeURIComponent(selectedDate)}` : '' %><%= selectedUser ? `&user_id=${encodeURIComponent(selectedUser)}` : '' %><%= selectedResult ? `&result=${encodeURIComponent(selectedResult)}` : '' %>"
+          >
+            Previous
+          </a>
+
+        <% } else { %>
+
+          <span class="page-link">
+            Previous
+          </span>
+
+        <% } %>
+
+      </li>
+
+
+      <!-- PAGE NUMBERS -->
+
+      <% for (let i = 1; i <= totalPages; i++) { %>
+
+        <li class="page-item <%= i === page ? 'active' : '' %>">
+
+          <a
+            class="page-link"
+            href="/admin/login-attempt-report?page=<%= i %>&limit=<%= limit %><%= selectedDate ? `&date=${encodeURIComponent(selectedDate)}` : '' %><%= selectedUser ? `&user_id=${encodeURIComponent(selectedUser)}` : '' %><%= selectedResult ? `&result=${encodeURIComponent(selectedResult)}` : '' %>"
+          >
+            <%= i %>
+          </a>
+
+        </li>
+
+      <% } %>
+
+
+      <!-- NEXT -->
+
+      <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
+
+        <% if (page < totalPages) { %>
+
+          <a
+            class="page-link"
+            href="/admin/login-attempt-report?page=<%= page + 1 %>&limit=<%= limit %><%= selectedDate ? `&date=${encodeURIComponent(selectedDate)}` : '' %><%= selectedUser ? `&user_id=${encodeURIComponent(selectedUser)}` : '' %><%= selectedResult ? `&result=${encodeURIComponent(selectedResult)}` : '' %>"
+          >
+            Next
+          </a>
+
+        <% } else { %>
+
+          <span class="page-link">
+            Next
+          </span>
+
+        <% } %>
+
+      </li>
+
+    </ul>
+
+  </nav>
+
+</section>
+
+  <!--Refer to index.ejs how to include header and footer.ejs-->
+</main>
+
+<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->
