@@ -1,9 +1,7 @@
-//
 import geoip from "geoip-lite";
 
 export default function webtraffic(db, io) {
   return async (req, res, next) => {
-    // ignore static files
     if (
       req.originalUrl.includes(".js") ||
       req.originalUrl.includes(".css") ||
@@ -22,22 +20,31 @@ export default function webtraffic(db, io) {
     const city = geo?.city || "Unknown";
     const timezone = geo?.timezone || "Unknown";
 
-    await db.query(
-      `
-            INSERT INTO webtraffic
-            (ip_address, country, city, timezone, page)
-            VALUES ($1, $2, $3, $4, $5)
-            `,
-      [ip, country, city, timezone, req.originalUrl],
-    );
+    res.on("finish", async () => {
+      const status = res.statusCode;
 
-    io.emit("new-visitor", {
-      ip,
-      country,
-      city,
-      timezone,
-      page: req.originalUrl,
-      time: new Date(),
+      try {
+        await db.query(
+          `
+            INSERT INTO webtraffic
+            (ip_address, country, city, timezone, page, status)
+            VALUES ($1, $2, $3, $4, $5, $6)
+          `,
+          [ip, country, city, timezone, req.originalUrl, status],
+        );
+
+        io.emit("new-visitor", {
+          ip,
+          country,
+          city,
+          timezone,
+          page: req.originalUrl,
+          status,
+          time: new Date(),
+        });
+      } catch (error) {
+        console.error("Failed to save web traffic:", error);
+      }
     });
 
     next();
