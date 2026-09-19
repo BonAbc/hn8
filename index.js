@@ -268,7 +268,15 @@ function ensureAuthenticated(req, res, next) {
 }
 
 //function ensureAdmin(req, res, next) {
+//
+function formatChicagoDateTime(value) {
+  if (!value) return "";
 
+  return DateTime.fromJSDate(new Date(value), { zone: "utc" })
+    .setZone("America/Chicago")
+    .toFormat("M/d/yyyy, h:mm:ss a");
+}
+//
 app.get("/", (req, res) =>
   res.render("index.ejs", { defaultDate: getToday() }),
 );

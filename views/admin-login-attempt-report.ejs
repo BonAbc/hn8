@@ -287,9 +287,7 @@
               </td>
 
               <td data-label="Date / Time">
-                <%= attempt.created_at
-                  ? new Date(attempt.created_at).toLocaleString()
-                  : "" %>
+               <%= formatChicagoDateTime(attempt.created_at) %>
               </td>
 
               <td data-label="Action">
@@ -340,7 +338,7 @@
 
 <hr>
 
-
+ 
 <!-- ======================================================
      PAGINATION
      ====================================================== -->
