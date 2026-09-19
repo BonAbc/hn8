@@ -9973,7 +9973,376 @@ app.delete(
 );
 
 //
+// Login-attempt report
+// =====================================================
+// LOGIN-ATTEMPT REPORT
+// =====================================================
 
+console.log("REGISTERING: GET /admin/login-attempt-report");
+
+app.get(
+  "/admin/login-attempt-report",
+
+  (req, res, next) => {
+    console.log("==============================================");
+    console.log("1. ROUTE MATCHED");
+    console.log("METHOD:", req.method);
+    console.log("URL:", req.originalUrl);
+    console.log("PATH:", req.path);
+    console.log("QUERY:", req.query);
+    next();
+  },
+
+  (req, res, next) => {
+    console.log("2. BEFORE ensureAuthenticated");
+    next();
+  },
+
+  ensureAuthenticated,
+
+  (req, res, next) => {
+    console.log("3. PASSED ensureAuthenticated");
+    console.log("USER:", req.user ? req.user.id : "NO USER");
+    next();
+  },
+
+  (req, res, next) => {
+    console.log("4. BEFORE ensureAdmin");
+    next();
+  },
+
+  ensureAdmin,
+
+  (req, res, next) => {
+    console.log("5. PASSED ensureAdmin");
+    next();
+  },
+
+  async (req, res) => {
+    console.log("6. ENTERED LOGIN REPORT HANDLER");
+
+    try {
+      // =====================================================
+      // PAGINATION
+      // =====================================================
+
+      const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+
+      const limit = 10;
+      const offset = (page - 1) * limit;
+
+      console.log("PAGINATION:", {
+        page,
+        limit,
+        offset,
+      });
+
+      // =====================================================
+      // FILTERS
+      // =====================================================
+
+      const selectedDate =
+        typeof req.query.date === "string" ? req.query.date.trim() : "";
+
+      const selectedUser =
+        typeof req.query.user_id === "string" ? req.query.user_id.trim() : "";
+
+      const selectedResult =
+        typeof req.query.result === "string" ? req.query.result.trim() : "";
+
+      console.log("FILTERS:", {
+        selectedDate,
+        selectedUser,
+        selectedResult,
+      });
+
+      const queryValues = [];
+      const conditions = [];
+
+      // =====================================================
+      // DATE FILTER
+      // =====================================================
+
+      if (selectedDate !== "") {
+        queryValues.push(selectedDate);
+
+        conditions.push(`
+          la.created_at >= $${queryValues.length}::date
+          AND la.created_at < (
+            $${queryValues.length}::date + INTERVAL '1 day'
+          )
+        `);
+      }
+
+      // =====================================================
+      // USER FILTER
+      // =====================================================
+
+      if (selectedUser !== "") {
+        const userId = parseInt(selectedUser, 10);
+
+        console.log("PARSED USER ID:", userId);
+
+        if (Number.isInteger(userId) && userId > 0) {
+          queryValues.push(userId);
+
+          conditions.push(`
+            la.user_id = $${queryValues.length}
+          `);
+        }
+      }
+
+      // =====================================================
+      // RESULT FILTER
+      // =====================================================
+
+      if (selectedResult !== "") {
+        queryValues.push(selectedResult);
+
+        conditions.push(`
+          la.result = $${queryValues.length}
+        `);
+      }
+
+      const whereClause =
+        conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+      console.log("WHERE CLAUSE:");
+      console.log(whereClause);
+
+      console.log("QUERY VALUES:");
+      console.log(queryValues);
+
+      // =====================================================
+      // TOTAL RECORDS
+      // =====================================================
+
+      console.log("7. RUNNING COUNT QUERY");
+
+      const countResult = await db.query(
+        `
+        SELECT COUNT(*)
+        FROM login_attempts la
+        ${whereClause}
+        `,
+        queryValues,
+      );
+
+      console.log("8. COUNT QUERY SUCCESS");
+
+      const totalRecords = parseInt(countResult.rows[0].count, 10);
+
+      const totalPages = Math.ceil(totalRecords / limit);
+
+      console.log("RECORD COUNTS:", {
+        totalRecords,
+        totalPages,
+      });
+
+      // =====================================================
+      // LOGIN ATTEMPT REPORT
+      // =====================================================
+
+      console.log("9. RUNNING LOGIN ATTEMPT QUERY");
+
+      const result = await db.query(
+        `
+        WITH filtered_attempts AS (
+          SELECT
+            la.*
+          FROM login_attempts la
+          ${whereClause}
+        ),
+
+        ip_counts AS (
+          SELECT
+            ip_address,
+
+            COUNT(
+              DISTINCT COALESCE(
+                user_id::text,
+                attempted_email
+              )
+            ) AS accounts_targeted
+
+          FROM filtered_attempts
+
+          GROUP BY
+            ip_address
+        )
+
+        SELECT
+          la.id,
+          la.user_id,
+          la.attempted_email,
+          la.result,
+          la.ip_address,
+          la.user_agent,
+          la.created_at,
+
+          mu.email,
+          mu.failed_2fa_attempts,
+
+          sp.first_name,
+          sp.last_name,
+
+          COALESCE(
+            ic.accounts_targeted,
+            0
+          ) AS accounts_targeted
+
+        FROM filtered_attempts la
+
+        LEFT JOIN my_user mu
+          ON mu.id = la.user_id
+
+        LEFT JOIN social_profile sp
+          ON sp.user_id = la.user_id
+
+        LEFT JOIN ip_counts ic
+          ON ic.ip_address = la.ip_address
+
+        ORDER BY
+          la.created_at DESC
+
+        LIMIT $${queryValues.length + 1}
+        OFFSET $${queryValues.length + 2}
+        `,
+        [...queryValues, limit, offset],
+      );
+
+      console.log("10. LOGIN ATTEMPT QUERY SUCCESS");
+      console.log("ROWS RETURNED:", result.rows.length);
+
+      // =====================================================
+      // USERS
+      // =====================================================
+
+      console.log("11. RUNNING USERS QUERY");
+
+      const usersResult = await db.query(
+        `
+        SELECT
+          mu.id,
+          mu.email,
+          sp.first_name,
+          sp.last_name
+
+        FROM my_user mu
+
+        LEFT JOIN social_profile sp
+          ON sp.user_id = mu.id
+
+        WHERE mu.is_active = TRUE
+
+        ORDER BY
+          mu.email ASC
+        `,
+      );
+
+      console.log("12. USERS QUERY SUCCESS");
+      console.log("USERS RETURNED:", usersResult.rows.length);
+
+      // =====================================================
+      // RENDER
+      // =====================================================
+
+      console.log("13. RENDERING EJS");
+
+      return res.render("admin-login-attempt-report", {
+        loginAttempts: result.rows,
+
+        users: usersResult.rows,
+
+        page,
+        limit,
+
+        totalRecords,
+        totalPages,
+
+        selectedDate,
+        selectedUser,
+        selectedResult,
+
+        defaultDate: getToday(),
+      });
+    } catch (err) {
+      console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+
+      console.error("LOGIN ATTEMPT REPORT ERROR");
+
+      console.error("MESSAGE:", err.message);
+
+      console.error("STACK:", err.stack);
+
+      console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+
+      return res
+        .status(500)
+        .send(`Unable to load login attempt report: ${err.message}`);
+    }
+  },
+);
+
+//
+app.delete(
+  "/admin/login-attempt-report/:id",
+  ensureAuthenticated,
+  ensureAdmin,
+  async (req, res) => {
+    try {
+      const attemptId = parseInt(req.params.id, 10);
+
+      if (!Number.isInteger(attemptId) || attemptId <= 0) {
+        return res.status(400).send("Invalid login attempt ID.");
+      }
+
+      const result = await db.query(
+        `
+        DELETE FROM login_attempts
+        WHERE id = $1
+        RETURNING id
+        `,
+        [attemptId],
+      );
+
+      if (result.rowCount === 0) {
+        return res.status(404).send("Login attempt record not found.");
+      }
+
+      // Preserve filters/page when returning to the report
+      const redirectParams = new URLSearchParams();
+
+      if (typeof req.query.page === "string" && req.query.page) {
+        redirectParams.set("page", req.query.page);
+      }
+
+      if (typeof req.query.date === "string" && req.query.date) {
+        redirectParams.set("date", req.query.date);
+      }
+
+      if (typeof req.query.user_id === "string" && req.query.user_id) {
+        redirectParams.set("user_id", req.query.user_id);
+      }
+
+      if (typeof req.query.result === "string" && req.query.result) {
+        redirectParams.set("result", req.query.result);
+      }
+
+      const queryString = redirectParams.toString();
+
+      return res.redirect(
+        `/admin/login-attempt-report${queryString ? `?${queryString}` : ""}`,
+      );
+    } catch (err) {
+      console.error("DELETE LOGIN ATTEMPT ERROR:", err);
+
+      return res
+        .status(500)
+        .send(`Unable to delete login attempt: ${err.message}`);
+    }
+  },
+);
 // ----------------------------
 app.use((err, req, res, next) => {
   console.error("❌ Uncaught error:", err);
