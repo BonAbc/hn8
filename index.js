@@ -9974,72 +9974,18 @@ app.delete(
 
 //
 // Login-attempt report
-// =====================================================
-// LOGIN-ATTEMPT REPORT
-// =====================================================
-
-console.log("REGISTERING: GET /admin/login-attempt-report");
-
 app.get(
   "/admin/login-attempt-report",
-
-  (req, res, next) => {
-    console.log("==============================================");
-    console.log("1. ROUTE MATCHED");
-    console.log("METHOD:", req.method);
-    console.log("URL:", req.originalUrl);
-    console.log("PATH:", req.path);
-    console.log("QUERY:", req.query);
-    next();
-  },
-
-  (req, res, next) => {
-    console.log("2. BEFORE ensureAuthenticated");
-    next();
-  },
-
-  ensureAuthenticated,
-
-  (req, res, next) => {
-    console.log("3. PASSED ensureAuthenticated");
-    console.log("USER:", req.user ? req.user.id : "NO USER");
-    next();
-  },
-
-  (req, res, next) => {
-    console.log("4. BEFORE ensureAdmin");
-    next();
-  },
-
   ensureAdmin,
-
-  (req, res, next) => {
-    console.log("5. PASSED ensureAdmin");
-    next();
-  },
 
   async (req, res) => {
     console.log("6. ENTERED LOGIN REPORT HANDLER");
 
     try {
-      // =====================================================
-      // PAGINATION
-      // =====================================================
-
       const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
 
       const limit = 10;
       const offset = (page - 1) * limit;
-
-      console.log("PAGINATION:", {
-        page,
-        limit,
-        offset,
-      });
-
-      // =====================================================
-      // FILTERS
-      // =====================================================
 
       const selectedDate =
         typeof req.query.date === "string" ? req.query.date.trim() : "";
@@ -10059,10 +10005,6 @@ app.get(
       const queryValues = [];
       const conditions = [];
 
-      // =====================================================
-      // DATE FILTER
-      // =====================================================
-
       if (selectedDate !== "") {
         queryValues.push(selectedDate);
 
@@ -10073,10 +10015,6 @@ app.get(
           )
         `);
       }
-
-      // =====================================================
-      // USER FILTER
-      // =====================================================
 
       if (selectedUser !== "") {
         const userId = parseInt(selectedUser, 10);
@@ -10092,10 +10030,6 @@ app.get(
         }
       }
 
-      // =====================================================
-      // RESULT FILTER
-      // =====================================================
-
       if (selectedResult !== "") {
         queryValues.push(selectedResult);
 
@@ -10107,18 +10041,6 @@ app.get(
       const whereClause =
         conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-      console.log("WHERE CLAUSE:");
-      console.log(whereClause);
-
-      console.log("QUERY VALUES:");
-      console.log(queryValues);
-
-      // =====================================================
-      // TOTAL RECORDS
-      // =====================================================
-
-      console.log("7. RUNNING COUNT QUERY");
-
       const countResult = await db.query(
         `
         SELECT COUNT(*)
@@ -10128,22 +10050,9 @@ app.get(
         queryValues,
       );
 
-      console.log("8. COUNT QUERY SUCCESS");
-
       const totalRecords = parseInt(countResult.rows[0].count, 10);
 
       const totalPages = Math.ceil(totalRecords / limit);
-
-      console.log("RECORD COUNTS:", {
-        totalRecords,
-        totalPages,
-      });
-
-      // =====================================================
-      // LOGIN ATTEMPT REPORT
-      // =====================================================
-
-      console.log("9. RUNNING LOGIN ATTEMPT QUERY");
 
       const result = await db.query(
         `
@@ -10211,15 +10120,6 @@ app.get(
         [...queryValues, limit, offset],
       );
 
-      console.log("10. LOGIN ATTEMPT QUERY SUCCESS");
-      console.log("ROWS RETURNED:", result.rows.length);
-
-      // =====================================================
-      // USERS
-      // =====================================================
-
-      console.log("11. RUNNING USERS QUERY");
-
       const usersResult = await db.query(
         `
         SELECT
@@ -10240,15 +10140,6 @@ app.get(
         `,
       );
 
-      console.log("12. USERS QUERY SUCCESS");
-      console.log("USERS RETURNED:", usersResult.rows.length);
-
-      // =====================================================
-      // RENDER
-      // =====================================================
-
-      console.log("13. RENDERING EJS");
-
       return res.render("admin-login-attempt-report", {
         loginAttempts: result.rows,
 
@@ -10267,23 +10158,12 @@ app.get(
         defaultDate: getToday(),
       });
     } catch (err) {
-      console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-
-      console.error("LOGIN ATTEMPT REPORT ERROR");
-
-      console.error("MESSAGE:", err.message);
-
-      console.error("STACK:", err.stack);
-
-      console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-
       return res
         .status(500)
         .send(`Unable to load login attempt report: ${err.message}`);
     }
   },
 );
-
 //
 app.delete(
   "/admin/login-attempt-report/:id",
