@@ -122,6 +122,14 @@ function formatChicagoDateTime(value) {
     .setZone("America/Chicago")
     .toFormat("M/d/yyyy, h:mm:ss a");
 }
+function formatChicagoDate(value) {
+  if (!value) return "";
+
+  return DateTime.fromJSDate(new Date(value), { zone: "utc" })
+    .setZone("America/Chicago")
+    .toFormat("M/d/yyyy");
+}
+
 //
 // ----------------------------
 // PostgreSQL Connection
@@ -9935,6 +9943,7 @@ app.get(
         selectedDate,
 
         defaultDate: getToday(),
+        formatChicagoDate,
       });
     } catch (err) {
       console.error("DAILY LOGIN REPORT ERROR:", err);
@@ -10088,7 +10097,7 @@ app.get(
           GROUP BY
             ip_address
         )
-
+ 
         SELECT
           la.id,
           la.user_id,
