@@ -81,6 +81,8 @@
           <th>Email</th>
           <th>PW Update</th>
           <th>Login Date</th>
+          <th>Created At</th>
+          <th>Updated At</th>
           <th>Login Count</th>
           <th>Action</th>
         </tr>
@@ -120,6 +122,12 @@
 
               <td data-label="Login Date">
                  <%= formatChicagoDate(login.login_date) %>
+              </td>
+               <td data-label="Login Date">
+                 <%= formatChicagoDateTime(login.created_at) %>
+              </td>
+               <td data-label="Login Date">
+                 <%= formatChicagoDateTime(login.updated_at) %>
               </td>
 
               <td data-label="Login Count">

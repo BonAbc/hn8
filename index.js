@@ -9905,7 +9905,9 @@ app.get(
           sp.last_name,
 
           d.login_date,
-          d.login_count
+          d.login_count,
+          d.created_at,
+          d.updated_at
 
         FROM daily_login_stats d
 
@@ -9944,6 +9946,7 @@ app.get(
 
         defaultDate: getToday(),
         formatChicagoDate,
+        formatChicagoDateTime,
       });
     } catch (err) {
       console.error("DAILY LOGIN REPORT ERROR:", err);
