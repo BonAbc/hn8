@@ -114,6 +114,15 @@ if (process.env.NODE_ENV === "production") {
 function getToday() {
   return DateTime.now().setZone("America/Chicago").toFormat("yyyy-MM-dd");
 }
+//
+function formatChicagoDateTime(value) {
+  if (!value) return "";
+
+  return DateTime.fromJSDate(new Date(value), { zone: "utc" })
+    .setZone("America/Chicago")
+    .toFormat("M/d/yyyy, h:mm:ss a");
+}
+//
 // ----------------------------
 // PostgreSQL Connection
 // ----------------------------
@@ -268,15 +277,7 @@ function ensureAuthenticated(req, res, next) {
 }
 
 //function ensureAdmin(req, res, next) {
-//
-function formatChicagoDateTime(value) {
-  if (!value) return "";
 
-  return DateTime.fromJSDate(new Date(value), { zone: "utc" })
-    .setZone("America/Chicago")
-    .toFormat("M/d/yyyy, h:mm:ss a");
-}
-//
 app.get("/", (req, res) =>
   res.render("index.ejs", { defaultDate: getToday() }),
 );
@@ -10164,6 +10165,7 @@ app.get(
         selectedResult,
 
         defaultDate: getToday(),
+        formatChicagoDateTime,
       });
     } catch (err) {
       return res
