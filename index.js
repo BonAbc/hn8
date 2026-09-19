@@ -1494,6 +1494,7 @@ app.get("/web/traffic/test", ensureAdmin, async (req, res) => {
     total, // add this
     totalPages,
     defaultDate: getToday(),
+    formatChicagoDateTime,
   });
 });
 //
