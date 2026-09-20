@@ -4,22 +4,36 @@
   <!--main should move to main page-->
   <!---->
 
-  <form>
-    <label for="current-date">Date:</label>
+  <div class="date-row">
+    <form>
+      <label for="date">Date:</label>
+      <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+    </form>
 
-    <input
-      type="date"
-      id="current-date"
-      name="current-date"
-      value="<%= defaultDate %>"
-      readonly
-    />
-  </form>
+    <div class="clock" id="clock">
+      <span class="number n12">12</span>
+      <span class="number n1">1</span>
+      <span class="number n2">2</span>
+      <span class="number n3">3</span>
+      <span class="number n4">4</span>
+      <span class="number n5">5</span>
+      <span class="number n6">6</span>
+      <span class="number n7">7</span>
+      <span class="number n8">8</span>
+      <span class="number n9">9</span>
+      <span class="number n10">10</span>
+      <span class="number n11">11</span>
+
+      <div class="hand hour" id="hour"></div>
+      <div class="hand minute" id="minute"></div>
+      <div class="hand second" id="second"></div>
+      <div class="clock-dot"></div>
+    </div>
+  </div>
 
   <h2 id="hm">Login Attempt Dashboard</h2>
-
   <!--👇👆👆👇👆👇-->
-  <!--👇👆👆👇👆👇--> 
+ 
 <section class="py-5 bg-light border border-black mt-4 mb-4">
 
   <!-- ======================================================
@@ -338,7 +352,7 @@
 
 <hr>
 
- 
+  
 <!-- ======================================================
      PAGINATION
      ====================================================== -->
@@ -422,6 +436,8 @@
 
   <!--Refer to index.ejs how to include header and footer.ejs-->
 </main>
+<script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+<script src="/js/clock.js"></script>
 <script>
   const filterDate = document.getElementById("filter-date");
 
@@ -433,3 +449,4 @@
   }
 </script>
 <%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->
+ 
