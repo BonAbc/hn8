@@ -110,7 +110,13 @@ if (process.env.NODE_ENV === "production") {
     next();
   });
 }
+//clock
+app.use((req, res, next) => {
+  // Make Chicago date/time available to every EJS page
+  res.locals.defaultDate = getToday();
 
+  next();
+});
 function getToday() {
   return DateTime.now().setZone("America/Chicago").toFormat("yyyy-MM-dd");
 }

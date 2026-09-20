@@ -2,10 +2,38 @@
   
 <main> 
 <!---->
+ <div class="date-row">
   <form>
     <label for="date">Date:</label>
-    <input type="date" id="date" name="date" value="<%= defaultDate %>">
+    <input
+      type="date"
+      id="date"
+      name="date"
+      value="<%= defaultDate %>"
+    >
   </form>
+
+  <div class="clock" id="clock">
+  <span class="number n12">12</span>
+  <span class="number n1">1</span>
+  <span class="number n2">2</span>
+  <span class="number n3">3</span>
+  <span class="number n4">4</span>
+  <span class="number n5">5</span>
+  <span class="number n6">6</span>
+  <span class="number n7">7</span>
+  <span class="number n8">8</span>
+  <span class="number n9">9</span>
+  <span class="number n10">10</span>
+  <span class="number n11">11</span>
+
+  <div class="hand hour" id="hour"></div>
+  <div class="hand minute" id="minute"></div>
+  <div class="hand second" id="second"></div>
+  <div class="clock-dot"></div>
+</div>
+ 
+</div>
 <br>
 
 <!---->
@@ -214,6 +242,8 @@ Contact us
 <!--Add page content 3 End-->
 
     </main>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+    <script src="/js/clocknosound.js"></script>
     <!--audio-->
    <script>
       document.querySelector("#hi").addEventListener("click", function ( ) {

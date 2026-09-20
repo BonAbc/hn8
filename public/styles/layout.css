@@ -324,3 +324,133 @@ html {
 /*Accounting page begin */
 /* Responsive input fields */
 /* Buttons container: 2 buttons side by side, half width */
+/* clock */
+
+.date-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.date-row form {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+}
+
+/* Clock */
+.clock {
+  position: relative;
+  width: 55px;
+  height: 55px;
+  min-width: 55px;
+  border: 2px solid #333;
+  border-radius: 50%;
+  background: white;
+  margin-left: 4px;
+}
+
+/* Numbers */
+.number {
+  position: absolute;
+  font-size: 7px;
+  font-weight: bold;
+  color: #222;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+.n12 {
+  left: 50%;
+  top: 10%;
+}
+.n1 {
+  left: 70%;
+  top: 15%;
+}
+.n2 {
+  left: 85%;
+  top: 30%;
+}
+.n3 {
+  left: 90%;
+  top: 50%;
+}
+.n4 {
+  left: 85%;
+  top: 70%;
+}
+.n5 {
+  left: 70%;
+  top: 85%;
+}
+.n6 {
+  left: 50%;
+  top: 90%;
+}
+.n7 {
+  left: 30%;
+  top: 85%;
+}
+.n8 {
+  left: 15%;
+  top: 70%;
+}
+.n9 {
+  left: 10%;
+  top: 50%;
+}
+.n10 {
+  left: 15%;
+  top: 30%;
+}
+.n11 {
+  left: 30%;
+  top: 15%;
+}
+
+/* Hands */
+.hand {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  transform-origin: 50% 100%;
+  border-radius: 2px;
+  z-index: 5;
+}
+
+.hour {
+  width: 2px;
+  height: 14px;
+  background: #222;
+}
+
+.minute {
+  width: 2px;
+  height: 19px;
+  background: #222;
+}
+
+.second {
+  width: 1px;
+  height: 22px;
+  background: red;
+}
+
+/* Center */
+.clock-dot {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: red;
+  border-radius: 50%;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+/* clock*/
