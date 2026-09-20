@@ -1,13 +1,11 @@
 <%- include("partials/header.ejs") %>
 <!--Remember this include when add a new page-->
+
 <main class="container">
-  <!--main should move to main page-->
-  <!---->
-  <%
-  const reportDate =
-    typeof selectedDate !== "undefined"
-      ? selectedDate
-      : "";
+
+<%
+  const reportDate = selectedDate || "";
+  const reportTimezone = selectedTimezone || "";
 %>
 
 <form>
@@ -29,20 +27,30 @@
   <!-- ======================================================
        DATE FILTER
        ====================================================== -->
- 
+
   <form
     method="GET"
     action="/admin/daily-login-report"
     class="mb-4"
   >
 
-    <label for="filter-date">Date:</label>
+    <label for="filter-date">
+      Login Date:
+    </label>
 
     <input
       type="date"
       id="filter-date"
       name="date"
       value="<%= reportDate %>"
+    />
+
+    <!-- Browser's IANA timezone -->
+    <input
+      type="hidden"
+      id="timezone"
+      name="timezone"
+      value="<%= reportTimezone %>"
     />
 
     <button
@@ -81,8 +89,8 @@
           <th>Email</th>
           <th>PW Update</th>
           <th>Login Date</th>
-          <th>Created At</th>
-          <th>Updated At</th>
+          <th>Created At (Local)</th>
+          <th>Updated At (Local)</th>
           <th>Login Count</th>
           <th>Action</th>
         </tr>
@@ -120,14 +128,22 @@
                 <%= login.updated_password_date || "" %>
               </td>
 
-              <td data-label="Login Date">
-                 <%= formatChicagoDate(login.login_date) %>
+              <td data-label="Login Date (UTC)">
+                <%= login.login_date || "" %>
               </td>
-               <td data-label="Login Date">
-                 <%= formatChicagoDateTime(login.created_at) %>
+
+              <td data-label="Created At (Local)">
+                <span
+                  class="local-date-time"
+                  data-value="<%= login.created_at.toISOString() %>"
+                ></span>
               </td>
-               <td data-label="Login Date">
-                 <%= formatChicagoDateTime(login.updated_at) %>
+
+              <td data-label="Updated At (Local)">
+                <span
+                  class="local-date-time"
+                  data-value="<%= login.updated_at.toISOString() %>"
+                ></span>
               </td>
 
               <td data-label="Login Count">
@@ -164,7 +180,7 @@
 
           <tr>
             <td
-              colspan="9"
+              colspan="11"
               class="text-center"
             >
               No login records found.
@@ -195,9 +211,7 @@
 
     <ul class="pagination justify-content-center">
 
-      <!-- ==================================================
-           PREVIOUS
-           ================================================== -->
+      <!-- PREVIOUS -->
 
       <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
 
@@ -205,7 +219,7 @@
 
           <a
             class="page-link"
-            href="/admin/daily-login-report?page=<%= page - 1 %>&limit=<%= limit %><%= reportDate ? `&date=${encodeURIComponent(reportDate)}` : '' %>"
+            href="/admin/daily-login-report?page=<%= page - 1 %>&limit=<%= limit %><%= reportDate ? `&date=${encodeURIComponent(reportDate)}` : '' %><%= reportTimezone ? `&timezone=${encodeURIComponent(reportTimezone)}` : '' %>"
           >
             Previous
           </a>
@@ -221,9 +235,7 @@
       </li>
 
 
-      <!-- ==================================================
-           PAGE NUMBERS
-           ================================================== -->
+      <!-- PAGE NUMBERS -->
 
       <% for (let i = 1; i <= totalPages; i++) { %>
 
@@ -231,7 +243,7 @@
 
           <a
             class="page-link"
-            href="/admin/daily-login-report?page=<%= i %>&limit=<%= limit %><%= reportDate ? `&date=${encodeURIComponent(reportDate)}` : '' %>"
+            href="/admin/daily-login-report?page=<%= i %>&limit=<%= limit %><%= reportDate ? `&date=${encodeURIComponent(reportDate)}` : '' %><%= reportTimezone ? `&timezone=${encodeURIComponent(reportTimezone)}` : '' %>"
           >
             <%= i %>
           </a>
@@ -241,9 +253,7 @@
       <% } %>
 
 
-      <!-- ==================================================
-           NEXT
-           ================================================== -->
+      <!-- NEXT -->
 
       <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
 
@@ -251,7 +261,7 @@
 
           <a
             class="page-link"
-            href="/admin/daily-login-report?page=<%= page + 1 %>&limit=<%= limit %><%= reportDate ? `&date=${encodeURIComponent(reportDate)}` : '' %>"
+            href="/admin/daily-login-report?page=<%= page + 1 %>&limit=<%= limit %><%= reportDate ? `&date=${encodeURIComponent(reportDate)}` : '' %><%= reportTimezone ? `&timezone=${encodeURIComponent(reportTimezone)}` : '' %>"
           >
             Next
           </a>
@@ -272,19 +282,56 @@
 
 </section>
 
-  <!--👇👆👆👇👆👇-->
-  <!--👇👆👆👇👆👇-->
-  
-  <!--Refer to index.ejs how to include header and footer.ejs-->
 </main>
+
+
 <script>
-  const filterDate = document.getElementById("filter-date");
+  // =====================================================
+  // USER'S LOCAL TIMEZONE
+  // =====================================================
 
-  if (filterDate && !filterDate.value) {
-    const now = new Date();
+  const timezoneInput =
+    document.getElementById("timezone");
 
-    filterDate.value =
-      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  if (timezoneInput) {
+    timezoneInput.value =
+      Intl.DateTimeFormat().resolvedOptions().timeZone;
   }
+
+
+  // =====================================================
+  // DISPLAY TIMESTAMPS IN USER'S LOCAL TIME
+  // =====================================================
+
+  function formatLocalDateTime(value) {
+    if (!value) return "";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+
+    return date.toLocaleString(undefined, {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  }
+
+  document
+    .querySelectorAll(".local-date-time")
+    .forEach((element) => {
+      element.textContent =
+        formatLocalDateTime(
+          element.dataset.value
+        );
+    });
 </script>
-<%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->
+
+
+<%- include("partials/footer.ejs") %>
+<!--Remember this include when add a new page-->

@@ -712,24 +712,23 @@ app.post("/login", (req, res, next) => {
     try {
       await db.query(
         `
-        INSERT INTO daily_login_stats (
-          user_id,
-          login_date,
-          login_count
-        )
-        VALUES (
-          $1,
-          CURRENT_DATE,
-          1
-        )
+    INSERT INTO daily_login_stats (
+      user_id,
+      login_date,
+      login_count
+    )
+    VALUES (
+      $1,
+      (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date,
+      1
+    )
+ 
+    ON CONFLICT (user_id, login_date)
 
-        ON CONFLICT (user_id, login_date)
-
-        DO UPDATE SET
-          login_count =
-            daily_login_stats.login_count + 1,
-          updated_at = CURRENT_TIMESTAMP
-        `,
+    DO UPDATE SET
+      login_count = daily_login_stats.login_count + 1,
+      updated_at = CURRENT_TIMESTAMP
+    `,
         [user.id],
       );
     } catch (loginStatsError) {
@@ -1464,39 +1463,164 @@ app.patch("/user/:id", ensureAdmin, async (req, res) => {
 });
 
 app.get("/web/traffic/test", ensureAdmin, async (req, res) => {
-  const page = Number(req.query.page) || 1;
-  const limit = 10;
-  const offset = (page - 1) * limit;
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = 10;
+    const offset = (page - 1) * limit;
 
-  const result = await db.query(
-    `
-        SELECT *
-        FROM webtraffic
-        ORDER BY created_at DESC
-        LIMIT $1 OFFSET $2
-        `,
-    [limit, offset],
-  );
+    const ip = (req.query.ip || "").trim();
+    const status = (req.query.status || "").trim();
+    const date = (req.query.date || "").trim();
+    const country = (req.query.country || "").trim();
 
-  const count = await db.query(
-    `
-        SELECT COUNT(*) 
-        FROM webtraffic
-        `,
-  );
+    const conditions = [];
+    const values = [];
 
-  const total = Number(count.rows[0].count);
-  const totalPages = Math.ceil(total / limit);
+    if (ip) {
+      values.push(ip);
 
-  res.render("webtraffic", {
-    visitors: result.rows,
-    page,
-    total, // add this
-    totalPages,
-    defaultDate: getToday(),
-    formatChicagoDateTime,
-  });
+      conditions.push(`ip_address = $${values.length}`);
+    }
+
+    if (status) {
+      values.push(status);
+
+      conditions.push(`status = $${values.length}`);
+    }
+
+    if (date) {
+      values.push(date);
+
+      const dateParam = `$${values.length}`;
+
+      conditions.push(`
+        created_at >= (
+          ${dateParam}::date
+          AT TIME ZONE 'America/Chicago'
+        )
+        AND created_at < (
+          (${dateParam}::date + INTERVAL '1 day')
+          AT TIME ZONE 'America/Chicago'
+        )
+      `);
+    }
+
+    if (country) {
+      values.push(country);
+
+      conditions.push(`country = $${values.length}`);
+    }
+
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    // ==================================================
+    // GET VISITORS
+    // ==================================================
+
+    const result = await db.query(
+      `
+      SELECT *
+      FROM webtraffic
+      ${whereClause}
+      ORDER BY created_at DESC
+      LIMIT $${values.length + 1}
+      OFFSET $${values.length + 2}
+      `,
+      [...values, limit, offset],
+    );
+
+    const count = await db.query(
+      `
+      SELECT COUNT(*)
+      FROM webtraffic
+      ${whereClause}
+      `,
+      values,
+    );
+
+    const total = Number(count.rows[0].count);
+
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+
+    const countriesResult = await db.query(
+      `
+      SELECT DISTINCT country
+      FROM webtraffic
+      WHERE country IS NOT NULL
+        AND TRIM(country) <> ''
+      ORDER BY country ASC
+      `,
+    );
+
+    const countries = countriesResult.rows.map((row) => row.country);
+
+    const statusesResult = await db.query(
+      `
+      SELECT DISTINCT status
+      FROM webtraffic
+      WHERE status IS NOT NULL
+        AND TRIM(status::text) <> ''
+      ORDER BY status
+      `,
+    );
+
+    const statuses = statusesResult.rows.map((row) => row.status);
+
+    if (page > totalPages && total > 0) {
+      const params = new URLSearchParams();
+
+      params.set("page", totalPages);
+
+      if (ip) {
+        params.set("ip", ip);
+      }
+
+      if (status) {
+        params.set("status", status);
+      }
+
+      if (date) {
+        params.set("date", date);
+      }
+
+      if (country) {
+        params.set("country", country);
+      }
+
+      return res.redirect(`/web/traffic/test?${params.toString()}`);
+    }
+
+    res.render("webtraffic", {
+      visitors: result.rows,
+
+      page,
+      total,
+      totalPages,
+
+      // Current filters
+      ip,
+      status,
+      date,
+      country,
+
+      // Dropdown options
+      countries,
+      statuses,
+
+      // Website/local date
+      defaultDate: getToday(),
+
+      // Display database timestamp as Chicago time
+      formatChicagoDateTime,
+    });
+  } catch (error) {
+    console.error("Web traffic error:", error);
+
+    res.status(500).send("Failed to load web traffic");
+  }
 });
+
 //
 app.post("/web/traffic/test/delete-selected", ensureAdmin, async (req, res) => {
   try {
@@ -1610,8 +1734,7 @@ app.post("/chapw", async (req, res) => {
   }
 });
 //✌✌✌ end sign up ✌✌✌
-//✌✌✌ end sign up ✌✌✌
-//✌✌✌ end sign up ✌✌✌
+
 app.get(
   "/admin/password-approval",
   ensureAuthenticated,
@@ -9324,11 +9447,9 @@ app.post("/live/:id/end", ensureAuthenticated, async (req, res) => {
         message: "You must be logged in.",
       });
     }
-
     // ----------------------------------------------------------
     // ID
     // ----------------------------------------------------------
-
     const broadcastId = String(req.params.id || "").trim();
 
     if (!broadcastId || !/^\d+$/.test(broadcastId)) {
@@ -9382,7 +9503,6 @@ app.post("/live/:id/end", ensureAuthenticated, async (req, res) => {
         message: "You cannot end this live broadcast.",
       });
     }
-
     // ----------------------------------------------------------
     // STATUS
     // ----------------------------------------------------------
@@ -9475,11 +9595,9 @@ app.post("/live/:id/end", ensureAuthenticated, async (req, res) => {
         endedAt: endedBroadcast.ended_at,
       });
     }
-
     // ----------------------------------------------------------
     // RESPONSE
     // ----------------------------------------------------------
-
     return res.status(200).json({
       success: true,
       message: "Live broadcast ended.",
@@ -9498,20 +9616,7 @@ app.post("/live/:id/end", ensureAuthenticated, async (req, res) => {
     });
   }
 });
-
 // POST /live/:id/end
-// ============================================================
-
-// ============================================================
-// PLAY LIVE RECORDING
-// GET /live/:id/recording
-// ============================================================
-
-// Playback
-
-// ============================================================
-//
-//
 // /report/live
 app.get("/report/live", ensureAuthenticated, async (req, res) => {
   try {
@@ -9566,15 +9671,12 @@ app.get("/report/live", ensureAuthenticated, async (req, res) => {
     return res.status(500).send("Unable to load live broadcast report.");
   }
 });
-
 //
-
 // GET /live/report
 // ============================================================
 // DOWNLOAD LIVE RECORDING
 // GET /report/live/:id/download
 // ============================================================
-
 app.get(
   "/report/live/:id/download",
   ensureAuthenticated,
@@ -9635,13 +9737,6 @@ app.get(
         return res.status(403).send("Invalid recording path.");
       }
 
-      console.log("==========================================");
-      console.log("LIVE DOWNLOAD");
-      console.log("Broadcast ID:", broadcast.id);
-      console.log("DB recording_path:", recordingPath);
-      console.log("Filename:", filename);
-      console.log("Physical file:", filePath);
-
       // =====================================================
       // CHECK FILE
       // =====================================================
@@ -9694,14 +9789,7 @@ app.get(
     }
   },
 );
-
-// ============================================================
 // PLAYBACK LIVE RECORDING
-// GET /report/live/:id/playback
-//
-// UNCHANGED
-// ============================================================
-
 //if /live/report : require login because above /live/:id 👆👌
 app.get("/report/live/:id/playback", ensureAuthenticated, async (req, res) => {
   try {
@@ -9803,11 +9891,9 @@ app.get(
           console.log("⚠️ FILE NOT FOUND:", filePath);
         }
       }
-
       // =====================================================
       // DELETE DATABASE ROW
       // =====================================================
-
       const deleteResult = await db.query(
         `
       DELETE FROM live_broadcasts
@@ -9835,46 +9921,49 @@ app.get(
     }
   },
 );
-
-// ============================================================
 // END LIVE BROADCAST
-// ============================================================
-
-//
 app.get(
   "/admin/daily-login-report",
   ensureAuthenticated,
   ensureAdmin,
   async (req, res) => {
     try {
-      // =====================================================
-      // PAGINATION
-      // =====================================================
-
       const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
 
       const limit = 10;
-
       const offset = (page - 1) * limit;
-
-      // =====================================================
-      // DATE FILTER
-      // =====================================================
 
       const selectedDate =
         typeof req.query.date === "string" ? req.query.date.trim() : "";
+
+      const selectedTimezone =
+        typeof req.query.timezone === "string" ? req.query.timezone.trim() : "";
 
       let dateCondition = "";
       const queryValues = [];
 
       if (selectedDate !== "") {
-        dateCondition = `WHERE d.login_date = $1`;
-        queryValues.push(selectedDate);
-      }
+        const timezone = selectedTimezone || "UTC";
 
-      // =====================================================
-      // TOTAL RECORDS
-      // =====================================================
+        const localStart = DateTime.fromISO(selectedDate, {
+          zone: timezone,
+        }).startOf("day");
+
+        if (!localStart.isValid) {
+          throw new Error("Invalid date or timezone.");
+        }
+
+        const utcStart = localStart.toUTC();
+
+        const utcEnd = localStart.plus({ days: 1 }).toUTC();
+
+        dateCondition = `
+          WHERE d.created_at >= $1
+            AND d.created_at < $2
+        `;
+
+        queryValues.push(utcStart.toJSDate(), utcEnd.toJSDate());
+      }
 
       const countResult = await db.query(
         `
@@ -9889,10 +9978,6 @@ app.get(
 
       const totalPages = Math.ceil(totalRecords / limit);
 
-      // =====================================================
-      // LOGIN REPORT
-      // =====================================================
-
       const result = await db.query(
         `
         SELECT
@@ -9906,9 +9991,9 @@ app.get(
           sp.last_name,
 
           d.login_date,
-          d.login_count,
           d.created_at,
-          d.updated_at
+          d.updated_at,
+          d.login_count
 
         FROM daily_login_stats d
 
@@ -9921,7 +10006,7 @@ app.get(
         ${dateCondition}
 
         ORDER BY
-          d.login_date DESC,
+          d.created_at DESC,
           d.user_id ASC
 
         LIMIT $${queryValues.length + 1}
@@ -9929,10 +10014,6 @@ app.get(
         `,
         [...queryValues, limit, offset],
       );
-
-      // =====================================================
-      // RENDER
-      // =====================================================
 
       return res.render("admin-daily-login-report", {
         loginStats: result.rows,
@@ -9944,10 +10025,9 @@ app.get(
         totalPages,
 
         selectedDate,
+        selectedTimezone,
 
         defaultDate: getToday(),
-        formatChicagoDate,
-        formatChicagoDateTime,
       });
     } catch (err) {
       console.error("DAILY LOGIN REPORT ERROR:", err);
@@ -9958,11 +10038,7 @@ app.get(
     }
   },
 );
-
-// =========================================================
 // DELETE DAILY LOGIN RECORD
-// =========================================================
-
 app.delete(
   "/admin/daily-login-report/:id",
   ensureAuthenticated,
@@ -9993,16 +10069,12 @@ app.delete(
     }
   },
 );
-
-//
 // Login-attempt report
 app.get(
   "/admin/login-attempt-report",
   ensureAdmin,
 
   async (req, res) => {
-    console.log("6. ENTERED LOGIN REPORT HANDLER");
-
     try {
       const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
 
@@ -10017,12 +10089,6 @@ app.get(
 
       const selectedResult =
         typeof req.query.result === "string" ? req.query.result.trim() : "";
-
-      console.log("FILTERS:", {
-        selectedDate,
-        selectedUser,
-        selectedResult,
-      });
 
       const queryValues = [];
       const conditions = [];
@@ -10040,8 +10106,6 @@ app.get(
 
       if (selectedUser !== "") {
         const userId = parseInt(selectedUser, 10);
-
-        console.log("PARSED USER ID:", userId);
 
         if (Number.isInteger(userId) && userId > 0) {
           queryValues.push(userId);

@@ -3628,7 +3628,22 @@ button:hover {
   background-color: #dbeafe !important;
   cursor: pointer;
 }
-
 /**/
 /**END login-report.ejs*/
+/**
+/**/
+/*webtraffic.ejs*/
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.visitor-table {
+  min-width: 1000px;
+  margin-bottom: 0;
+}
+
+/*webtraffic.ejs*/
 /**/

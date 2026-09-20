@@ -12,6 +12,160 @@
   <!---->
    <h2 id="hm">Hoa Mai</h2>
    <!--👇👆👆👇👆👇--> 
+   <section class="py-4 bg-light border border-black mt-4 mb-4">
+
+  <div class="container-fluid">
+
+    <h2>Filter Web Traffic</h2>
+
+    <form
+      action="/web/traffic/test"
+      method="GET"
+      class="row g-3"
+    >
+
+      <!-- IP -->
+      <div class="col-md-3">
+
+        <label
+          for="ip"
+          class="form-label"
+        >
+          IP Address
+        </label>
+
+        <input
+          type="text"
+          id="ip"
+          name="ip"
+          class="form-control"
+          placeholder="e.g. 192.168.1.1"
+          value="<%= ip || '' %>"
+        >
+
+      </div>
+
+
+      <!-- COUNTRY -->
+      <div class="col-md-3">
+
+        <label
+          for="country"
+          class="form-label"
+        >
+          Country
+        </label>
+
+        <select
+          id="country"
+          name="country"
+          class="form-select"
+        >
+
+          <option value="">
+            All Countries
+          </option>
+
+          <% countries.forEach(item => { %>
+
+            <option
+              value="<%= item %>"
+              <%= country === item ? "selected" : "" %>
+            >
+              <%= item %>
+            </option>
+
+          <% }) %>
+
+        </select>
+
+      </div>
+
+
+      <!-- STATUS -->
+      <div class="col-md-3">
+
+        <label
+          for="status"
+          class="form-label"
+        >
+          Status
+        </label>
+
+        <select
+          id="status"
+          name="status"
+          class="form-select"
+        >
+
+          <option value="">
+            All Statuses
+          </option>
+
+          <% statuses.forEach(item => { %>
+
+            <option
+              value="<%= item %>"
+              <%= String(status) === String(item)
+                ? "selected"
+                : "" %>
+            >
+              <%= item %>
+            </option>
+
+          <% }) %>
+
+        </select>
+
+      </div>
+
+
+      <!-- DATE -->
+      <div class="col-md-3">
+
+        <label
+          for="filter-date"
+          class="form-label"
+        >
+          Date
+        </label>
+
+        <input
+          type="date"
+          id="filter-date"
+          name="date"
+          class="form-control"
+          value="<%= date || '' %>"
+        >
+
+      </div>
+
+
+      <!-- BUTTONS -->
+      <div class="col-12">
+
+        <button
+          type="submit"
+          class="btn btn-primary rounded-0"
+        >
+          Show
+        </button>
+
+        <a
+          href="/web/traffic/test"
+          class="btn btn-secondary rounded-0"
+        >
+          Clear
+        </a>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</section>
+
   <!---->
   <!--👇👆👆👇👆👇-->
     <section class="py-5 bg-light border border-black mt-4 mb-4">
@@ -33,92 +187,169 @@
   <div class="container-fluid">
 
     <form
-      action="/web/traffic/test/delete-selected"
-      method="POST"
-      onsubmit="return confirmBulkDelete();"
+  action="/web/traffic/test/delete-selected"
+  method="POST"
+  onsubmit="return confirmBulkDelete();"
+>
+
+  <input
+    type="hidden"
+    name="page"
+    value="<%= page %>"
+  >
+
+  <!-- Keep current filters -->
+  <input
+    type="hidden"
+    name="ip"
+    value="<%= ip || '' %>"
+  >
+
+  <input
+    type="hidden"
+    name="country"
+    value="<%= country || '' %>"
+  >
+
+  <input
+    type="hidden"
+    name="status"
+    value="<%= status || '' %>"
+  >
+
+  <input
+    type="hidden"
+    name="date"
+    value="<%= date || '' %>"
+  >
+
+  <button
+    type="submit"
+    class="btn btn-danger btn-sm rounded-0 mb-3"
+  >
+    Delete Selected
+  </button>
+
+
+  <div class="table-wrapper">
+
+    <table
+      class="table table-striped table-hover table-bordered visitor-table"
     >
 
-      <input type="hidden" name="page" value="<%= page %>">
+      <thead>
 
-      <button
-        type="submit"
-        class="btn btn-danger btn-sm rounded-0 mb-3"
-      >
-        Delete Selected
-      </button>
+        <tr>
 
-      <div class="table-wrapper">
+          <!-- SELECT ALL -->
+          <th>
 
-        <table class="table table-striped table-hover table-bordered visitor-table">
+            <label
+              for="select-all"
+              style="cursor: pointer;"
+            >
+              <input
+                type="checkbox"
+                id="select-all"
+                onchange="toggleAll(this)"
+              >
 
-          <thead>
-            <tr>
-              <th>Select</th>
-              <th>ID</th>
-              <th>IP</th>
-              <th>Country</th>
-              <th>City</th>
-              <th>Timezone</th>
-              <th>Page</th>
-              <th>Status</th>
-              <th>Time</th>
-            </tr>
-          </thead>
+              Select All
+            </label>
 
-          <tbody id="list">
+          </th>
 
-            <% visitors.forEach(visitor => { %>
+          <th>ID</th>
+          <th>IP</th>
+          <th>Country</th>
+          <th>City</th>
+          <th>Timezone</th>
+          <th>Page</th>
+          <th>Status</th>
+          <th>Time</th>
 
-              <tr>
+        </tr>
 
-                <td data-label="Select">
-                  <input
-                    type="checkbox"
-                    name="ids"
-                    value="<%= visitor.id %>"
-                    class="visitor-checkbox"
-                  >
-                </td>
+      </thead>
 
-                <td data-label="ID">
-                  <%= visitor.id %>
-                </td>
 
-                <td data-label="IP">
-                  <%= visitor.ip_address %>
-                </td>
+      <tbody id="list">
 
-                <td data-label="Country">
-                  <%= visitor.country %>
-                </td>
+        <% visitors.forEach(visitor => { %>
 
-                <td data-label="City">
-                  <%= visitor.city %>
-                </td>
+          <tr>
 
-                <td data-label="Timezone">
-                  <%= visitor.timezone %>
-                </td>
+            <!-- SELECT -->
+            <td data-label="Select">
 
-                <td data-label="Page">
-                  <%= visitor.page %>
-                </td>
-                <td data-label="Status">
-                <%= visitor.status %>
-                </td>
-                 <td><%= formatChicagoDateTime(visitor.created_at) %></td>   
+              <input
+                type="checkbox"
+                name="ids"
+                value="<%= visitor.id %>"
+                class="visitor-checkbox"
+              >
 
-              </tr>
+            </td>
 
-            <% }) %>
- 
-          </tbody>
 
-        </table>
+            <!-- ID -->
+            <td data-label="ID">
+              <%= visitor.id %>
+            </td>
 
-      </div>
 
-    </form>
+            <!-- IP -->
+            <td data-label="IP">
+              <%= visitor.ip_address %>
+            </td>
+
+
+            <!-- COUNTRY -->
+            <td data-label="Country">
+              <%= visitor.country %>
+            </td>
+
+
+            <!-- CITY -->
+            <td data-label="City">
+              <%= visitor.city %>
+            </td>
+
+
+            <!-- TIMEZONE -->
+            <td data-label="Timezone">
+              <%= visitor.timezone %>
+            </td>
+
+
+            <!-- PAGE -->
+            <td data-label="Page">
+              <%= visitor.page %>
+            </td>
+
+
+            <!-- STATUS -->
+            <td data-label="Status">
+              <%= visitor.status %>
+            </td>
+
+
+            <!-- TIME -->
+            <td data-label="Time">
+              <%= formatChicagoDateTime(visitor.created_at) %>
+            </td>
+
+          </tr>
+
+        <% }) %>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</form>
 
   </div>
 </section>
@@ -247,8 +478,8 @@
     </span>
 
   <% } %>
-
-
+ 
+ 
   <!-- LAST -->
 
   <% if (page < totalPages) { %>
@@ -269,7 +500,7 @@
     </span>
 
   <% } %>
-
+ 
 </nav>
 </section>
    <!-- PAGINATION -->
@@ -277,59 +508,12 @@
   <!---->
   <!--👇👆👆👇👆👇-->
 </main>
-
+ 
 
 <script src="/socket.io/socket.io.js"></script>
 
-<script>
+<script src="/js/webtraffics.js"></script>
 
-const socket = io();
-
-// (data):object receive from front js
-socket.on("new-visitor", (data) => {
-
-    const table = document.getElementById("list");
-
-    table.innerHTML =
-    `
-    <tr>
-        <td>NEW</td>
-        <td>${data.ip || ""}</td>
-        <td>${data.page}</td>
-        <td>${data.time}</td> 
-    </tr>
-    `
-    + table.innerHTML;
-
-});
-
-</script>
-<script>
-
-function toggleAll(source) {
-  const checkboxes = document.querySelectorAll(".visitor-checkbox");
-
-  checkboxes.forEach(checkbox => {
-    checkbox.checked = source.checked;
-  });
-}
-
-function confirmBulkDelete() {
-  const selected = document.querySelectorAll(
-    ".visitor-checkbox:checked"
-  );
-
-  if (selected.length === 0) {
-    alert("Please select at least one visitor.");
-    return false;
-  }
-
-  return confirm(
-    `Delete ${selected.length} selected visitor record(s)?`
-  );
-}
-
-</script>
 <!-- Link external JS end -->
 <!--👇👆👆👇👆👇-->
 
