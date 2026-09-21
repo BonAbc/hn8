@@ -174,7 +174,7 @@ app.use(
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       httpOnly: true,
-      maxAge: 1000 * 60 * 30, // 30 minutes
+      maxAge: 1000 * 60 * 15, // 15 minutes
     },
   }),
 );
@@ -452,15 +452,41 @@ app.get("/login", (req, res) => {
 app.get("/chapw", (req, res) =>
   res.render("chapw.ejs", { defaultDate: getToday(), message: null }),
 );
+//
+app.get("/logout", async (req, res, next) => {
+  try {
+    if (req.user?.id) {
+      await db.query(
+        `
+        UPDATE daily_login_stats
+        SET logout = CURRENT_TIMESTAMP
+        WHERE id = (
+          SELECT id
+          FROM daily_login_stats
+          WHERE user_id = $1
+            AND logout IS NULL
+            AND idlelogout IS NULL
+          ORDER BY created_at DESC
+          LIMIT 1
+        )
+        `,
+        [req.user.id],
+      );
+    }
 
-app.get("/logout", (req, res, next) => {
-  req.logout((err) => {
-    if (err) return next(err);
-    req.session.destroy(() => {
-      res.clearCookie("connect.sid");
-      res.redirect("/");
+    req.logout((err) => {
+      if (err) return next(err);
+
+      req.session.destroy((err) => {
+        if (err) return next(err);
+
+        res.clearCookie("connect.sid");
+        res.redirect("/");
+      });
     });
-  });
+  } catch (err) {
+    next(err);
+  }
 });
 //
 passport.use(
@@ -716,33 +742,45 @@ app.post("/login", (req, res, next) => {
     // ==================================================
 
     try {
-      await db.query(
+      const loginStatsResult = await db.query(
         `
     INSERT INTO daily_login_stats (
       user_id,
       login_date,
-      login_count
+      login_count,
+      created_at,
+      idlelogout
     )
     VALUES (
       $1,
       (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date,
-      1
+      1,
+      CURRENT_TIMESTAMP,
+      NULL
     )
- 
-    ON CONFLICT (user_id, login_date)
-
-    DO UPDATE SET
-      login_count = daily_login_stats.login_count + 1,
-      updated_at = CURRENT_TIMESTAMP
+    RETURNING id
     `,
         [user.id],
       );
-    } catch (loginStatsError) {
-      console.error("DAILY LOGIN STATS ERROR:", loginStatsError);
 
-      // Do not prevent the user from continuing
-      // to login if statistics recording fails.
+      req.session.dailyLoginStatsId = loginStatsResult.rows[0].id;
+
+      await new Promise((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
+    } catch (loginStatsError) {
+      console.error("LOGIN STATS ERROR:", loginStatsError);
+
+      // Do not prevent the user from continuing to login
+      // if statistics recording fails.
     }
+
     // ==========================================
     // FIRST-TIME 2FA
     // ==========================================
@@ -1114,20 +1152,26 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
       defaultDate: getToday(),
     });
   }
-
-  req.logIn(user, (err) => {
+  req.logIn(user, async (err) => {
     if (err) {
       return next(err);
     }
-    // Recompute admin status
     req.session.isAdmin = user.role === "admin";
 
     delete req.session.pending2FAUser;
-
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
     return res.redirect(`/social/post`);
-    //
   });
 });
+//
 app.get("/reset-2fa", ensureAdmin, async (req, res) => {
   res.render("startover2fa.ejs", { defaultDate: getToday() });
 });
@@ -9928,6 +9972,7 @@ app.get(
   },
 );
 // END LIVE BROADCAST
+//begin daily login report
 app.get(
   "/admin/daily-login-report",
   ensureAuthenticated,
@@ -9945,8 +9990,11 @@ app.get(
       const selectedTimezone =
         typeof req.query.timezone === "string" ? req.query.timezone.trim() : "";
 
-      let dateCondition = "";
+      const selectedUser =
+        typeof req.query.user_id === "string" ? req.query.user_id.trim() : "";
+
       const queryValues = [];
+      const conditions = [];
 
       if (selectedDate !== "") {
         const timezone = selectedTimezone || "UTC";
@@ -9956,27 +10004,56 @@ app.get(
         }).startOf("day");
 
         if (!localStart.isValid) {
-          throw new Error("Invalid date or timezone.");
+          throw new Error(
+            `Invalid date or timezone: ${selectedDate} / ${timezone}`,
+          );
         }
 
         const utcStart = localStart.toUTC();
 
         const utcEnd = localStart.plus({ days: 1 }).toUTC();
 
-        dateCondition = `
-          WHERE d.created_at >= $1
-            AND d.created_at < $2
-        `;
+        // UTC beginning of selected local date
 
-        queryValues.push(utcStart.toJSDate(), utcEnd.toJSDate());
+        queryValues.push(utcStart.toJSDate());
+
+        const startParam = queryValues.length;
+
+        // UTC beginning of following local date
+
+        queryValues.push(utcEnd.toJSDate());
+
+        const endParam = queryValues.length;
+
+        conditions.push(`
+          d.created_at >= $${startParam}
+          AND d.created_at < $${endParam}
+        `);
       }
+
+      if (selectedUser !== "") {
+        const userId = parseInt(selectedUser, 10);
+
+        if (!Number.isInteger(userId) || userId <= 0) {
+          throw new Error("Invalid user ID.");
+        }
+
+        queryValues.push(userId);
+
+        conditions.push(`
+          d.user_id = $${queryValues.length}
+        `);
+      }
+
+      const whereClause =
+        conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
       const countResult = await db.query(
         `
-        SELECT COUNT(*)
-        FROM daily_login_stats d
-        ${dateCondition}
-        `,
+          SELECT COUNT(*)
+          FROM daily_login_stats d
+          ${whereClause}
+          `,
         queryValues,
       );
 
@@ -9986,43 +10063,100 @@ app.get(
 
       const result = await db.query(
         `
-        SELECT
-          d.id,
-          d.user_id,
+          SELECT
+            d.id,
+            d.user_id,
 
-          mu.email,
-          mu.updated_password_date,
+            mu.email,
+            mu.updated_password_date,
 
-          sp.first_name,
-          sp.last_name,
+            sp.first_name,
+            sp.last_name,
 
-          d.login_date,
-          d.created_at,
-          d.updated_at,
-          d.login_count
+            d.created_at,
 
-        FROM daily_login_stats d
+            d.updated_at,
+            d.login_count,
 
-        JOIN my_user mu
-          ON mu.id = d.user_id
+            d.logout,
+            d.idlelogout,
 
-        LEFT JOIN social_profile sp
-          ON sp.user_id = d.user_id
+            CASE
+              WHEN d.logout IS NOT NULL
+                THEN 'Logout'
 
-        ${dateCondition}
+              WHEN d.idlelogout IS NOT NULL
+                THEN 'Idle Logout'
 
-        ORDER BY
-          d.created_at DESC,
-          d.user_id ASC
+              ELSE 'Active'
+            END AS session_status,
 
-        LIMIT $${queryValues.length + 1}
-        OFFSET $${queryValues.length + 2}
-        `,
+            CASE
+              WHEN d.logout IS NOT NULL THEN
+                EXTRACT(
+                  EPOCH FROM
+                  (
+                    d.logout -
+                    d.created_at
+                  )
+                )::INTEGER
+
+              WHEN d.idlelogout IS NOT NULL THEN
+                EXTRACT(
+                  EPOCH FROM
+                  (
+                    d.idlelogout -
+                    d.created_at
+                  )
+                )::INTEGER
+
+              ELSE NULL
+            END AS duration_seconds
+
+          FROM daily_login_stats d
+
+          JOIN my_user mu
+            ON mu.id = d.user_id
+
+          LEFT JOIN social_profile sp
+            ON sp.user_id = d.user_id
+
+          ${whereClause}
+
+          ORDER BY
+            d.created_at DESC,
+            d.user_id ASC
+
+          LIMIT $${queryValues.length + 1}
+          OFFSET $${queryValues.length + 2}
+          `,
         [...queryValues, limit, offset],
+      );
+      const usersResult = await db.query(
+        `
+          SELECT
+            mu.id,
+            mu.email,
+
+            sp.first_name,
+            sp.last_name
+
+          FROM my_user mu
+
+          LEFT JOIN social_profile sp
+            ON sp.user_id = mu.id
+
+          WHERE mu.is_active = TRUE
+
+          ORDER BY
+            mu.email ASC
+          `,
       );
 
       return res.render("admin-daily-login-report", {
         loginStats: result.rows,
+
+        users: usersResult.rows,
 
         page,
         limit,
@@ -10030,10 +10164,15 @@ app.get(
         totalRecords,
         totalPages,
 
+        // Keep these available to EJS.
+        // Pagination uses them too.
         selectedDate,
         selectedTimezone,
+        selectedUser,
 
         defaultDate: getToday(),
+
+        formatChicagoDateTime,
       });
     } catch (err) {
       console.error("DAILY LOGIN REPORT ERROR:", err);

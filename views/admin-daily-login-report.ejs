@@ -3,29 +3,52 @@
 
 <main class="container">
 
-<%
-  const reportDate = selectedDate || "";
-  const reportTimezone = selectedTimezone || "";
-%>
+<div class="date-row">
+  <form>
+    <label for="date">Date:</label>
+    <input
+      type="date"
+      id="date"
+      name="date"
+      value="<%= defaultDate %>"
+    >
+  </form>
 
-<form>
-  <label for="current-date">Date:</label>
+  <div class="clock" id="clock">
+  <span class="number n12">12</span>
+  <span class="number n1">1</span>
+  <span class="number n2">2</span>
+  <span class="number n3">3</span>
+  <span class="number n4">4</span>
+  <span class="number n5">5</span>
+  <span class="number n6">6</span>
+  <span class="number n7">7</span>
+  <span class="number n8">8</span>
+  <span class="number n9">9</span>
+  <span class="number n10">10</span>
+  <span class="number n11">11</span>
 
-  <input
-    type="date"
-    id="current-date"
-    name="current-date"
-    value="<%= defaultDate %>"
-    readonly
-  />
-</form>
+  <div class="hand hour" id="hour"></div>
+  <div class="hand minute" id="minute"></div>
+  <div class="hand second" id="second"></div>
+  <div class="clock-dot"></div>
+</div>
+ 
+</div>
 
-<h2 id="hm">Login Dashboard</h2>
 
+<h2 id="hm">
+  Login Dashboard
+</h2>
+
+<div class="mb-3">
+  <strong>Total Logins:</strong>
+  <%= totalRecords %>
+</div>
 <section class="py-5 bg-light border border-black mt-4 mb-4">
 
   <!-- ======================================================
-       DATE FILTER
+       FILTERS
        ====================================================== -->
 
   <form
@@ -33,6 +56,8 @@
     action="/admin/daily-login-report"
     class="mb-4"
   >
+
+    <!-- DATE FILTER -->
 
     <label for="filter-date">
       Login Date:
@@ -42,29 +67,89 @@
       type="date"
       id="filter-date"
       name="date"
-      value="<%= reportDate %>"
+      value="<%= selectedDate || '' %>"
     />
 
-    <!-- Browser's IANA timezone -->
+
+   <!-- USER FILTER -->
+
+<label
+  for="filter-user"
+  class="ms-3"
+>
+  User:
+</label>
+
+<select
+  id="filter-user"
+  name="user_id"
+>
+
+  <option value="">
+    All Users
+  </option>
+
+  <%
+    const userList =
+      typeof users !== "undefined" && Array.isArray(users)
+        ? users
+        : [];
+  %>
+
+  <% userList.forEach((user) => { %>
+
+    <option
+      value="<%= user.id %>"
+      <%= String(user.id) === String(selectedUser || "")
+        ? "selected"
+        : "" %>
+    >
+
+      <%= user.email %>
+
+      <% if (user.first_name || user.last_name) { %>
+
+        -
+        <%= user.first_name || "" %>
+        <%= user.last_name || "" %>
+
+      <% } %>
+
+    </option>
+
+  <% }); %>
+
+</select>
+
+
+
+    <!-- BROWSER TIMEZONE -->
+
     <input
       type="hidden"
       id="timezone"
       name="timezone"
-      value="<%= reportTimezone %>"
+      value="<%= selectedTimezone || '' %>"
     />
+
+
+    <!-- FILTER BUTTON -->
 
     <button
       type="submit"
-      class="btn btn-primary"
+      class="btn btn-primary ms-2"
     >
       Filter
     </button>
 
+
+    <!-- CLEAR FILTERS -->
+
     <a
       href="/admin/daily-login-report"
-      class="btn btn-secondary"
+      class="btn btn-secondary ms-2"
     >
-      All Dates
+      Clear Filters
     </a>
 
   </form>
@@ -81,20 +166,41 @@
     >
 
       <thead>
+
         <tr>
+
           <th>ID</th>
+
           <th>User ID</th>
+
           <th>First Name</th>
+
           <th>Last Name</th>
+
           <th>Email</th>
+
           <th>PW Update</th>
-          <th>Login Date</th>
-          <th>Created At (Local)</th>
-          <th>Updated At (Local)</th>
+
+          <th>Login</th>
+
+          <th>Logout</th>
+
+          <th>Idle Logout</th>
+
+          <th>Status</th>
+
+          <th>Duration</th>
+
+          <th>Updated At</th>
+
           <th>Login Count</th>
+
           <th>Action</th>
+
         </tr>
+
       </thead>
+
 
       <tbody>
 
@@ -104,53 +210,228 @@
 
             <tr>
 
+              <!-- ID -->
+
               <td data-label="ID">
                 <%= login.id %>
               </td>
+
+
+              <!-- USER ID -->
 
               <td data-label="User ID">
                 <%= login.user_id %>
               </td>
 
+
+              <!-- FIRST NAME -->
+
               <td data-label="First Name">
                 <%= login.first_name || "" %>
               </td>
+
+
+              <!-- LAST NAME -->
 
               <td data-label="Last Name">
                 <%= login.last_name || "" %>
               </td>
 
+
+              <!-- EMAIL -->
+
               <td data-label="Email">
                 <%= login.email || "" %>
               </td>
+
+
+              <!-- PASSWORD UPDATE -->
 
               <td data-label="PW Update">
                 <%= login.updated_password_date || "" %>
               </td>
 
-              <td data-label="Login Date (UTC)">
-                <%= login.login_date || "" %>
+
+              <!-- LOGIN -->
+
+              <td data-label="Login">
+
+                <% if (login.created_at) { %>
+
+                  <span
+                    class="local-date-time"
+                    data-value="<%= login.created_at.toISOString() %>"
+                  ></span>
+
+                <% } else { %>
+
+                  —
+
+                <% } %>
+
               </td>
 
-              <td data-label="Created At (Local)">
-                <span
-                  class="local-date-time"
-                  data-value="<%= login.created_at.toISOString() %>"
-                ></span>
+
+              <!-- MANUAL LOGOUT -->
+
+              <td data-label="Logout">
+
+                <% if (login.logout) { %>
+
+                  <span
+                    class="local-date-time"
+                    data-value="<%= login.logout.toISOString() %>"
+                  ></span>
+
+                <% } else { %>
+
+                  <span class="text-muted">
+                    —
+                  </span>
+
+                <% } %>
+
               </td>
 
-              <td data-label="Updated At (Local)">
-                <span
-                  class="local-date-time"
-                  data-value="<%= login.updated_at.toISOString() %>"
-                ></span>
+
+              <!-- IDLE LOGOUT -->
+
+              <td data-label="Idle Logout">
+
+                <% if (login.idlelogout) { %>
+
+                  <span
+                    class="local-date-time"
+                    data-value="<%= login.idlelogout.toISOString() %>"
+                  ></span>
+
+                <% } else { %>
+
+                  <span class="text-muted">
+                    —
+                  </span>
+
+                <% } %>
+
               </td>
+
+
+              <!-- STATUS -->
+
+              <td data-label="Status">
+
+                <% if (login.session_status === "Logout") { %>
+
+                  <span class="text-success">
+                    Logout
+                  </span>
+
+                <% } else if (
+                  login.session_status === "Idle Logout"
+                ) { %>
+
+                  <span class="text-warning">
+                    Idle Logout
+                  </span>
+
+                <% } else { %>
+
+                  <span class="text-primary">
+                    Active
+                  </span>
+
+                <% } %>
+
+              </td>
+
+
+              <!-- DURATION -->
+
+              <td data-label="Duration">
+
+                <% if (
+                  login.duration_seconds !== null &&
+                  login.duration_seconds !== undefined
+                ) { %>
+
+                  <%
+                    const totalSeconds =
+                      Number(login.duration_seconds);
+
+                    const hours =
+                      Math.floor(
+                        totalSeconds / 3600
+                      );
+
+                    const minutes =
+                      Math.floor(
+                        (totalSeconds % 3600) / 60
+                      );
+
+                    const seconds =
+                      totalSeconds % 60;
+                  %>
+
+                  <% if (hours > 0) { %>
+
+                    <%= hours %>h
+
+                  <% } %>
+
+                  <% if (
+                    minutes > 0 ||
+                    hours > 0
+                  ) { %>
+
+                    <%= minutes %>m
+
+                  <% } %>
+
+                  <%= seconds %>s
+
+                <% } else { %>
+
+                  <span class="text-muted">
+                    —
+                  </span>
+
+                <% } %>
+
+              </td>
+
+
+              <!-- UPDATED AT -->
+
+              <td data-label="Updated At">
+
+                <% if (login.updated_at) { %>
+
+                  <span
+                    class="local-date-time"
+                    data-value="<%= login.updated_at.toISOString() %>"
+                  ></span>
+
+                <% } else { %>
+
+                  —
+
+                <% } %>
+
+              </td>
+
+
+              <!-- LOGIN COUNT -->
 
               <td data-label="Login Count">
+
                 <strong>
                   <%= login.login_count %>
                 </strong>
+
               </td>
+
+
+              <!-- ACTION -->
 
               <td data-label="Action">
 
@@ -179,12 +460,14 @@
         <% } else { %>
 
           <tr>
+
             <td
-              colspan="11"
+              colspan="14"
               class="text-center"
             >
               No login records found.
             </td>
+
           </tr>
 
         <% } %>
@@ -211,15 +494,18 @@
 
     <ul class="pagination justify-content-center">
 
+
       <!-- PREVIOUS -->
 
-      <li class="page-item <%= page <= 1 ? 'disabled' : '' %>">
+      <li
+        class="page-item <%= page <= 1 ? 'disabled' : '' %>"
+      >
 
         <% if (page > 1) { %>
 
           <a
             class="page-link"
-            href="/admin/daily-login-report?page=<%= page - 1 %>&limit=<%= limit %><%= reportDate ? `&date=${encodeURIComponent(reportDate)}` : '' %><%= reportTimezone ? `&timezone=${encodeURIComponent(reportTimezone)}` : '' %>"
+            href="/admin/daily-login-report?page=<%= page - 1 %>&limit=<%= limit %><%= selectedDate ? `&date=${encodeURIComponent(selectedDate)}` : '' %><%= selectedTimezone ? `&timezone=${encodeURIComponent(selectedTimezone)}` : '' %><%= selectedUser ? `&user_id=${encodeURIComponent(selectedUser)}` : '' %>"
           >
             Previous
           </a>
@@ -237,31 +523,39 @@
 
       <!-- PAGE NUMBERS -->
 
-      <% for (let i = 1; i <= totalPages; i++) { %>
+      <% for (
+        let i = 1;
+        i <= totalPages;
+        i++
+      ) { %>
 
-        <li class="page-item <%= i === page ? 'active' : '' %>">
+        <li
+          class="page-item <%= i === page ? 'active' : '' %>"
+        >
 
           <a
             class="page-link"
-            href="/admin/daily-login-report?page=<%= i %>&limit=<%= limit %><%= reportDate ? `&date=${encodeURIComponent(reportDate)}` : '' %><%= reportTimezone ? `&timezone=${encodeURIComponent(reportTimezone)}` : '' %>"
+            href="/admin/daily-login-report?page=<%= i %>&limit=<%= limit %><%= selectedDate ? `&date=${encodeURIComponent(selectedDate)}` : '' %><%= selectedTimezone ? `&timezone=${encodeURIComponent(selectedTimezone)}` : '' %><%= selectedUser ? `&user_id=${encodeURIComponent(selectedUser)}` : '' %>"
           >
             <%= i %>
           </a>
 
         </li>
-
+ 
       <% } %>
 
 
       <!-- NEXT -->
 
-      <li class="page-item <%= page >= totalPages ? 'disabled' : '' %>">
+      <li
+        class="page-item <%= page >= totalPages ? 'disabled' : '' %>"
+      >
 
         <% if (page < totalPages) { %>
 
           <a
             class="page-link"
-            href="/admin/daily-login-report?page=<%= page + 1 %>&limit=<%= limit %><%= reportDate ? `&date=${encodeURIComponent(reportDate)}` : '' %><%= reportTimezone ? `&timezone=${encodeURIComponent(reportTimezone)}` : '' %>"
+            href="/admin/daily-login-report?page=<%= page + 1 %>&limit=<%= limit %><%= selectedDate ? `&date=${encodeURIComponent(selectedDate)}` : '' %><%= selectedTimezone ? `&timezone=${encodeURIComponent(selectedTimezone)}` : '' %><%= selectedUser ? `&user_id=${encodeURIComponent(selectedUser)}` : '' %>"
           >
             Next
           </a>
@@ -281,9 +575,11 @@
   </nav>
 
 </section>
+ 
 
 </main>
-
+ <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+ <script src="/js/clocknosound.js"></script>
 
 <script>
   // =====================================================
@@ -295,7 +591,9 @@
 
   if (timezoneInput) {
     timezoneInput.value =
-      Intl.DateTimeFormat().resolvedOptions().timeZone;
+      Intl.DateTimeFormat()
+        .resolvedOptions()
+        .timeZone;
   }
 
 
@@ -321,6 +619,7 @@
       second: "2-digit",
     });
   }
+
 
   document
     .querySelectorAll(".local-date-time")
