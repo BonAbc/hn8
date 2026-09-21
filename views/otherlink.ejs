@@ -3,10 +3,32 @@
 <main class="container">
   <!--main should move to main page-->
   <!---->
-  <form>
-    <label for="date">Date:</label>
-    <input type="date" id="date" name="date" value="<%= defaultDate %>" />
-  </form>
+   <div class="date-row">
+    <form>
+      <label for="date">Date:</label>
+      <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+    </form>
+
+    <div class="clock" id="clock">
+      <span class="number n12">12</span>
+      <span class="number n1">1</span>
+      <span class="number n2">2</span>
+      <span class="number n3">3</span>
+      <span class="number n4">4</span>
+      <span class="number n5">5</span>
+      <span class="number n6">6</span>
+      <span class="number n7">7</span>
+      <span class="number n8">8</span>
+      <span class="number n9">9</span>
+      <span class="number n10">10</span>
+      <span class="number n11">11</span>
+
+      <div class="hand hour" id="hour"></div>
+      <div class="hand minute" id="minute"></div>
+      <div class="hand second" id="second"></div>
+      <div class="clock-dot"></div>
+    </div>
+  </div>
   <br />
   <!---->
   <h2 id="hm">Tax</h2>
@@ -27,7 +49,7 @@
         src="/images/Database-fill-check.PNG"
         class="card-img-top"
         alt="Database Picture"
-      />
+      /> 
       <div class="card-body">
         <h5 class="card-title">Database</h5>
         <p class="card-text"></p>
@@ -203,6 +225,7 @@
   <!--Refer to index.ejs how to include header and footer.ejs-->
 </main>
 <!-- Link external JS -->
-
+<script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+<script src="/js/clock.js"></script>
 <!-- Link external JS end -->
 <%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->
