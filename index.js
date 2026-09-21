@@ -211,7 +211,7 @@ authenticator.options = {
 const token = authenticator.generate(secret);
 
 const authLimiter = rateLimit({
-  windowMs: 30 * 60 * 1000,
+  windowMs: 15 * 60 * 1000,
   max: 10,
   message: "Too many login attempts. Try again later.",
 });
@@ -434,7 +434,7 @@ app.get("/invoices", async (req, res) => {
 });
 
 // ----------------------------
-app.get("/login", (req, res) => {
+app.get("/login", authLimiter, (req, res) => {
   const showLoginModal = req.session.showLoginModal || false;
   const showAdminLoginModal = req.session.showAdminLoginModal || false;
 
@@ -450,7 +450,7 @@ app.get("/login", (req, res) => {
   });
 });
 
-app.get("/chapw", (req, res) =>
+app.get("/chapw", authLimiter, (req, res) =>
   res.render("chapw.ejs", { defaultDate: getToday(), message: null }),
 );
 //
@@ -723,7 +723,7 @@ passport.deserializeUser(async (id, cb) => {
 });
 
 //
-app.post("/login", loginLimiter, (req, res, next) => {
+app.post("/login", authLimiter, (req, res, next) => {
   passport.authenticate("local", async (err, user, info) => {
     if (err) {
       return next(err);
@@ -1697,7 +1697,7 @@ app.post("/web/traffic/test/delete-selected", ensureAdmin, async (req, res) => {
 });
 
 // Change password POST
-app.post("/chapw", async (req, res) => {
+app.post("/chapw", authLimiter, async (req, res) => {
   const { email, newPassword, confirmPassword } = req.body;
 
   if (!email || !newPassword || !confirmPassword) {
