@@ -205,7 +205,7 @@
  <label for="socialPostFiles">
   📎 Add images, video, PDF, or CSV Excel
 </label>
-
+ 
 <input
   type="file"
   id="socialPostFiles"
@@ -589,7 +589,9 @@
 
 <% } %>
 
- 
+ <div class="social-post-content">
+  <%= post.content %>
+</div>
 
 <% if (post.media && post.media.length > 0) { %>
 
@@ -681,9 +683,7 @@
 <!----> 
 
 
-<div class="social-post-content">
-  <%= post.content %>
-</div>
+
        
 
         <%
