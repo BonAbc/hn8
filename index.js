@@ -170,6 +170,7 @@ app.use(
     secret: process.env.SESSION_SECRET || "fallbacksecret",
     resave: false,
     saveUninitialized: false,
+    rolling: true,
     cookie: {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -722,13 +723,9 @@ passport.deserializeUser(async (id, cb) => {
 });
 
 //
-app.post("/login", (req, res, next) => {
-  const requestId =
-    Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
-
+app.post("/login", loginLimiter, (req, res, next) => {
   passport.authenticate("local", async (err, user, info) => {
     if (err) {
-      console.error("❌ PASSPORT ERROR:", err);
       return next(err);
     }
 
@@ -737,58 +734,16 @@ app.post("/login", (req, res, next) => {
 
       return res.redirect("/login");
     }
-    // DAILY LOGIN STATISTICS
-    // ONE RECORD = ONE USER + ONE DATE
+
     // ==================================================
-
-    try {
-      const loginStatsResult = await db.query(
-        `
-    INSERT INTO daily_login_stats (
-      user_id,
-      login_date,
-      login_count,
-      created_at,
-      idlelogout
-    )
-    VALUES (
-      $1,
-      (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date,
-      1,
-      CURRENT_TIMESTAMP,
-      NULL
-    )
-    RETURNING id
-    `,
-        [user.id],
-      );
-
-      req.session.dailyLoginStatsId = loginStatsResult.rows[0].id;
-
-      await new Promise((resolve, reject) => {
-        req.session.save((err) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
-          }
-        });
-      });
-    } catch (loginStatsError) {
-      console.error("LOGIN STATS ERROR:", loginStatsError);
-
-      // Do not prevent the user from continuing to login
-      // if statistics recording fails.
-    }
-
-    // ==========================================
-    // FIRST-TIME 2FA
-    // ==========================================
+    // 2FA
+    // ==================================================
 
     if (!user.two_factor_enabled) {
       req.session.pendingSetupUser = user.id;
       req.session.pending2FAUser = null;
       req.session.isAdmin = user.role === "admin";
+
       return req.session.save((sessionErr) => {
         if (sessionErr) {
           console.error("❌ SESSION SAVE ERROR:", sessionErr);
@@ -798,6 +753,10 @@ app.post("/login", (req, res, next) => {
         return res.redirect("/enable-2fa");
       });
     }
+
+    // ==================================================
+    // 2FA ALREADY ENABLED
+    // ==================================================
 
     req.session.pending2FAUser = user.id;
     req.session.pendingSetupUser = null;
@@ -972,7 +931,7 @@ app.get("/2fa/verify-2fa", (req, res) => {
   });
 });
 
-// Add 2FA Verify 👌👌👌👌👌👌
+// Add 2FA Verify 👌👌
 app.post("/2fa/verify-2fa", async (req, res, next) => {
   const code = req.body.code;
 
@@ -1033,21 +992,12 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
     user.two_fa_lock_until = null;
   }
 
-  // =====================================
-  // VERIFY AUTHENTICATOR CODE
-  // =====================================
-
   const isValid = authenticator.verify({
     token: code,
     secret: user.two_factor_secret,
   });
-  // use field: user.two_factor_secret,
-  // =====================================
-  // INVALID 2FA CODE
-  // =====================================
 
   if (!isValid) {
-    // Log failed 2FA attempt for admin report
     try {
       await db.query(
         `
@@ -1068,14 +1018,14 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
 
     const attempts = user.failed_2fa_attempts + 1;
 
-    // 2nd failed attempt = lock
+    // Third failed attempt = lock
     if (attempts >= 2) {
       await db.query(
         `
       UPDATE my_user
       SET
         failed_2fa_attempts = $1,
-        two_fa_lock_until = NOW() + INTERVAL '1 day'
+        two_fa_lock_until = NOW() + INTERVAL '15 minute'
       WHERE id = $2
       `,
         [attempts, user.id],
@@ -1083,24 +1033,23 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
 
       return res.render("verify-2fa.ejs", {
         message:
-          "Too many failed verification attempts. Account locked for 1 day.",
+          "Too many failed verification attempts. Account locked for 15 minutes.",
         defaultDate: getToday(),
       });
     }
 
     // First and second failures
-
     await db.query(
       `
-      UPDATE my_user
-      SET failed_2fa_attempts = $1
-      WHERE id = $2
-      `,
+    UPDATE my_user
+    SET failed_2fa_attempts = $1
+    WHERE id = $2
+    `,
       [attempts, user.id],
     );
 
     return res.render("verify-2fa.ejs", {
-      message: `Invalid verification code. ${2 - attempts} attempt(s) remaining. 2nd failure, your account will be locked for 1 day`,
+      message: `Invalid verification code. ${2 - attempts} attempt(s) remaining. 2nd failure, your account will be locked for 15 minutes`,
       defaultDate: getToday(),
     });
   }
@@ -1109,12 +1058,16 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
     `
     UPDATE my_user
     SET
-      failed_2fa_attempts = 0,      
+      failed_2fa_attempts = 0,
       two_fa_lock_until = NULL
     WHERE id = $1
     `,
     [user.id],
   );
+
+  // =====================================
+  // PASSWORD CHANGE + 2FA
+  // =====================================
 
   if (req.session.pendingPasswordChange) {
     const { userId, newPassword, expires } = req.session.pendingPasswordChange;
@@ -1128,8 +1081,6 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
       return res.send("Password change request expired");
     }
 
-    // bcrypt AFTER successful 2FA
-
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
     await db.query(
@@ -1137,8 +1088,7 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
       UPDATE my_user
       SET 
       pw = $1,
-      pw_change_approved = false,
-      updated_password_date = CURRENT_DATE
+      pw_change_approved = false
       WHERE id = $2
       `,
       [hashedPassword, userId],
@@ -1156,9 +1106,46 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
     if (err) {
       return next(err);
     }
+
     req.session.isAdmin = user.role === "admin";
 
     delete req.session.pending2FAUser;
+
+    try {
+      const loginStatsResult = await db.query(
+        `
+    INSERT INTO daily_login_stats (
+      user_id,
+      login_date,
+      login_count,
+      created_at,
+      logout,
+      idlelogout
+    )
+    VALUES (
+      $1,
+      (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date,
+      1,
+      CURRENT_TIMESTAMP,
+      NULL,
+      NULL
+    )
+    RETURNING id
+    `,
+        [user.id],
+      );
+
+      req.session.dailyLoginStatsId = loginStatsResult.rows[0].id;
+    } catch (loginStatsError) {
+      console.error("LOGIN STATS ERROR:", loginStatsError);
+
+      // Do not prevent login if statistics recording fails.
+    }
+
+    // ==========================================
+    // SAVE FINAL AUTHENTICATED SESSION
+    // ==========================================
+
     await new Promise((resolve, reject) => {
       req.session.save((err) => {
         if (err) {
@@ -1168,9 +1155,12 @@ app.post("/2fa/verify-2fa", async (req, res, next) => {
         }
       });
     });
-    return res.redirect(`/social/post`);
+
+    return res.redirect("/social/post");
   });
+  //
 });
+
 //
 app.get("/reset-2fa", ensureAdmin, async (req, res) => {
   res.render("startover2fa.ejs", { defaultDate: getToday() });
