@@ -1505,7 +1505,7 @@ app.patch("/user/:id", ensureAdmin, async (req, res) => {
 app.get("/web/traffic/test", ensureAdmin, async (req, res) => {
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
-    const limit = 10;
+    const limit = 20;
     const offset = (page - 1) * limit;
 
     const ip = (req.query.ip || "").trim();
