@@ -240,9 +240,27 @@
         >
           Delete Selected
         </button>
+           <!-- SELECT ALL -->
+<div class="select-all-wrapper mb-3">
 
+  <label
+    for="select-all"
+    style="cursor: pointer;"
+  >
+
+    <input
+      type="checkbox"
+      id="select-all"
+    >
+
+    Select All
+
+  </label>
+
+</div>
 
         <div class="table-wrapper">
+
 
           <table
             class="table table-striped table-hover table-bordered visitor-table"
@@ -253,26 +271,9 @@
               <tr>
 
                 <!-- SELECT ALL -->
-                <th>
+                
 
-                  <label
-                    for="select-all"
-                    style="cursor: pointer;"
-                  >
-
-                    <input
-                      type="checkbox"
-                      id="select-all"
-                     
-                    >
-
-                    Select All
-
-                  </label>
-
-                </th>
-
-
+                <th>Select</th>
                 <th>ID</th>
 
                 <!-- ACTUAL VISITOR -->
@@ -363,7 +364,7 @@
                       <%= visitor.timezone || "Unknown" %>
 
                     </td>
-
+ 
 
                     <!-- PAGE -->
                     <td data-label="Page">

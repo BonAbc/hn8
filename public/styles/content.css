@@ -3633,6 +3633,21 @@ button:hover {
 /**
 /**/
 /*webtraffic.ejs*/
+.select-all-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.select-all-wrapper label {
+  cursor: pointer;
+  user-select: none;
+}
+
+.select-all-wrapper input {
+  cursor: pointer;
+}
+
 .table-wrapper {
   width: 100%;
   overflow-x: auto;
