@@ -68,7 +68,7 @@ app.use((req, res, next) => {
 
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: "Too many requests. Please try again later.",
