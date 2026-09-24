@@ -1502,10 +1502,11 @@ app.patch("/user/:id", ensureAdmin, async (req, res) => {
   }
 });
 
+//
 app.get("/web/traffic/test", ensureAdmin, async (req, res) => {
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
-    const limit = 20;
+    const limit = 22;
     const offset = (page - 1) * limit;
 
     const ip = (req.query.ip || "").trim();
@@ -1519,7 +1520,7 @@ app.get("/web/traffic/test", ensureAdmin, async (req, res) => {
     if (ip) {
       values.push(ip);
 
-      conditions.push(`ip_address = $${values.length}`);
+      conditions.push(`visitor_ip = $${values.length}`);
     }
 
     if (status) {
@@ -1554,10 +1555,6 @@ app.get("/web/traffic/test", ensureAdmin, async (req, res) => {
     const whereClause =
       conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    // ==================================================
-    // GET VISITORS
-    // ==================================================
-
     const result = await db.query(
       `
       SELECT *
@@ -1580,7 +1577,6 @@ app.get("/web/traffic/test", ensureAdmin, async (req, res) => {
     );
 
     const total = Number(count.rows[0].count);
-
     const totalPages = Math.max(1, Math.ceil(total / limit));
 
     const countriesResult = await db.query(
