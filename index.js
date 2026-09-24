@@ -62,7 +62,19 @@ app.use((req, res, next) => {
   }
   next();
 });
+// ==================================================
+// GLOBAL RATE LIMITER
+// ==================================================
 
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too many requests. Please try again later.",
+});
+
+app.use(globalLimiter);
 app.use(compression());
 
 app.use(bodyParser.urlencoded({ extended: true }));
