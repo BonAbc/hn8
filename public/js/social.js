@@ -246,7 +246,7 @@ let socialPostAttachments = [];
 
 let socialPostIsSubmitting = false;
 
-const SOCIAL_MAX_FILES = 10;
+const SOCIAL_MAX_FILES = 14;
 
 const SOCIAL_MAX_FILE_SIZE = 100 * 1024 * 1024;
 
