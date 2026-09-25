@@ -68,7 +68,7 @@ app.use((req, res, next) => {
 
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: 350,
   standardHeaders: true,
   legacyHeaders: false,
   message: "Too many requests. Please try again later.",
@@ -2887,7 +2887,7 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
 app.post(
   "/social/post/create",
   ensureAuthenticated,
-  socialFileUpload.array("files", 10),
+  socialFileUpload.array("files", 14),
 
   async (req, res) => {
     const client = await db.connect();
@@ -2966,7 +2966,7 @@ app.post(
       }
       //
 
-      const MAX_FILES = 10;
+      const MAX_FILES = 14;
       const MAX_TOTAL_SIZE = 100 * 1024 * 1024;
 
       if (files.length > MAX_FILES) {
@@ -2999,10 +2999,10 @@ app.post(
         });
       }
 
-      if (content.length > 10000) {
+      if (content.length > 15000) {
         return res.status(400).json({
           success: false,
-          error: "Post is too long. Maximum 10000 characters.",
+          error: "Post is too long. Maximum 15000 characters.",
         });
       }
 
