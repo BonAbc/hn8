@@ -2053,6 +2053,18 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
               p.visibility = 'client_only'
               AND p.target_user_id = $1
             )
+            
+             OR
+
+              (
+                 p.visibility = 'loggedin users'
+                  AND EXISTS (
+                  SELECT 1
+              FROM my_user admin_user
+             WHERE admin_user.id = p.user_id
+                   AND LOWER(TRIM(admin_user.role)) IN ('admin1', 'admin2')
+                )
+                ) 
           `,
           [userId],
         );
@@ -2195,6 +2207,12 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
                   p.visibility = 'client_only'
                   AND p.target_user_id = $2
                 )
+                 OR
+
+                 (
+                    p.visibility = 'loggedin users'
+                AND LOWER(TRIM(u.role)) IN ('admin1', 'admin2')
+                 )   
               )
             )
 
@@ -2358,6 +2376,12 @@ app.get("/social/post", ensureAuthenticated, async (req, res) => {
             p.visibility = 'client_only'
             AND p.target_user_id = $1
           )
+             OR
+
+        (
+        p.visibility = 'loggedin users'
+        AND LOWER(TRIM(u.role)) IN ('admin1', 'admin2')
+         )
 
         ORDER BY
           p.created_at DESC,
@@ -5343,10 +5367,12 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
         visibility = "";
       }
     } else if (isClient) {
-      // Client can only see own admin_only posts.
+      // Client can only see own admin_only posts and loggedin users
       visibility = (req.query.visibility || "").trim();
 
-      if (visibility !== "admin_only") {
+      const allowedVisibility = ["admin_only", "loggedin users"];
+
+      if (!allowedVisibility.includes(visibility)) {
         visibility = "";
       }
     } else {
@@ -5428,6 +5454,12 @@ app.get("/social/search", ensureAuthenticated, async (req, res) => {
         p.visibility = 'client_only'
         AND p.target_user_id = $${clientUserParam}
       )
+        OR
+
+      (
+        p.visibility = 'loggedin users'
+        AND LOWER(TRIM(u.role)) IN ('admin1', 'admin2')
+      ) 
     )
   `);
     } else if (hasFullAdminAccess) {
