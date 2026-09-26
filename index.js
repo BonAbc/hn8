@@ -357,7 +357,7 @@ app.get("/otherlink", async (req, res) => {
 app.get("/calculate", (req, res) =>
   res.render("calculator.ejs", { defaultDate: getToday() }),
 );
-app.get("/mortgage", (req, res) =>
+app.get("/mortgage", ensureAuthenticated, (req, res) =>
   res.render("mortgage.ejs", { defaultDate: getToday() }),
 );
 app.get("/hana", (req, res) =>
