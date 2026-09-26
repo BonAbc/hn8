@@ -368,7 +368,7 @@ function generateSchedule2(
 
   const periods = document.getElementById("schedule2Periods");
 
-  const paymentPeriod = document.getElementById("schedule2PaymentPeriod");
+  const paymentPeriod = document.getElementById("schedule2ActualPeriod");
 
   if (constant) {
     constant.textContent = formatOutput(monthlyPayment);
@@ -526,7 +526,7 @@ function clearAllFields() {
     "schedule2Constant",
     "schedule2Additional",
     "schedule2Payment",
-    "schedule2PaymentPeriod",
+    "schedule2ActualPeriod",
     "schedule2Periods",
   ];
 
