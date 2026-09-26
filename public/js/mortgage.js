@@ -256,6 +256,13 @@ function generateSchedule2(
 
   body.innerHTML = "";
 
+  const message = document.getElementById("schedule2PaymentMessage");
+
+  if (message) {
+    message.textContent = "";
+    message.style.display = "none";
+  }
+
   const monthlyRate = annualInterestRate / 100 / 12;
 
   const maximumPeriods = Math.ceil(loanTermYears * 12);
@@ -265,6 +272,10 @@ function generateSchedule2(
   let totalPayment = 0;
   let totalInterest = 0;
   let updatedNumberOfPayments = 0;
+
+  let paymentWasCapped = false;
+  let originalActualPayment = 0;
+  let cappedPayment = 0;
 
   for (let period = 1; period <= maximumPeriods; period++) {
     if (balance <= 0.000001) {
@@ -292,15 +303,28 @@ function generateSchedule2(
       period === actualPaymentPeriod
     ) {
       payment = actualPayment;
+      originalActualPayment = actualPayment;
     }
 
     /*
-      Final payment cannot exceed
-      remaining balance + interest.
+      Amount actually required to pay off
+      this period.
     */
 
-    if (payment > beginningBalance + interestPaid) {
-      payment = beginningBalance + interestPaid;
+    const amountDue = beginningBalance + interestPaid;
+
+    /*
+      If the requested payment is greater
+      than the amount remaining, cap it.
+    */
+
+    if (payment > amountDue) {
+      if (period === actualPaymentPeriod) {
+        paymentWasCapped = true;
+        cappedPayment = amountDue;
+      }
+
+      payment = amountDue;
     }
 
     const principalPaid = payment - interestPaid;
@@ -330,6 +354,27 @@ function generateSchedule2(
     body.appendChild(row);
 
     balance = endingBalance;
+  }
+
+  /* =================================================
+     SHOW ACTUAL PAYMENT MESSAGE
+     ================================================= */
+
+  if (message && paymentWasCapped) {
+    const excessAmount = originalActualPayment - cappedPayment;
+
+    message.innerHTML = `
+      <strong>Payment exceeds remaining balance.</strong>
+      The requested payment of $${formatOutput(originalActualPayment)}
+      was limited to $${formatOutput(cappedPayment)} because this is the
+      amount required to pay off the remaining balance and interest in
+      period ${actualPaymentPeriod}.
+      <br>
+      Excess amount: $${formatOutput(excessAmount)}.
+      No further payments are required.
+    `;
+
+    message.style.display = "block";
   }
 
   /* =================================================
