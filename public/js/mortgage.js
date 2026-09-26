@@ -1,3 +1,7 @@
+/* =====================================================
+   FORMAT OUTPUT
+   ===================================================== */
+
 function formatOutput(value) {
   if (isNaN(value)) return "";
 
@@ -7,7 +11,10 @@ function formatOutput(value) {
   }).format(value);
 }
 
-// Convert input value to number
+/* =====================================================
+   CLEAN NUMBER
+   ===================================================== */
+
 function cleanNumber(value) {
   if (!value) return 0;
 
@@ -16,13 +23,17 @@ function cleanNumber(value) {
   return isNaN(num) ? 0 : num;
 }
 
-// Mortgage formula
+/* =====================================================
+   MORTGAGE FORMULA
+   ===================================================== */
+
 function calculateMonthlyPayment(
   loanAmount,
   annualInterestRate,
   loanTermYears,
 ) {
   const monthlyRate = annualInterestRate / 100 / 12;
+
   const totalPayments = loanTermYears * 12;
 
   if (totalPayments <= 0) return 0;
@@ -37,11 +48,15 @@ function calculateMonthlyPayment(
   );
 }
 
-// Format input on blur
+/* =====================================================
+   FORMAT INPUT ON BLUR
+   ===================================================== */
+
 function formatWithCommasAndDecimals(event) {
   const input = event.target;
 
   const raw = input.value.replace(/,/g, "");
+
   const num = parseFloat(raw);
 
   if (!isNaN(num)) {
@@ -72,6 +87,7 @@ function getMortgageData() {
     Purchase Price + Down Payment
     take priority when both are valid.
   */
+
   if (purchasePrice > 0 && downPayment >= 0 && downPayment <= purchasePrice) {
     loanAmount = purchasePrice - downPayment;
   } else {
@@ -122,6 +138,7 @@ function generateSchedule1(
   body.innerHTML = "";
 
   const monthlyRate = annualInterestRate / 100 / 12;
+
   const totalPeriods = Math.ceil(loanTermYears * 12);
 
   let balance = loanAmount;
@@ -131,7 +148,9 @@ function generateSchedule1(
   let totalInterest = 0;
 
   for (let period = 1; period <= totalPeriods; period++) {
-    if (balance <= 0.000001) break;
+    if (balance <= 0.000001) {
+      break;
+    }
 
     const beginningBalance = balance;
 
@@ -139,7 +158,11 @@ function generateSchedule1(
 
     let payment = monthlyPayment;
 
-    // Final payment cannot exceed remaining balance + interest
+    /*
+      Final payment cannot exceed
+      remaining balance + interest.
+    */
+
     if (payment > beginningBalance + interestPaid) {
       payment = beginningBalance + interestPaid;
     }
@@ -152,7 +175,7 @@ function generateSchedule1(
       endingBalance = 0;
     }
 
-    // Add to totals
+    // Add totals
     totalPayment += payment;
     totalInterest += interestPaid;
 
@@ -169,18 +192,11 @@ function generateSchedule1(
 
     body.appendChild(row);
 
-    // Carry balance to next period
     balance = endingBalance;
   }
 
   /* =================================================
      SCHEDULE 1 TOTAL ROW
-
-     Beginning Balance = blank
-     Total Payment     = total
-     Interest Paid     = total
-     Principal Paid    = blank
-     Ending Balance    = blank
      ================================================= */
 
   const totalRow = document.createElement("tr");
@@ -198,7 +214,10 @@ function generateSchedule1(
 
   body.appendChild(totalRow);
 
-  // Summary
+  /* =================================================
+     SUMMARY
+     ================================================= */
+
   const loan = document.getElementById("schedule1Loan");
 
   const payment = document.getElementById("schedule1Payment");
@@ -243,42 +262,30 @@ function generateSchedule2(
 
   let balance = loanAmount;
 
-  // TOTALS
   let totalPayment = 0;
   let totalInterest = 0;
+  let updatedNumberOfPayments = 0;
 
   for (let period = 1; period <= maximumPeriods; period++) {
-    if (balance <= 0.000001) break;
+    if (balance <= 0.000001) {
+      break;
+    }
 
     const beginningBalance = balance;
 
-    /*
-      Interest is calculated from the
-      current beginning balance.
-    */
     const interestPaid = monthlyRate === 0 ? 0 : beginningBalance * monthlyRate;
 
     /*
       Normally use Constant Monthly Payment.
     */
+
     let payment = monthlyPayment;
 
     /*
-      IMPORTANT:
-
-      Actual Monthly Payment is the TOTAL
-      payment for the selected period.
-
-      Example:
-
-      Constant = 53.185
-      Actual   = 60.000
-      Period   = 10
-
-      Periods 1-9  = 53.185
-      Period 10    = 60.000
-      Periods 11+  = 53.185
+      Actual Payment applies only
+      to the selected period.
     */
+
     if (
       actualPayment > 0 &&
       actualPaymentPeriod > 0 &&
@@ -291,6 +298,7 @@ function generateSchedule2(
       Final payment cannot exceed
       remaining balance + interest.
     */
+
     if (payment > beginningBalance + interestPaid) {
       payment = beginningBalance + interestPaid;
     }
@@ -303,7 +311,8 @@ function generateSchedule2(
       endingBalance = 0;
     }
 
-    // Add to totals
+    updatedNumberOfPayments = period;
+
     totalPayment += payment;
     totalInterest += interestPaid;
 
@@ -320,28 +329,11 @@ function generateSchedule2(
 
     body.appendChild(row);
 
-    /*
-      IMPORTANT:
-
-      The new lower balance becomes
-      the beginning balance for the
-      next period.
-
-      Therefore the extra payment
-      affects all following interest
-      calculations.
-    */
     balance = endingBalance;
   }
 
   /* =================================================
      SCHEDULE 2 TOTAL ROW
-
-     Beginning Balance = blank
-     Total Payment     = total
-     Interest Paid     = total
-     Principal Paid    = blank
-     Ending Balance    = blank
      ================================================= */
 
   const totalRow = document.createElement("tr");
@@ -359,12 +351,17 @@ function generateSchedule2(
 
   body.appendChild(totalRow);
 
-  // Summary
+  /* =================================================
+     SUMMARY
+     ================================================= */
+
   const constant = document.getElementById("schedule2Constant");
 
   const additional = document.getElementById("schedule2Additional");
 
   const payment = document.getElementById("schedule2Payment");
+
+  const plannedPeriods = document.getElementById("schedule2PlannedPeriods");
 
   const periods = document.getElementById("schedule2Periods");
 
@@ -379,10 +376,6 @@ function generateSchedule2(
       actualPayment > 0 ? formatOutput(actualPayment) : formatOutput(0);
   }
 
-  /*
-    Shows the actual payment amount
-    for the special period.
-  */
   if (payment) {
     payment.textContent =
       actualPayment > 0
@@ -395,8 +388,12 @@ function generateSchedule2(
       actualPaymentPeriod > 0 ? actualPaymentPeriod : 0;
   }
 
+  if (plannedPeriods) {
+    plannedPeriods.textContent = maximumPeriods;
+  }
+
   if (periods) {
-    periods.textContent = maximumPeriods;
+    periods.textContent = updatedNumberOfPayments;
   }
 }
 
@@ -412,11 +409,13 @@ function calculateSchedule2() {
   /*
     Get Constant Monthly Payment from num6.
   */
+
   let monthlyPayment = cleanNumber(document.getElementById("num6")?.value);
 
   /*
     If num6 is empty, calculate it.
   */
+
   if (
     monthlyPayment <= 0 &&
     loanAmount > 0 &&
@@ -441,6 +440,7 @@ function calculateSchedule2() {
   /*
     Actual Payment requires a valid period.
   */
+
   if (
     actualPayment > 0 &&
     (actualPaymentPeriod <= 0 ||
@@ -454,15 +454,13 @@ function calculateSchedule2() {
   /*
     Period requires an Actual Payment.
   */
+
   if (actualPaymentPeriod > 0 && actualPayment <= 0) {
     alert("Please enter an Actual Monthly Payment.");
 
     return;
   }
 
-  /*
-    Recalculate Schedule 2 only.
-  */
   generateSchedule2(
     loanAmount,
     interestRate,
@@ -471,6 +469,212 @@ function calculateSchedule2() {
     actualPayment,
     actualPaymentPeriod,
   );
+}
+
+/* =====================================================
+   CSV HELPER
+   ===================================================== */
+
+/*
+  Makes a value safe for CSV.
+
+  Example:
+  123,456.789
+  becomes:
+  "123,456.789"
+*/
+
+function csvEscape(value) {
+  const text = String(value ?? "");
+
+  if (
+    text.includes(",") ||
+    text.includes('"') ||
+    text.includes("\n") ||
+    text.includes("\r")
+  ) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+
+  return text;
+}
+
+/* =====================================================
+   DOWNLOAD SCHEDULE 1 AS CSV
+   ===================================================== */
+
+function downloadSchedule1CSV() {
+  const body = document.getElementById("amortizationBody1");
+
+  /*
+    Schedule must be calculated first.
+  */
+
+  if (!body || body.children.length === 0) {
+    alert("Please calculate Schedule 1 first.");
+
+    return;
+  }
+
+  /* =================================================
+     GET MORTGAGE INFORMATION
+     ================================================= */
+
+  const { loanAmount, interestRate, loanTermYears } = getMortgageData();
+
+  const monthlyPayment = cleanNumber(
+    document.getElementById("schedule1Payment")?.textContent,
+  );
+
+  const purchasePrice = cleanNumber(document.getElementById("num1")?.value);
+
+  const downPayment = cleanNumber(document.getElementById("num2")?.value);
+
+  const date = document.getElementById("date")?.value || "";
+
+  /* =================================================
+     CREATE CSV
+     ================================================= */
+
+  const csvRows = [];
+
+  /*
+    Title
+  */
+
+  csvRows.push([csvEscape("Mortgage Amortization Schedule")]);
+
+  csvRows.push([csvEscape("Schedule 1 - Constant Monthly Payment")]);
+
+  csvRows.push([]);
+
+  /*
+    Mortgage information
+  */
+
+  csvRows.push(["Date", csvEscape(date)]);
+
+  csvRows.push([
+    "Purchase Price",
+    purchasePrice > 0 ? csvEscape(formatOutput(purchasePrice)) : "",
+  ]);
+
+  csvRows.push([
+    "Down Payment",
+    downPayment >= 0 && purchasePrice > 0
+      ? csvEscape(formatOutput(downPayment))
+      : "",
+  ]);
+
+  csvRows.push(["Mortgage Amount", csvEscape(formatOutput(loanAmount))]);
+
+  csvRows.push(["Interest Rate", csvEscape(`${formatOutput(interestRate)}%`)]);
+
+  csvRows.push([
+    "Mortgage Term",
+    csvEscape(`${formatOutput(loanTermYears)} years`),
+  ]);
+
+  csvRows.push(["Monthly Payment", csvEscape(formatOutput(monthlyPayment))]);
+
+  csvRows.push([
+    "Number of Payments",
+    csvEscape(document.getElementById("schedule1Periods")?.textContent || "0"),
+  ]);
+
+  csvRows.push([]);
+
+  /*
+    Schedule table header
+  */
+
+  csvRows.push([
+    "Period",
+    "Beginning Balance",
+    "Total Payment",
+    "Interest Paid",
+    "Principal Paid",
+    "Ending Balance",
+  ]);
+
+  /* =================================================
+     GET TABLE ROWS
+     ================================================= */
+
+  const rows = body.querySelectorAll("tr");
+
+  rows.forEach((row) => {
+    const cells = row.querySelectorAll("td");
+
+    if (cells.length !== 6) {
+      return;
+    }
+
+    const rowData = Array.from(cells).map((cell) => {
+      const text = cell.textContent.trim();
+
+      /*
+            Remove $ and commas from
+            numeric values so the CSV
+            opens cleanly in Excel.
+          */
+
+      if (text !== "TOTAL" && text !== "") {
+        return text.replace(/[$,]/g, "");
+      }
+
+      return text;
+    });
+
+    csvRows.push(rowData.map(csvEscape));
+  });
+
+  /* =================================================
+     FOOTER
+     ================================================= */
+
+  csvRows.push([]);
+
+  csvRows.push([
+    csvEscape("For informational purposes only. All numbers are estimates."),
+  ]);
+
+  /* =================================================
+     CREATE CSV FILE
+     ================================================= */
+
+  const csvContent = csvRows.map((row) => row.join(",")).join("\r\n");
+
+  /*
+    UTF-8 BOM makes the CSV open
+    correctly in Microsoft Excel.
+  */
+
+  const blob = new Blob(["\uFEFF" + csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+
+  link.href = url;
+
+  link.download = "mortgage-amortization-schedule-1.csv";
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  document.body.removeChild(link);
+
+  /*
+    Release browser memory.
+  */
+
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 100);
 }
 
 /* =====================================================
@@ -527,6 +731,7 @@ function clearAllFields() {
     "schedule2Additional",
     "schedule2Payment",
     "schedule2ActualPeriod",
+    "schedule2PlannedPeriods",
     "schedule2Periods",
   ];
 
@@ -573,11 +778,13 @@ function calculate() {
   /*
     Schedule 2 inputs
   */
+
   const { actualPayment, actualPaymentPeriod } = getSchedule2Inputs();
 
   /*
     Mortgage amount
   */
+
   let loanAmount = 0;
 
   if (purchasePrice > 0 && downPayment >= 0 && downPayment <= purchasePrice) {
@@ -626,6 +833,7 @@ function calculate() {
         /*
           Schedule 1
         */
+
         generateSchedule1(
           loanAmount,
           interestRate,
@@ -636,6 +844,7 @@ function calculate() {
         /*
           Schedule 2
         */
+
         generateSchedule2(
           loanAmount,
           interestRate,
@@ -711,11 +920,13 @@ function calculate() {
     /*
       Schedule 1
     */
+
     generateSchedule1(loanAmount, interestRate, loanTermYears, monthlyPayment);
 
     /*
       Schedule 2
     */
+
     generateSchedule2(
       loanAmount,
       interestRate,
@@ -759,6 +970,7 @@ window.addEventListener("DOMContentLoaded", () => {
   /*
       Existing Calculate button.
     */
+
   const calculateBtn = document.getElementById("calculateBtn");
 
   if (calculateBtn) {
@@ -768,6 +980,7 @@ window.addEventListener("DOMContentLoaded", () => {
   /*
       Schedule 2 Recalculate button.
     */
+
   const recalculateSchedule2Btn = document.getElementById(
     "recalculateSchedule2Btn",
   );
@@ -777,8 +990,21 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   /*
+      Schedule 1 CSV Download
+    */
+
+  const downloadSchedule1CsvBtn = document.getElementById(
+    "downloadSchedule1CsvBtn",
+  );
+
+  if (downloadSchedule1CsvBtn) {
+    downloadSchedule1CsvBtn.addEventListener("click", downloadSchedule1CSV);
+  }
+
+  /*
       Reset button.
     */
+
   const resetBtn = document.getElementById("resetBtn");
 
   if (resetBtn) {
