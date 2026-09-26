@@ -376,7 +376,6 @@ function generateSchedule2(
 
     message.style.display = "block";
   }
-
   /* =================================================
      SCHEDULE 2 TOTAL ROW
      ================================================= */
