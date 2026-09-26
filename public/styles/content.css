@@ -272,46 +272,246 @@ button:hover {
   background-color: #0056b3;
 }
 
+/* =====================================
+   Amortization Schedule
+   ===================================== */
+
+.amortization-section {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.amortization-section h2,
+.amortization-section h3 {
+  text-align: center;
+}
+
+/* ---------- Table Wrapper ---------- */
+
+.amortization-table-wrapper {
+  width: 100%;
+  margin: 20px auto;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  display: flex;
+  justify-content: center;
+
+  box-sizing: border-box;
+}
+
+/* ---------- Table ---------- */
+
+.amortization-table {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+
+  border-collapse: collapse;
+
+  background-color: #fff;
+
+  text-align: center;
+  font-size: 14px;
+}
+
+/* ---------- Header ---------- */
+
+.amortization-table thead th {
+  background-color: #212529;
+  color: #fff;
+
+  padding: 10px 12px;
+
+  border: 1px solid #dee2e6;
+
+  white-space: nowrap;
+
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* ---------- Body ---------- */
+
+.amortization-table tbody td {
+  padding: 8px 12px;
+
+  border: 1px solid #dee2e6;
+
+  text-align: center;
+  vertical-align: middle;
+
+  white-space: nowrap;
+}
+
+/* ---------- Alternating Rows ---------- */
+
+.amortization-table tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.amortization-table tbody tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+/* ---------- Hover ---------- */
+
+.amortization-table tbody tr:hover {
+  background-color: #e9ecef;
+}
+
+/* ---------- First Column ---------- */
+
+.amortization-table th:first-child,
+.amortization-table td:first-child {
+  text-align: center;
+}
+
 /* ============================================================
-   MORTGAGE PAGE
+   TABLET
    ============================================================ */
 
-.mo1 {
-  margin-bottom: 20px;
+@media (max-width: 992px) {
+  .mortgage-wrapper {
+    flex: 1 1 45%;
+    min-width: 220px;
+  }
+
+  .amortization-section {
+    max-width: 100%;
+    padding: 0 10px;
+  }
+
+  .amortization-table-wrapper {
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+
+  .amortization-table {
+    min-width: 850px;
+  }
 }
 
-.mortgage-container {
-  display: flex;
-  flex-wrap: wrap;
+/* ============================================================
+   MOBILE
+   ============================================================ */
 
-  justify-content: space-between;
-  align-items: stretch;
+@media (max-width: 768px) {
+  .mortgage-container {
+    flex-direction: column;
+    gap: 10px;
+  }
 
-  gap: 10px;
+  .mortgage-wrapper {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+
+  /* Keep recalculate button centered */
+  .mortgage-wrapper:has(#recalculateSchedule2Btn) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #recalculateSchedule2Btn {
+    margin: 0 auto;
+  }
+
+  /* Schedule section */
+  .amortization-section {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 5px;
+  }
+
+  .amortization-section h2 {
+    font-size: 22px;
+  }
+
+  .amortization-section h3 {
+    font-size: 18px;
+  }
+
+  /*
+    Table remains wide enough to preserve
+    readable columns. User can scroll horizontally.
+  */
+  .amortization-table-wrapper {
+    width: 100%;
+    display: block;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    -webkit-overflow-scrolling: touch;
+
+    margin: 15px 0;
+  }
+
+  .amortization-table {
+    width: max-content;
+    min-width: 850px;
+    font-size: 13px;
+  }
+
+  .amortization-table thead th {
+    padding: 8px 10px;
+  }
+
+  .amortization-table tbody td {
+    padding: 7px 10px;
+  }
 }
 
-.mortgage-wrapper {
-  flex: 1 1 30%;
+/* ============================================================
+   SMALL MOBILE
+   ============================================================ */
 
-  min-width: 250px;
-  padding: 10px;
-  box-sizing: border-box;
+@media (max-width: 480px) {
+  .mo1 {
+    font-size: 22px;
+    margin-bottom: 15px;
+  }
 
-  border: 2px solid #007bff;
-  border-radius: 8px;
+  .mortgage-wrapper {
+    padding: 8px;
+  }
 
-  background-color: gold;
+  .calc-block label {
+    font-size: 14px;
+  }
+
+  .amortization-section h2 {
+    font-size: 20px;
+  }
+
+  .amortization-section h3 {
+    font-size: 16px;
+  }
+
+  .amortization-table {
+    min-width: 850px;
+    font-size: 12px;
+  }
+
+  .amortization-table thead th {
+    padding: 7px 8px;
+  }
+
+  .amortization-table tbody td {
+    padding: 6px 8px;
+  }
 }
 
-/* ---------- Mortgage Labels ---------- */
-
-.calc-block label {
-  display: block;
-  margin-bottom: 5px;
-
-  font-weight: bold;
-}
-
+/* ============================================================
+   End MORTGAGE PAGE
+   ============================================================ */
 /* ============================================================
    TAX PAGE
    ============================================================ */

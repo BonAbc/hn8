@@ -30,114 +30,127 @@
       <div class="clock-dot"></div>
     </div>
   </div>
+
   <br />
+
   <!---->
   <h2 class="mo1">Mortgage Calculator</h2>
-  <!-- <h3>Debt Amortization</h3>-->
-  <!--Add another div-->
 
-  <!--Add another div-->
   <!-- Mortgage Calculator UI -->
   <div class="mortgage-container">
     <div class="mortgage-wrapper">
       <!-- Purchase and Down Payment -->
+
       <div class="calc-block">
         <label for="num1">Purchase Price</label>
-        <input type="text" id="num1" placeholder="Enter number 1" readonly />
+        <input type="text" id="num1" placeholder="Enter number 1" />
       </div>
 
       <div class="calc-block">
         <label for="num2">Down Payment</label>
-        <input type="text" id="num2" placeholder="Enter number 2" readonly />
+        <input type="text" id="num2" placeholder="Enter number 2" />
       </div>
 
       <div class="calc-block">
-        <label for="num3">Loan Amount <span style="color: red">*</span></label>
-        <input
-          type="text"
-          id="num3"
-          placeholder="Auto/Enter number 3"
-          readonly
-        />
+        <label for="num3">
+          Mortgage Amount
+          <span style="color: red">*</span>
+        </label>
+
+        <input type="text" id="num3" placeholder="Auto/Enter number 3" />
       </div>
     </div>
 
     <div class="mortgage-wrapper">
       <!-- Interest Rate, Loan Term, Monthly Payment -->
+
       <div class="calc-block">
-        <label for="num4"
-          >Annual Interest Rate <span style="color: red">*</span>
+        <label for="num4">
+          Annual Percentage Rate
+          <span style="color: red">*</span>
         </label>
+
         <div class="input-wrapper">
           <input
             type="text"
             id="num4"
             placeholder="Enter number 4 *"
             required
-            readonly
           />
+
           <span class="unit">%</span>
         </div>
       </div>
 
       <div class="calc-block">
-        <label for="num5"
-          >Loan Term in year <span style="color: red">*</span></label
-        >
-        <input
-          type="text"
-          id="num5"
-          placeholder="Enter number 5 *"
-          required
-          readonly
-        />
+        <label for="num5">
+          Mortgage Term in Years
+          <span style="color: red">*</span>
+        </label>
+
+        <input type="text" id="num5" placeholder="Enter number 5 *" required />
       </div>
 
       <div class="calc-block">
-        <label for="num6">Constant Monthly Payment </label>
+        <label for="num6"> Constant Monthly Payment </label>
+
         <input type="text" id="num6" placeholder="Number 6 Auto" readonly />
       </div>
     </div>
 
     <div class="mortgage-wrapper">
       <!-- Additional Costs -->
+
       <div class="calc-block">
-        <label for="num7">Monthly Property Tax</label>
-        <input type="text" id="num7" placeholder="Enter number 7" readonly />
+        <label for="num7"> Monthly Property Tax </label>
+
+        <input type="text" id="num7" placeholder="Enter number 7" />
       </div>
 
       <div class="calc-block">
-        <label for="num8">Monthly Insurance</label>
-        <input type="text" id="num8" placeholder="Enter number 8" readonly />
+        <label for="num8"> Monthly Insurance </label>
+
+        <input type="text" id="num8" placeholder="Enter number 8" />
       </div>
 
       <div class="calc-block">
-        <label for="num9">Others Monthly</label>
-        <input type="text" id="num9" placeholder="Enter number 9" readonly />
+        <label for="num9"> Others Monthly </label>
+
+        <input type="text" id="num9" placeholder="Enter number 9" />
       </div>
     </div>
   </div>
+
   <br />
   <br />
+
   <div class="mortgage-container">
     <div class="mortgage-wrapper">
       <!-- Operation and Buttons -->
+
       <div class="calc-block">
-        <label for="operator">Select Calculation</label>
+        <label for="operator"> Select Calculation </label>
+
         <select id="operator">
           <option value="">- Select Calculation -</option>
+
           <option value="loan">
-            Loan Amount : Number 1/ Number 2 Required
+            Mortgage Amount : Number 1/ Number 2 Required
           </option>
+
           <option value="payment">Monthly Payment</option>
+
           <option value="total">Total Monthly Payment</option>
         </select>
       </div>
     </div>
+
     <div class="mortgage-wrapper">
       <div class="calc-block">
-        <button type="button" id="calculateBtn" disabled>Calculate</button>
+        <button type="button" id="calculateBtn">Calculate</button>
+
         <br />
+
         <button type="button" id="resetBtn" style="margin-top: 10px">
           Reset
         </button>
@@ -146,29 +159,179 @@
 
     <div class="mortgage-wrapper">
       <!-- Result -->
+
       <div class="calc-block">
-        <label for="result">Monthly Total</label>
+        <label for="result"> Monthly Total </label>
+
         <input type="text" id="result" placeholder="Result Auto" readonly />
       </div>
     </div>
   </div>
+
   <br />
-  <!-- <h5 style="color: darkblue">Dzui lòng chỉ giáo, nếu sơ sót.</h5> -->
+  <hr />
+  <h6>***For informational purposes only. All numbers are estimates.***</h6>
+  <hr />
+  <!-- ===================================== -->
+  <!-- Amortization Schedule 1 -->
+  <!-- ===================================== -->
 
-  <!--Add another div-->
+  <section class="amortization-section">
+    <h2>Amortization Schedule</h2>
 
-  <!-- Add another div-->
+    <h3>Schedule 1 — Constant Monthly Payment</h3>
 
-  <!---->
+    <div class="amortization-summary">
+      <span>
+        Mortgage Amount:
+        <strong id="schedule1Loan"> $0.00 </strong>
+      </span>
 
-  <!--Add another div-->
-  <!---->
+      <span>
+        Monthly Payment:
+        <strong id="schedule1Payment"> $0.00 </strong>
+      </span>
+
+      <span>
+        Number of Payments:
+        <strong id="schedule1Periods"> 0 </strong>
+      </span>
+    </div>
+
+    <div class="amortization-table-wrapper">
+      <table class="amortization-table">
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>Beginning Balance</th>
+            <th>Total Payment</th>
+            <th>Interest Paid</th>
+            <th>Principal Paid</th>
+            <th>Ending Balance</th>
+          </tr>
+        </thead>
+
+        <tbody id="amortizationBody1"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <br />
+  <br />
+
+  <!-- ===================================== -->
+  <!-- Amortization Schedule 2 -->
+  <!-- ===================================== -->
+  <hr />
+  <section class="amortization-section">
+    <h2>Amortization Schedule 2</h2>
+
+    <h3>Schedule 2 — One-Time Actual Payment</h3>
+
+    <p>
+      Use the fields below when you want to make a different payment during one
+      specific period. The Actual Monthly Payment applies only to the period
+      entered. All other periods continue using the Constant Monthly Payment.
+    </p>
+
+    <p>
+      If the Actual Monthly Payment is greater than the Constant Monthly
+      Payment, the additional amount reduces the mortgage principal. The lower
+      balance then carries forward, so the interest and principal amounts are
+      recalculated for every following period.
+    </p>
+
+    <!-- Schedule 2 Inputs -->
+
+    <div class="mortgage-container">
+      <div class="mortgage-wrapper">
+        <div class="calc-block">
+          <label for="actualPayment">Actual Monthly Payment</label>
+          <input type="text" id="actualPayment" placeholder="Optional" />
+        </div>
+      </div>
+
+      <div class="mortgage-wrapper">
+        <div class="calc-block">
+          <label for="actualPaymentPeriod">Actual Payment Period</label>
+          <input type="text" id="actualPaymentPeriod" placeholder="Optional" />
+        </div>
+      </div>
+
+      <div class="mortgage-wrapper">
+        <div class="calc-block">
+          <button type="button" id="recalculateSchedule2Btn">
+            Recalculate Schedule 2
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <p>
+      <strong>Example:</strong>
+      If the mortgage term is 2 years (24 periods), the Constant Monthly Payment
+      is $1,000, the Actual Monthly Payment is $1,200, and the Actual Payment
+      Period is 10, then periods 1–9 use $1,000, period 10 uses $1,200, and
+      periods 11–24 return to the $1,000 Constant Monthly Payment. The lower
+      balance created by the extra payment carries forward into every subsequent
+      period.
+    </p>
+
+    <div class="amortization-summary">
+      <span>
+        Constant Payment:
+        <strong id="schedule2Constant"> $0.00 </strong>
+      </span>
+
+      <span>
+        Actual Payment:
+        <strong id="schedule2Additional"> $0.00 </strong>
+      </span>
+
+      <span>
+        Payment Period:
+        <strong id="schedule2ActualPeriod"> 0 </strong>
+      </span>
+
+      <span>
+        Number of Payments:
+        <strong id="schedule2Periods"> 0 </strong>
+      </span>
+    </div>
+
+    <div class="amortization-table-wrapper">
+      <table class="amortization-table">
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>Beginning Balance</th>
+            <th>Total Payment</th>
+            <th>Interest Paid</th>
+            <th>Principal Paid</th>
+            <th>Ending Balance</th>
+          </tr>
+        </thead>
+
+        <tbody id="amortizationBody2"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <br />
+
   <h5>Turning Numbers into Better Decisions.</h5>
+
   <!---->
 </main>
+
 <!-- Link external JS -->
+
 <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+
 <script src="/js/clock.js"></script>
+
 <script src="/js/mortgage.js"></script>
+
 <!-- Link external JS end -->
+
 <%- include("partials/footer.ejs") %>
