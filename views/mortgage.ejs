@@ -152,7 +152,7 @@
         <br />
 
         <button type="button" id="resetBtn" style="margin-top: 10px">
-          Reset
+          Clear
         </button>
       </div>
     </div>
@@ -226,82 +226,98 @@
   <!-- ===================================== -->
   <!-- Amortization Schedule 2 -->
   <!-- ===================================== -->
+
   <hr />
+
   <section class="amortization-section">
     <h2>Amortization Schedule 2</h2>
 
-    <h3>Schedule 2 — One-Time Actual Payment</h3>
+    <h3>Schedule 2 — Multiple Actual Payments</h3>
 
     <p>
-      Use the fields below when you want to make a different payment during one
-      specific period. The Actual Monthly Payment applies only to the period
-      entered. All other periods continue using the Constant Monthly Payment.
+      Add one or more actual mortgage payments for specific payment periods. All
+      periods not listed below will use the Constant Monthly Payment.
     </p>
 
     <p>
-      If the Actual Monthly Payment is greater than the Constant Monthly
-      Payment, the additional amount reduces the mortgage principal. The lower
-      balance then carries forward, so the interest and principal amounts are
-      recalculated for every following period.
+      When an Actual Monthly Payment is entered for a specific period, that
+      payment replaces the Constant Monthly Payment for that period. The
+      resulting balance carries forward and affects all following periods.
     </p>
 
-    <!-- Schedule 2 Inputs -->
+    <!-- ===================================== -->
+    <!-- ACTUAL PAYMENT INPUT TABLE -->
+    <!-- ===================================== -->
 
-    <div class="mortgage-container">
-      <div class="mortgage-wrapper">
-        <div class="calc-block">
-          <label for="actualPayment">Actual Monthly Payment</label>
-          <input type="text" id="actualPayment" placeholder="Optional" />
-        </div>
-      </div>
+    <!-- ===================================== -->
+    <!-- Schedule 2 Actual Payments -->
+    <!-- ===================================== -->
 
-      <div class="mortgage-wrapper">
-        <div class="calc-block">
-          <label for="actualPaymentPeriod">Actual Payment Period</label>
-          <input type="text" id="actualPaymentPeriod" placeholder="Optional" />
-        </div>
-      </div>
+    <div class="amortization-table-wrapper schedule2-input-wrapper">
+      <table class="amortization-table schedule2-payment-table">
+        <thead>
+          <tr>
+            <th>Actual Monthly Payment</th>
+            <th>Actual Payment Period</th>
+            <th>Action</th>
+          </tr>
+        </thead>
 
-      <div class="mortgage-wrapper">
-        <div class="calc-block">
-          <button type="button" id="recalculateSchedule2Btn">
-            Recalculate Schedule 2
-          </button>
-        </div>
-      </div>
+        <tbody id="schedule2PaymentRows">
+          <!-- JavaScript adds payment rows here -->
+        </tbody>
+      </table>
     </div>
 
-    <p>
-      <strong>Example:</strong>
-      If the mortgage term is 2 years (24 periods), the Constant Monthly Payment
-      is $1,000, the Actual Monthly Payment is $1,200, and the Actual Payment
-      Period is 10, then periods 1–9 use $1,000, period 10 uses $1,200, and
-      periods 11–24 return to the $1,000 Constant Monthly Payment. The lower
-      balance created by the extra payment carries forward into every subsequent
-      period.
-    </p>
+    <!-- Schedule 2 Buttons -->
+
+    <div class="schedule2-button-row">
+      <button type="button" id="addSchedule2PaymentBtn">Add</button>
+
+      <button type="button" id="recalculateSchedule2Btn">
+        Recalculate Schedule 2
+      </button>
+    </div>
+
+    <!-- ===================================== -->
+    <!-- MESSAGE -->
+    <!-- ===================================== -->
+
+    <div
+      id="schedule2PaymentMessage"
+      class="schedule2-payment-message"
+      style="display: none"
+    ></div>
+
+    <!-- ===================================== -->
+    <!-- SUMMARY -->
+    <!-- ===================================== -->
 
     <div class="amortization-summary">
       <span>
         Constant Payment:
-        <strong id="schedule2Constant"> $0.00 </strong>
+        <strong id="schedule2Constant">0.000</strong>
       </span>
 
       <span>
-        Actual Payment:
-        <strong id="schedule2Additional"> $0.00 </strong>
+        Actual Payments:
+        <strong id="schedule2Additional">0.000</strong>
       </span>
 
       <span>
-        Payment Period:
-        <strong id="schedule2ActualPeriod"> 0 </strong>
+        Number of Actual Payments:
+        <strong id="schedule2ActualPaymentCount">0</strong>
       </span>
 
       <span>
         Number of Payments:
-        <strong id="schedule2Periods"> 0 </strong>
+        <strong id="schedule2Periods">0</strong>
       </span>
     </div>
+
+    <!-- ===================================== -->
+    <!-- AMORTIZATION TABLE -->
+    <!-- ===================================== -->
 
     <div class="amortization-table-wrapper">
       <table class="amortization-table">
@@ -315,10 +331,12 @@
             <th>Ending Balance</th>
           </tr>
         </thead>
+
         <tbody id="amortizationBody2"></tbody>
       </table>
     </div>
   </section>
+
   <div id="schedule2PaymentMessage" class="schedule2-payment-message"></div>
   <br />
 

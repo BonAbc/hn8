@@ -423,38 +423,376 @@ button:hover {
 .amortization-table td:first-child {
   text-align: center;
 }
+
+/* ============================================================
+   SCHEDULE 2 PAYMENT MESSAGE
+   ============================================================ */
+
 .schedule2-payment-message {
   display: none;
+
   margin: 15px 0;
+
   padding: 12px 16px;
+
   border-radius: 6px;
+
   background: #fff3cd;
+
   border: 1px solid #ffe69c;
+
   color: #664d03;
+
   line-height: 1.5;
 }
+
 /* ============================================================
-   TABLET
+   SCHEDULE 2 - ACTUAL PAYMENT INPUT TABLE
+   ============================================================ */
+
+/*
+   This table uses the same general table style as
+   Schedule 1 and Schedule 2.
+
+   Columns:
+   Actual Monthly Payment
+   Actual Payment Period
+   Action
+*/
+
+.schedule2-payment-table-wrapper {
+  width: 100%;
+
+  margin: 20px auto;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  display: flex;
+  justify-content: center;
+
+  box-sizing: border-box;
+
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ---------- Schedule 2 Payment Table ---------- */
+
+.schedule2-payment-table {
+  width: 100%;
+
+  max-width: 900px;
+
+  margin: 0 auto;
+
+  border-collapse: collapse;
+
+  background-color: #fff;
+
+  text-align: center;
+
+  font-size: 14px;
+}
+
+/* ---------- Header ---------- */
+
+.schedule2-payment-table thead th {
+  background-color: #212529;
+
+  color: #fff;
+
+  padding: 10px 12px;
+
+  border: 1px solid #dee2e6;
+
+  white-space: nowrap;
+
+  text-align: center;
+
+  vertical-align: middle;
+}
+
+/* ---------- Body ---------- */
+
+.schedule2-payment-table tbody td {
+  padding: 8px 12px;
+
+  border: 1px solid #dee2e6;
+
+  text-align: center;
+
+  vertical-align: middle;
+
+  white-space: nowrap;
+
+  background-color: #ffffff;
+}
+
+/* ---------- Alternating Rows ---------- */
+
+.schedule2-payment-table tbody tr:nth-child(even) td {
+  background-color: #f8f9fa;
+}
+
+.schedule2-payment-table tbody tr:nth-child(odd) td {
+  background-color: #ffffff;
+}
+
+/* ---------- Hover ---------- */
+
+.schedule2-payment-table tbody tr:hover td {
+  background-color: #e9ecef;
+}
+
+/* ============================================================
+   SCHEDULE 2 INPUTS
+   ============================================================ */
+
+.schedule2-payment-table input {
+  width: 100%;
+
+  max-width: 220px;
+
+  min-height: 38px;
+
+  padding: 7px 10px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #ced4da;
+
+  border-radius: 4px;
+
+  background-color: #ffffff;
+
+  color: #212529;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+/* ---------- Actual Payment ---------- */
+
+.schedule2-payment-table .schedule2-actual-payment {
+  text-align: right;
+}
+
+/* ---------- Actual Period ---------- */
+
+.schedule2-payment-table .schedule2-actual-period {
+  max-width: 150px;
+
+  text-align: center;
+}
+
+/* ---------- Input Focus ---------- */
+
+.schedule2-payment-table input:focus {
+  border-color: #007bff;
+
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+}
+
+/* ---------- Input Hover ---------- */
+
+.schedule2-payment-table input:hover {
+  border-color: #8fa8ba;
+}
+
+/* ============================================================
+   SCHEDULE 2 REMOVE BUTTON
+   ============================================================ */
+
+.schedule2-remove-btn {
+  display: inline-block;
+
+  min-width: 80px;
+
+  min-height: 34px;
+
+  padding: 6px 14px;
+
+  border: 1px solid #dc3545;
+
+  border-radius: 4px;
+
+  background-color: #dc3545;
+
+  color: #ffffff;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.schedule2-remove-btn:hover {
+  background-color: #c82333;
+
+  border-color: #bd2130;
+}
+
+.schedule2-remove-btn:active {
+  background-color: #bd2130;
+
+  border-color: #b21f2d;
+}
+
+/* ============================================================
+   SCHEDULE 2 BUTTON AREA
+   ============================================================ */
+
+.schedule2-button-row {
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  gap: 10px;
+
+  margin: 10px 0 20px;
+}
+
+/* ============================================================
+   ADD BUTTON
+   ============================================================ */
+
+#addSchedule2PaymentBtn {
+  display: inline-block;
+
+  min-height: 36px;
+
+  padding: 7px 18px;
+
+  margin: 0;
+
+  border: 1px solid #007bff;
+
+  border-radius: 4px;
+
+  background-color: #007bff;
+
+  color: #ffffff;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+#addSchedule2PaymentBtn:hover {
+  background-color: #0069d9;
+
+  border-color: #0062cc;
+}
+
+#addSchedule2PaymentBtn:active {
+  background-color: #0062cc;
+
+  border-color: #005cbf;
+}
+
+/* ============================================================
+   RECALCULATE SCHEDULE 2 BUTTON
+   ============================================================ */
+
+#recalculateSchedule2Btn {
+  display: inline-block;
+
+  min-height: 36px;
+
+  padding: 7px 18px;
+
+  margin: 0;
+
+  border: 1px solid #007bff;
+
+  border-radius: 4px;
+
+  background-color: #007bff;
+
+  color: #ffffff;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+#recalculateSchedule2Btn:hover {
+  background-color: #0069d9;
+
+  border-color: #0062cc;
+}
+
+#recalculateSchedule2Btn:active {
+  background-color: #0062cc;
+
+  border-color: #005cbf;
+}
+
+/* ============================================================
+   TABLET - GENERAL MORTGAGE
    ============================================================ */
 
 @media (max-width: 992px) {
   .mortgage-wrapper {
     flex: 1 1 45%;
+
     min-width: 220px;
   }
 
   .amortization-section {
     max-width: 100%;
+
     padding: 0 10px;
   }
 
   .amortization-table-wrapper {
     justify-content: flex-start;
+
     overflow-x: auto;
   }
 
   .amortization-table {
     min-width: 850px;
+  }
+}
+
+/* ============================================================
+   TABLET - SCHEDULE 2 PAYMENT INPUT TABLE
+   ============================================================ */
+
+@media (max-width: 992px) {
+  .schedule2-payment-table-wrapper {
+    justify-content: flex-start;
+
+    overflow-x: auto;
+  }
+
+  .schedule2-payment-table {
+    min-width: 650px;
   }
 }
 
@@ -465,19 +803,25 @@ button:hover {
 @media (max-width: 768px) {
   .mortgage-container {
     flex-direction: column;
+
     gap: 10px;
   }
 
   .mortgage-wrapper {
     width: 100%;
+
     min-width: 0;
+
     flex: 1 1 100%;
   }
 
   /* Keep recalculate button centered */
+
   .mortgage-wrapper:has(#recalculateSchedule2Btn) {
     display: flex;
+
     align-items: center;
+
     justify-content: center;
   }
 
@@ -486,9 +830,12 @@ button:hover {
   }
 
   /* Schedule section */
+
   .amortization-section {
     width: 100%;
+
     max-width: 100%;
+
     padding: 0 5px;
   }
 
@@ -501,14 +848,17 @@ button:hover {
   }
 
   /*
-    Table remains wide enough to preserve
-    readable columns. User can scroll horizontally.
+    Main amortization table remains wide enough
+    to preserve readable columns.
   */
+
   .amortization-table-wrapper {
     width: 100%;
+
     display: block;
 
     overflow-x: auto;
+
     overflow-y: hidden;
 
     -webkit-overflow-scrolling: touch;
@@ -518,7 +868,9 @@ button:hover {
 
   .amortization-table {
     width: max-content;
+
     min-width: 850px;
+
     font-size: 13px;
   }
 
@@ -529,6 +881,67 @@ button:hover {
   .amortization-table tbody td {
     padding: 7px 10px;
   }
+
+  /* ========================================================
+     Schedule 2 Payment Input Table
+     ======================================================== */
+
+  .schedule2-payment-table-wrapper {
+    width: 100%;
+
+    display: block;
+
+    overflow-x: auto;
+
+    overflow-y: hidden;
+
+    -webkit-overflow-scrolling: touch;
+
+    margin: 15px 0;
+  }
+
+  .schedule2-payment-table {
+    width: max-content;
+
+    min-width: 650px;
+
+    font-size: 13px;
+  }
+
+  .schedule2-payment-table thead th {
+    padding: 8px 10px;
+  }
+
+  .schedule2-payment-table tbody td {
+    padding: 7px 10px;
+  }
+
+  .schedule2-payment-table input {
+    min-height: 36px;
+
+    font-size: 13px;
+  }
+
+  /* ========================================================
+     Schedule 2 Buttons
+     ======================================================== */
+
+  .schedule2-button-row {
+    flex-direction: column;
+
+    width: 100%;
+
+    gap: 8px;
+  }
+
+  #addSchedule2PaymentBtn,
+  #recalculateSchedule2Btn {
+    width: 100%;
+
+    max-width: 300px;
+
+    margin: 0 auto;
+  }
 }
 
 /* ============================================================
@@ -538,6 +951,7 @@ button:hover {
 @media (max-width: 480px) {
   .mo1 {
     font-size: 22px;
+
     margin-bottom: 15px;
   }
 
@@ -557,8 +971,11 @@ button:hover {
     font-size: 16px;
   }
 
+  /* Main amortization table */
+
   .amortization-table {
     min-width: 850px;
+
     font-size: 12px;
   }
 
@@ -568,6 +985,40 @@ button:hover {
 
   .amortization-table tbody td {
     padding: 6px 8px;
+  }
+
+  /* Schedule 2 payment input table */
+
+  .schedule2-payment-table {
+    min-width: 600px;
+
+    font-size: 12px;
+  }
+
+  .schedule2-payment-table thead th {
+    padding: 7px 8px;
+  }
+
+  .schedule2-payment-table tbody td {
+    padding: 6px 8px;
+  }
+
+  .schedule2-payment-table input {
+    min-height: 34px;
+
+    padding: 6px 8px;
+
+    font-size: 12px;
+  }
+
+  .schedule2-remove-btn {
+    min-width: 70px;
+
+    min-height: 32px;
+
+    padding: 5px 10px;
+
+    font-size: 12px;
   }
 }
 
