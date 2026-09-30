@@ -188,7 +188,7 @@
     id="socialPostCreateComposer"
     class="social-post-create-composer"
     contenteditable="true"
-    data-placeholder="What's on your mind?/or The main content of the file/video upload"
+    data-placeholder="What's on your mind?/The main content of the file/video upload"
   ></div>
 
   <input
@@ -670,7 +670,35 @@
           </div>
 
         <% } %>
+        <!-- DELETE THIS INDIVIDUAL FILE -->
 
+<% if (
+  currentUserId &&
+  String(currentUserId) === String(post.userId)
+) { %>
+
+  <button
+    type="button"
+    class="social-delete-media-button"
+    data-media-id="<%= file.id %>"
+    data-post-id="<%= post.id %>"
+  >
+    🗑️ Delete file
+  </button>
+
+<% } else if (isAdmin) { %>
+
+  <button
+    type="button"
+    class="social-delete-media-button"
+    data-media-id="<%= file.id %>"
+    data-post-id="<%= post.id %>"
+  >
+    🗑️ Delete file
+  </button>
+
+<% } %>
+          
       </div>
 
     <% }); %>

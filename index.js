@@ -3611,7 +3611,7 @@ app.post("/social/post/edit", ensureAuthenticated, async (req, res) => {
       return res.redirect("/social/post");
     }
 
-    if (content.length > 5000) {
+    if (content.length > 15000) {
       return res.status(400).send("Post is too long.");
     }
 
@@ -3895,6 +3895,150 @@ app.post("/social/post/delete", ensureAuthenticated, async (req, res) => {
   }
 });
 //
+// ============================================================
+// DELETE INDIVIDUAL SOCIAL POST MEDIA
+// ============================================================
+
+app.post("/social/post/media/delete", ensureAuthenticated, async (req, res) => {
+  const client = await db.connect();
+
+  try {
+    const userId = req.user?.id || null;
+    const mediaId = parseInt(req.body.mediaId, 10);
+    const postId = parseInt(req.body.postId, 10);
+
+    // ======================================================
+    // VALIDATION
+    // ======================================================
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: "Please log in.",
+      });
+    }
+
+    if (!Number.isInteger(mediaId) || !Number.isInteger(postId)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid media or post ID.",
+      });
+    }
+
+    // ======================================================
+    // CURRENT USER ROLE
+    // ======================================================
+
+    const roleResult = await client.query(
+      `
+        SELECT role
+        FROM my_user
+        WHERE id = $1
+        `,
+      [userId],
+    );
+
+    const userRole = String(roleResult.rows[0]?.role || "")
+      .trim()
+      .toLowerCase();
+
+    const isAdmin = userRole === "admin1" || userRole === "admin2";
+
+    // ======================================================
+    // FIND MEDIA + VERIFY POST
+    // ======================================================
+
+    const mediaResult = await client.query(
+      `
+        SELECT
+          m.id,
+          m.post_id,
+          m.file_url,
+          p.user_id AS post_owner_id
+        FROM social_post_media m
+        JOIN social_posts p
+          ON p.id = m.post_id
+        WHERE m.id = $1
+          AND m.post_id = $2
+        LIMIT 1
+        `,
+      [mediaId, postId],
+    );
+
+    if (!mediaResult.rowCount) {
+      return res.status(404).json({
+        success: false,
+        error: "Media file not found.",
+      });
+    }
+
+    const media = mediaResult.rows[0];
+
+    // ======================================================
+    // PERMISSION
+    //
+    // Post owner can delete their own media.
+    // admin1/admin2 can delete media from any post.
+    // ======================================================
+
+    const isOwner = String(media.post_owner_id) === String(userId);
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        error: "You cannot delete this file.",
+      });
+    }
+
+    // ======================================================
+    // DELETE MEDIA DATABASE RECORD
+    // ======================================================
+
+    await client.query("BEGIN");
+
+    await client.query(
+      `
+        DELETE FROM social_post_media
+        WHERE id = $1
+          AND post_id = $2
+        `,
+      [mediaId, postId],
+    );
+
+    await client.query("COMMIT");
+
+    // ======================================================
+    // SUCCESS
+    // ======================================================
+
+    return res.status(200).json({
+      success: true,
+      mediaId: String(mediaId),
+      postId: String(postId),
+    });
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackError) {
+      console.error("Rollback error:", rollbackError);
+    }
+
+    console.error("========================================");
+    console.error("DELETE SOCIAL MEDIA ERROR");
+    console.error("message:", err.message);
+    console.error("code:", err.code);
+    console.error("detail:", err.detail);
+    console.error("stack:", err.stack);
+    console.error("========================================");
+
+    return res.status(500).json({
+      success: false,
+      error: "Unable to delete file.",
+    });
+  } finally {
+    client.release();
+  }
+});
 
 // POST COMMENT
 app.post("/social/post/comment", ensureAuthenticated, async (req, res) => {

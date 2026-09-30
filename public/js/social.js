@@ -869,3 +869,83 @@ document.addEventListener("click", (event) => {
 
   socialShowReply(commentId, parentReplyId);
 });
+//
+// ============================================================
+// SOCIAL DELETE INDIVIDUAL MEDIA FILE
+// ============================================================
+
+document.addEventListener("click", async (event) => {
+  const button = event.target.closest(".social-delete-media-button");
+
+  if (!button) {
+    return;
+  }
+
+  const mediaId = button.dataset.mediaId;
+  const postId = button.dataset.postId;
+
+  if (!mediaId || !postId) {
+    console.error("Missing mediaId or postId:", {
+      mediaId,
+      postId,
+    });
+
+    return;
+  }
+
+  const confirmed = confirm("Are you sure you want to delete this file?");
+
+  if (!confirmed) {
+    return;
+  }
+
+  const originalHTML = button.innerHTML;
+
+  try {
+    button.disabled = true;
+    button.innerHTML = "⏳ Deleting...";
+
+    const response = await fetch("/social/post/media/delete", {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        mediaId: mediaId,
+        postId: postId,
+      }),
+    });
+
+    const responseText = await response.text();
+
+    let data;
+
+    try {
+      data = JSON.parse(responseText);
+    } catch (error) {
+      throw new Error(
+        `Server returned an invalid response (${response.status}).`,
+      );
+    }
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "Unable to delete file.");
+    }
+
+    // Remove ONLY this file from the page
+    const mediaItem = button.closest(".social-post-media-item");
+
+    if (mediaItem) {
+      mediaItem.remove();
+    }
+  } catch (error) {
+    console.error("DELETE MEDIA ERROR:", error);
+
+    alert(error.message || "Unable to delete file.");
+
+    button.disabled = false;
+    button.innerHTML = originalHTML;
+  }
+});
