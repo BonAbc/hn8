@@ -80,7 +80,7 @@ app.use(compression());
 // ----------------------------
 // Blocked IPs
 // ----------------------------
-const BLOCKED_IPS = new Set(["35.240.58.49", "185.93.89.167"]);
+const BLOCKED_IPS = new Set(["35.240.58.49", "185.93.89.167", "172.56.17.147"]);
 
 app.use((req, res, next) => {
   const clientIP =
