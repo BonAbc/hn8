@@ -76,6 +76,26 @@ const globalLimiter = rateLimit({
 
 app.use(globalLimiter);
 app.use(compression());
+//
+// ----------------------------
+// Blocked IPs
+// ----------------------------
+const BLOCKED_IPS = new Set(["35.240.58.49", "185.93.89.167"]);
+
+app.use((req, res, next) => {
+  const clientIP =
+    req.headers["cf-connecting-ip"] || req.ip?.replace(/^::ffff:/, "");
+
+  if (BLOCKED_IPS.has(clientIP)) {
+    console.log(`BLOCKED IP: ${clientIP} | ${req.method} ${req.originalUrl}`);
+
+    return res.status(403).send("Forbidden");
+  }
+
+  next();
+});
+
+//
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
