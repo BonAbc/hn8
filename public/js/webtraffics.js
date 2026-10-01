@@ -24,7 +24,7 @@ socket.on("new-visitor", (data) => {
     <td data-label="ID">
       ${data.id || ""}
     </td>
-
+  
     <!-- REAL VISITOR IP -->
     <td data-label="Visitor IP">
       ${data.visitor_ip || "Unknown"}
@@ -110,3 +110,51 @@ function confirmBulkDelete() {
 
   return confirm(`Delete ${selected.length} selected visitor record(s)?`);
 }
+//
+document.addEventListener("click", async (event) => {
+  const button = event.target.closest(".block-ip-button");
+
+  if (!button) {
+    return;
+  }
+
+  const ip = button.dataset.ip;
+
+  if (!ip) {
+    return;
+  }
+
+  const confirmed = confirm(`Block this IP: ${ip}?`);
+
+  if (!confirmed) {
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Blocking...";
+
+  try {
+    const response = await fetch("/web/traffic/test/block", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ip }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to block IP");
+    }
+
+    button.textContent = "Blocked";
+    button.classList.remove("btn-danger");
+    button.classList.add("btn-secondary");
+  } catch (error) {
+    console.error("Block IP error:", error);
+
+    button.disabled = false;
+    button.textContent = "Block IP";
+
+    alert("Failed to block IP.");
+  }
+});

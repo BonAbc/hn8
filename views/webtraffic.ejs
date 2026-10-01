@@ -2,16 +2,34 @@
 
 <main class="container">
 
-  <form>
-    <label for="date">Date:</label>
-    <input
-      type="date"
-      id="date"
-      name="date"
-      value="<%= defaultDate %>"
-    />
-  </form>
+   <div class="date-row">
+    <form>
+      <label for="date">Date:</label>
+      <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+    </form>
 
+    <div class="clock" id="clock">
+      <span class="number n12">12</span>
+      <span class="number n1">1</span>
+      <span class="number n2">2</span>
+      <span class="number n3">3</span>
+      <span class="number n4">4</span>
+      <span class="number n5">5</span>
+      <span class="number n6">6</span>
+      <span class="number n7">7</span>
+      <span class="number n8">8</span>
+      <span class="number n9">9</span>
+      <span class="number n10">10</span>
+      <span class="number n11">11</span>
+
+      <div class="hand hour" id="hour"></div>
+      <div class="hand minute" id="minute"></div>
+      <div class="hand second" id="second"></div>
+      <div class="clock-dot"></div>
+    </div>
+  </div>
+  <br />
+ 
   <h2 id="hm">Hoa Mai</h2>
 
   <!-- FILTERS -->
@@ -294,6 +312,8 @@
 
                 <th>Time</th>
 
+                <th>Action</th>
+
               </tr>
 
             </thead>
@@ -397,16 +417,34 @@
 
                     </td>
 
+                      <!-- ACTION -->
+                     <td data-label="Action">
+
+                   <% if (visitor.visitor_ip) { %>
+
+                  <button
+                   type="button"
+                   class="btn btn-danger btn-sm rounded-0 block-ip-button"
+                   data-ip="<%= visitor.visitor_ip %>"
+                   >
+                   Block IP
+                  </button>
+
+                   <% } %>
+
+                   </td>
+
+
                   </tr>
 
                 <% }) %>
 
-              <% } else { %>
+               <% } else { %>
 
                 <tr>
 
                   <td
-                    colspan="10"
+                    colspan="11"
                     class="text-center"
                   >
                     No traffic found.
@@ -611,5 +649,7 @@
 <script src="/socket.io/socket.io.js"></script>
 
 <script src="/js/webtraffics.js"></script>
+
+<script src="/js/clock.js"></script>
 
 <%- include("partials/footer.ejs") %>

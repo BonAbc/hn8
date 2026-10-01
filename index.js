@@ -79,35 +79,38 @@ app.use(compression());
 //
 // ----------------------------
 // Blocked IPs
-// ----------------------------
-const BLOCKED_IPS = new Set([
-  "35.240.58.49",
-  "185.93.89.167",
-  "20.5.79.49",
-  "114.148.171.128",
-  "173.252.70.30",
-  "20.214.145.90",
-  "94.154.43.180",
-  "172.68.183.25",
-  "207.46.13.17",
-  "185.177.72.100",
-  "185.177.72.17",
-  "20.214.151.17",
-  "185.177.72.69",
-  "185.177.72.23",
-]);
+app.use(async (req, res, next) => {
+  try {
+    const clientIP =
+      req.headers["cf-connecting-ip"] || req.ip?.replace(/^::ffff:/, "");
 
-app.use((req, res, next) => {
-  const clientIP =
-    req.headers["cf-connecting-ip"] || req.ip?.replace(/^::ffff:/, "");
+    if (!clientIP) {
+      return next();
+    }
+    // select 1 : any IP only 1 matched > block
+    const result = await db.query(
+      `
+      SELECT 1
+      FROM blocked_ips
+      WHERE ip_address = $1::inet
+      LIMIT 1
+      `,
+      [clientIP],
+    );
 
-  if (BLOCKED_IPS.has(clientIP)) {
-    console.log(`BLOCKED IP: ${clientIP} | ${req.method} ${req.originalUrl}`);
+    if (result.rowCount > 0) {
+      console.log(`BLOCKED IP: ${clientIP} | ${req.method} ${req.originalUrl}`);
 
-    return res.status(403).send("Forbidden");
+      return res.status(403).send("Forbidden");
+    }
+
+    next();
+  } catch (error) {
+    console.error("Blocked IP check error:", error);
+
+    // Don't break the website if the blocklist database check fails.
+    next();
   }
-
-  next();
 });
 
 //
@@ -10664,6 +10667,38 @@ app.delete(
     }
   },
 );
+//
+app.post("/web/traffic/test/block", ensureAdmin, async (req, res) => {
+  try {
+    const ip = (req.body.ip || "").trim();
+
+    if (!ip) {
+      return res.status(400).json({
+        error: "IP address is required",
+      });
+    }
+
+    await db.query(
+      `
+      INSERT INTO blocked_ips (ip_address, reason)
+      VALUES ($1::inet, $2)
+      ON CONFLICT (ip_address) DO NOTHING
+      `,
+      [ip, "Blocked from web traffic dashboard"],
+    );
+
+    res.json({
+      success: true,
+      ip,
+    });
+  } catch (error) {
+    console.error("Block IP error:", error);
+
+    res.status(500).json({
+      error: "Failed to block IP",
+    });
+  }
+});
 // ----------------------------
 app.use((err, req, res, next) => {
   console.error("❌ Uncaught error:", err);
