@@ -111,6 +111,95 @@ app.use(async (req, res, next) => {
   }
 });
 //
+// ==================================================
+// PER-IP TRAFFIC PROTECTION
+// ==================================================
+
+const MAX_REQUESTS = 5;
+const REQUEST_WINDOW_MINUTES = 15;
+
+// One request at a time per IP
+const activeRequests = new Map();
+
+app.use(async (req, res, next) => {
+  try {
+    const clientIP =
+      req.headers["cf-connecting-ip"] || req.ip?.replace(/^::ffff:/, "");
+
+    if (!clientIP) {
+      return next();
+    }
+
+    // ==================================================
+    // 1. ONE ACTIVE REQUEST PER IP
+    // ==================================================
+
+    if (activeRequests.has(clientIP)) {
+      console.log(
+        `CONCURRENT LIMIT: ${clientIP} | ${req.method} ${req.originalUrl}`,
+      );
+
+      return res
+        .status(429)
+        .send("Too many simultaneous requests. Please try again.");
+    }
+
+    activeRequests.set(clientIP, true);
+
+    let released = false;
+
+    const release = () => {
+      if (released) return;
+
+      released = true;
+      activeRequests.delete(clientIP);
+    };
+
+    res.once("finish", release);
+    res.once("close", release);
+
+    // ==================================================
+    // 2. MAX 5 REQUESTS PER IP / 15 MINUTES
+    // ==================================================
+
+    const result = await db.query(
+      `
+  SELECT COUNT(*) AS request_count
+  FROM webtraffic
+  WHERE visitor_ip = $1
+    AND created_at >= NOW() - ($2 * INTERVAL '1 minute')
+  `,
+      [clientIP, REQUEST_WINDOW_MINUTES],
+    );
+
+    const requestCount = Number(result.rows[0].request_count);
+
+    if (requestCount >= MAX_REQUESTS) {
+      console.log(
+        `REQUEST LIMIT: ${clientIP} | ${requestCount} requests | ${req.method} ${req.originalUrl}`,
+      );
+
+      release();
+
+      return res.status(429).send("Too many requests. Please try again later.");
+    }
+
+    next();
+  } catch (error) {
+    console.error("IP traffic protection error:", error);
+
+    const clientIP =
+      req.headers["cf-connecting-ip"] || req.ip?.replace(/^::ffff:/, "");
+
+    if (clientIP) {
+      activeRequests.delete(clientIP);
+    }
+
+    next();
+  }
+});
+
+//
 app.use(globalLimiter);
 app.use(compression());
 //
