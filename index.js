@@ -268,7 +268,7 @@ const authLimiter = rateLimit({
 //
 const publicLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 6,
   message: "Too many request attempts. Try again later.",
 });
 //
