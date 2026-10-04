@@ -1,14 +1,23 @@
 /* =====================================================
+   MORTGAGE CALCULATOR
+   mortgage.js
+   ===================================================== */
+
+/* =====================================================
    FORMAT OUTPUT
    ===================================================== */
 
 function formatOutput(value) {
-  if (isNaN(value)) return "";
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    return "";
+  }
 
   return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 3,
     maximumFractionDigits: 3,
-  }).format(value);
+  }).format(number);
 }
 
 /* =====================================================
@@ -16,11 +25,19 @@ function formatOutput(value) {
    ===================================================== */
 
 function cleanNumber(value) {
-  if (!value) return 0;
+  if (value === null || value === undefined) {
+    return 0;
+  }
 
-  const num = parseFloat(value.toString().replace(/,/g, ""));
+  const text = String(value).replace(/,/g, "").trim();
 
-  return isNaN(num) ? 0 : num;
+  if (text === "") {
+    return 0;
+  }
+
+  const number = parseFloat(text);
+
+  return Number.isFinite(number) ? number : 0;
 }
 
 /* =====================================================
@@ -32,22 +49,36 @@ function calculateMonthlyPayment(
   annualInterestRate,
   loanTermYears,
 ) {
-  const monthlyRate = annualInterestRate / 100 / 12;
+  const principal = Number(loanAmount);
+  const rate = Number(annualInterestRate);
+  const years = Number(loanTermYears);
 
-  const totalPayments = loanTermYears * 12;
+  if (!Number.isFinite(principal) || principal <= 0) {
+    return 0;
+  }
+
+  if (!Number.isFinite(rate) || rate < 0) {
+    return 0;
+  }
+
+  if (!Number.isFinite(years) || years <= 0) {
+    return 0;
+  }
+
+  const monthlyRate = rate / 100 / 12;
+  const totalPayments = Math.ceil(years * 12);
 
   if (totalPayments <= 0) {
     return 0;
   }
 
   if (monthlyRate === 0) {
-    return loanAmount / totalPayments;
+    return principal / totalPayments;
   }
 
-  return (
-    (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, totalPayments)) /
-    (Math.pow(1 + monthlyRate, totalPayments) - 1)
-  );
+  const factor = Math.pow(1 + monthlyRate, totalPayments);
+
+  return (principal * monthlyRate * factor) / (factor - 1);
 }
 
 /* =====================================================
@@ -57,13 +88,193 @@ function calculateMonthlyPayment(
 function formatWithCommasAndDecimals(event) {
   const input = event.target;
 
-  const raw = input.value.replace(/,/g, "");
-
-  const num = parseFloat(raw);
-
-  if (!isNaN(num)) {
-    input.value = formatOutput(num);
+  if (!input) {
+    return;
   }
+
+  const raw = input.value.replace(/,/g, "").trim();
+
+  if (raw === "") {
+    return;
+  }
+
+  const number = parseFloat(raw);
+
+  if (Number.isFinite(number)) {
+    input.value = formatOutput(number);
+  }
+}
+
+/* =====================================================
+   DATE HELPERS
+   ===================================================== */
+
+/*
+  Parse YYYY-MM-DD as a local date.
+
+  This avoids the UTC date-shift problem that can happen
+  when using new Date("YYYY-MM-DD").
+*/
+
+function parseLocalDate(dateString) {
+  if (!dateString) {
+    return null;
+  }
+
+  const parts = String(dateString).split("-");
+
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
+
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day)
+  ) {
+    return null;
+  }
+
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+/* =====================================================
+   DATE -> YYYY-MM-DD
+   ===================================================== */
+
+function formatDateForInput(date) {
+  if (!(date instanceof Date) || !Number.isFinite(date.getTime())) {
+    return "";
+  }
+
+  const year = date.getFullYear();
+
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+/* =====================================================
+   DATE -> MM/DD/YYYY
+   ===================================================== */
+
+function formatDisplayDate(date) {
+  if (!(date instanceof Date) || !Number.isFinite(date.getTime())) {
+    return "";
+  }
+
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+
+  const day = String(date.getDate()).padStart(2, "0");
+
+  const year = date.getFullYear();
+
+  return `${month}/${day}/${year}`;
+}
+
+/* =====================================================
+   ADD CALENDAR MONTHS
+   ===================================================== */
+
+function addMonths(date, months) {
+  if (!(date instanceof Date) || !Number.isFinite(date.getTime())) {
+    return null;
+  }
+
+  const originalDate = new Date(date.getTime());
+
+  const originalDay = originalDate.getDate();
+
+  /*
+    Determine whether original date is the final
+    calendar day of its month.
+  */
+
+  const lastDayOfOriginalMonth = new Date(
+    originalDate.getFullYear(),
+    originalDate.getMonth() + 1,
+    0,
+  ).getDate();
+
+  const isEndOfMonth = originalDay === lastDayOfOriginalMonth;
+
+  /*
+    Move to target month, starting at day 1.
+  */
+
+  const result = new Date(
+    originalDate.getFullYear(),
+    originalDate.getMonth() + months,
+    1,
+  );
+
+  /*
+    Last day of target month.
+  */
+
+  const lastDayOfTargetMonth = new Date(
+    result.getFullYear(),
+    result.getMonth() + 1,
+    0,
+  ).getDate();
+
+  /*
+    Preserve month-end behavior.
+
+    01/31 -> 02/28
+    02/28 -> 03/31
+    03/31 -> 04/30
+  */
+
+  if (isEndOfMonth) {
+    result.setDate(lastDayOfTargetMonth);
+  } else {
+    result.setDate(Math.min(originalDay, lastDayOfTargetMonth));
+  }
+
+  return result;
+}
+
+/* =====================================================
+   GET SCHEDULE 1 PAYMENT DATE
+   ===================================================== */
+
+function getSchedule1PaymentDate(period) {
+  const startInput = document.getElementById("schedule1StartDate");
+
+  if (!startInput || !startInput.value) {
+    return null;
+  }
+
+  const startDate = parseLocalDate(startInput.value);
+
+  if (!startDate) {
+    return null;
+  }
+
+  const paymentPeriod = Math.floor(Number(period));
+
+  if (!Number.isFinite(paymentPeriod) || paymentPeriod <= 0) {
+    return null;
+  }
+
+  return addMonths(startDate, paymentPeriod - 1);
 }
 
 /* =====================================================
@@ -86,8 +297,8 @@ function getMortgageData() {
   let loanAmount = 0;
 
   /*
-    Purchase Price + Down Payment
-    take priority when both are valid.
+    Purchase Price + Down Payment take priority
+    when valid.
   */
 
   if (purchasePrice > 0 && downPayment >= 0 && downPayment <= purchasePrice) {
@@ -97,10 +308,170 @@ function getMortgageData() {
   }
 
   return {
+    purchasePrice,
+    downPayment,
     loanAmount,
     interestRate,
     loanTermYears,
   };
+}
+
+/* =====================================================
+   CREATE SCHEDULE ROW
+   ===================================================== */
+
+function createScheduleRow({
+  period,
+  year,
+  paymentDate,
+  beginningBalance,
+  payment,
+  interestPaid,
+  principalPaid,
+  unpaidInterest = 0,
+  endingBalance,
+  actualPayment = false,
+}) {
+  const row = document.createElement("tr");
+
+  if (actualPayment) {
+    row.classList.add("schedule2-actual-period-highlight");
+  }
+
+  row.innerHTML = `
+    <td>${period}</td>
+
+    <td>${year}</td>
+
+    <td>${paymentDate}</td>
+
+    <td>${formatOutput(beginningBalance)}</td>
+
+    <td>${formatOutput(payment)}</td>
+
+    <td>${formatOutput(interestPaid)}</td>
+
+    <td>${formatOutput(principalPaid)}</td>
+
+    <td>${formatOutput(unpaidInterest)}</td>
+
+    <td>${formatOutput(endingBalance)}</td>
+
+    <td>0.000</td>
+
+    <td>0.000</td>
+  `;
+
+  return row;
+}
+
+/* =====================================================
+   CREATE ANNUAL SUMMARY ROW
+   ===================================================== */
+
+function createAnnualSummaryRow({
+  year,
+  totalPayment,
+  totalInterest,
+  totalPrincipal,
+  totalUnpaidInterest = 0,
+  endingBalance,
+}) {
+  const row = document.createElement("tr");
+
+  row.classList.add("amortization-annual-summary-row");
+
+  row.innerHTML = `
+    <td colspan="3">
+      <strong>${year} TOTAL</strong>
+    </td>
+
+    <td></td>
+
+    <td>
+      <strong>${formatOutput(totalPayment)}</strong>
+    </td>
+
+    <td>
+      <strong>${formatOutput(totalInterest)}</strong>
+    </td>
+
+    <td>
+      <strong>${formatOutput(totalPrincipal)}</strong>
+    </td>
+
+    <td>
+      <strong>${formatOutput(totalUnpaidInterest)}</strong>
+    </td>
+
+    <td>
+      <strong>${formatOutput(endingBalance)}</strong>
+    </td>
+
+    <td>
+      <strong>0.000</strong>
+    </td>
+
+    <td>
+      <strong>0.000</strong>
+    </td>
+  `;
+
+  return row;
+}
+
+/* =====================================================
+   CREATE OVERALL TOTAL ROW
+   ===================================================== */
+
+function createOverallTotalRow({
+  totalPayment,
+  totalInterest,
+  totalPrincipal,
+  totalUnpaidInterest = 0,
+  endingBalance,
+}) {
+  const row = document.createElement("tr");
+
+  row.classList.add("amortization-total-row");
+
+  row.innerHTML = `
+    <td colspan="3">
+      <strong>TOTAL</strong>
+    </td>
+
+    <td></td>
+
+    <td>
+      <strong>${formatOutput(totalPayment)}</strong>
+    </td>
+
+    <td>
+      <strong>${formatOutput(totalInterest)}</strong>
+    </td>
+
+    <td>
+      <strong>${formatOutput(totalPrincipal)}</strong>
+    </td>
+
+    <td>
+      <strong>${formatOutput(totalUnpaidInterest)}</strong>
+    </td>
+
+    <td>
+      <strong>${formatOutput(endingBalance)}</strong>
+    </td>
+
+    <td>
+      <strong>0.000</strong>
+    </td>
+
+    <td>
+      <strong>0.000</strong>
+    </td>
+  `;
+
+  return row;
 }
 
 /* =====================================================
@@ -116,7 +487,9 @@ function generateSchedule1(
 ) {
   const body = document.getElementById("amortizationBody1");
 
-  if (!body) return;
+  if (!body) {
+    return;
+  }
 
   body.innerHTML = "";
 
@@ -127,8 +500,30 @@ function generateSchedule1(
   let balance = loanAmount;
 
   let totalPayment = 0;
-
   let totalInterest = 0;
+  let totalPrincipal = 0;
+
+  let currentYear = null;
+
+  let annualPayment = 0;
+  let annualInterest = 0;
+  let annualPrincipal = 0;
+
+  const startInput = document.getElementById("schedule1StartDate");
+
+  if (!startInput || !startInput.value) {
+    alert("Please select a Payment Start Date before calculating.");
+
+    return;
+  }
+
+  const startDate = parseLocalDate(startInput.value);
+
+  if (!startDate) {
+    alert("Invalid Payment Start Date.");
+
+    return;
+  }
 
   for (let period = 1; period <= totalPeriods; period++) {
     if (balance <= 0.000001) {
@@ -142,15 +537,21 @@ function generateSchedule1(
     let payment = monthlyPayment;
 
     /*
-      Final payment cannot exceed
-      remaining balance + interest.
+      Final payment cannot exceed:
+      beginning balance + interest.
     */
 
-    if (payment > beginningBalance + interestPaid) {
-      payment = beginningBalance + interestPaid;
+    const amountDue = beginningBalance + interestPaid;
+
+    if (payment > amountDue) {
+      payment = amountDue;
     }
 
-    const principalPaid = payment - interestPaid;
+    let principalPaid = payment - interestPaid;
+
+    if (principalPaid < 0) {
+      principalPaid = 0;
+    }
 
     let endingBalance = beginningBalance - principalPaid;
 
@@ -158,78 +559,120 @@ function generateSchedule1(
       endingBalance = 0;
     }
 
+    const paymentDate = addMonths(startDate, period - 1);
+
+    const year = paymentDate.getFullYear();
+
+    /*
+      Finish previous annual summary when year changes.
+    */
+
+    if (currentYear !== null && year !== currentYear) {
+      body.appendChild(
+        createAnnualSummaryRow({
+          year: currentYear,
+          totalPayment: annualPayment,
+          totalInterest: annualInterest,
+          totalPrincipal: annualPrincipal,
+          totalUnpaidInterest: 0,
+          endingBalance: beginningBalance,
+        }),
+      );
+
+      annualPayment = 0;
+      annualInterest = 0;
+      annualPrincipal = 0;
+    }
+
+    currentYear = year;
+
+    /*
+      Add totals.
+    */
+
     totalPayment += payment;
-
     totalInterest += interestPaid;
+    totalPrincipal += principalPaid;
 
-    const row = document.createElement("tr");
+    annualPayment += payment;
+    annualInterest += interestPaid;
+    annualPrincipal += principalPaid;
 
-    row.innerHTML = `
-      <td>${period}</td>
+    /*
+      Add schedule row.
+    */
 
-      <td>
-        ${formatOutput(beginningBalance)}
-      </td>
-
-      <td>
-        ${formatOutput(payment)}
-      </td>
-
-      <td>
-        ${formatOutput(interestPaid)}
-      </td>
-
-      <td>
-        ${formatOutput(principalPaid)}
-      </td>
-
-      <td>
-        ${formatOutput(endingBalance)}
-      </td>
-    `;
-
-    body.appendChild(row);
+    body.appendChild(
+      createScheduleRow({
+        period,
+        year,
+        paymentDate: formatDisplayDate(paymentDate),
+        beginningBalance,
+        payment,
+        interestPaid,
+        principalPaid,
+        unpaidInterest: 0,
+        endingBalance,
+        actualPayment: false,
+      }),
+    );
 
     balance = endingBalance;
+
+    /*
+      Loan is paid off.
+    */
+
+    if (balance <= 0.000001) {
+      body.appendChild(
+        createAnnualSummaryRow({
+          year: currentYear,
+          totalPayment: annualPayment,
+          totalInterest: annualInterest,
+          totalPrincipal: annualPrincipal,
+          totalUnpaidInterest: 0,
+          endingBalance: balance,
+        }),
+      );
+
+      break;
+    }
+
+    /*
+      Final scheduled period.
+    */
+
+    if (period === totalPeriods) {
+      body.appendChild(
+        createAnnualSummaryRow({
+          year: currentYear,
+          totalPayment: annualPayment,
+          totalInterest: annualInterest,
+          totalPrincipal: annualPrincipal,
+          totalUnpaidInterest: 0,
+          endingBalance: balance,
+        }),
+      );
+    }
   }
 
-  /* =================================================
-     SCHEDULE 1 TOTAL ROW
-     ================================================= */
+  /*
+    Overall total.
+  */
 
-  const totalRow = document.createElement("tr");
+  body.appendChild(
+    createOverallTotalRow({
+      totalPayment,
+      totalInterest,
+      totalPrincipal,
+      totalUnpaidInterest: 0,
+      endingBalance: balance,
+    }),
+  );
 
-  totalRow.classList.add("amortization-total-row");
-
-  totalRow.innerHTML = `
-    <td>
-      <strong>TOTAL</strong>
-    </td>
-
-    <td></td>
-
-    <td>
-      <strong>
-        ${formatOutput(totalPayment)}
-      </strong>
-    </td>
-
-    <td>
-      <strong>
-        ${formatOutput(totalInterest)}
-      </strong>
-    </td>
-
-    <td></td>
-
-    <td></td>
-  `;
-
-  body.appendChild(totalRow);
-
-  /* =================================================
-     SUMMARY
-     ================================================= */
+  /*
+    Summary.
+  */
 
   const loan = document.getElementById("schedule1Loan");
 
@@ -245,8 +688,32 @@ function generateSchedule1(
     payment.textContent = formatOutput(monthlyPayment);
   }
 
+  /*
+    This represents the maximum scheduled number
+    of payments, not necessarily the number actually
+    generated if the mortgage pays off early.
+  */
+
+  let generatedPeriods = 0;
+
+  const scheduleRows = body.querySelectorAll("tr");
+
+  scheduleRows.forEach((row) => {
+    const firstCell = row.querySelector("td");
+
+    if (!firstCell) {
+      return;
+    }
+
+    const value = parseInt(firstCell.textContent.trim(), 10);
+
+    if (Number.isInteger(value)) {
+      generatedPeriods = Math.max(generatedPeriods, value);
+    }
+  });
+
   if (periods) {
-    periods.textContent = totalPeriods;
+    periods.textContent = generatedPeriods;
   }
 }
 
@@ -276,7 +743,7 @@ function clearSchedule2Highlights() {
 }
 
 /* =====================================================
-   GET ALL SCHEDULE 2 ACTUAL PAYMENTS
+   GET SCHEDULE 2 ACTUAL / SCENARIO PAYMENTS
    ===================================================== */
 
 function getSchedule2Payments(validateIncomplete = false) {
@@ -295,6 +762,8 @@ function getSchedule2Payments(validateIncomplete = false) {
 
     const periodInput = row.querySelector(".schedule2-actual-period");
 
+    const dateInput = row.querySelector(".schedule2-actual-payment-date");
+
     if (!paymentInput || !periodInput) {
       continue;
     }
@@ -303,26 +772,22 @@ function getSchedule2Payments(validateIncomplete = false) {
 
     const periodRaw = periodInput.value.trim();
 
-    const actualPayment = cleanNumber(paymentRaw);
+    /*
+      Empty row is allowed.
+    */
 
-    const actualPaymentPeriod = Math.floor(cleanNumber(periodRaw));
+    if (paymentRaw === "" && periodRaw === "") {
+      row.classList.remove("schedule2-incomplete-row");
+
+      continue;
+    }
 
     const hasPayment = paymentRaw !== "";
 
     const hasPeriod = periodRaw !== "";
 
     /*
-      Completely empty row:
-      allowed.
-    */
-
-    if (!hasPayment && !hasPeriod) {
-      continue;
-    }
-
-    /*
-      Incomplete row:
-      one field exists but the other is missing.
+      Incomplete row.
     */
 
     if (hasPayment !== hasPeriod) {
@@ -330,12 +795,8 @@ function getSchedule2Payments(validateIncomplete = false) {
 
       if (validateIncomplete) {
         alert(
-          "Incomplete Actual Payment row detected. Please enter both the Actual Monthly Payment and Payment Period, or remove the row.",
+          "Incomplete Scenario Payment row. Enter both the Actual Monthly Payment and Payment Period, or remove the row.",
         );
-
-        /*
-          Focus whichever field is missing.
-        */
 
         if (!hasPayment) {
           paymentInput.focus();
@@ -346,21 +807,38 @@ function getSchedule2Payments(validateIncomplete = false) {
         return null;
       }
 
-      /*
-        During normal Mortgage Calculate,
-        do not use incomplete rows.
-      */
-
       continue;
     }
 
+    const actualPayment = cleanNumber(paymentRaw);
+
+    const actualPaymentPeriod = Math.floor(cleanNumber(periodRaw));
+
+    let actualPaymentDate = "";
+
+    if (dateInput) {
+      actualPaymentDate = dateInput.value.trim();
+    }
+
     /*
-      Both fields exist.
+      Automatically use Schedule 1's payment date
+      if the user doesn't provide a custom date.
     */
+
+    if (actualPaymentPeriod > 0 && !actualPaymentDate) {
+      const defaultDate = getSchedule1PaymentDate(actualPaymentPeriod);
+
+      if (defaultDate) {
+        actualPaymentDate = formatDateForInput(defaultDate);
+
+        dateInput.value = actualPaymentDate;
+      }
+    }
 
     payments.push({
       actualPayment,
       actualPaymentPeriod,
+      actualPaymentDate,
       row,
     });
   }
@@ -383,6 +861,17 @@ function addSchedule2PaymentRow() {
 
   row.classList.add("schedule2-payment-row");
 
+  /*
+    IMPORTANT:
+    This now matches the EJS exactly.
+
+    EJS has:
+    1. Actual Monthly Payment
+    2. Actual Payment Period
+    3. Actual Payment Date
+    4. Action
+  */
+
   row.innerHTML = `
     <td>
       <input
@@ -401,6 +890,13 @@ function addSchedule2PaymentRow() {
     </td>
 
     <td>
+      <input
+        type="date"
+        class="schedule2-actual-payment-date"
+      />
+    </td>
+
+    <td>
       <button
         type="button"
         class="schedule2-remove-btn"
@@ -413,7 +909,7 @@ function addSchedule2PaymentRow() {
   body.appendChild(row);
 
   /*
-    Format payment on blur.
+    Payment formatting.
   */
 
   const paymentInput = row.querySelector(".schedule2-actual-payment");
@@ -423,17 +919,36 @@ function addSchedule2PaymentRow() {
   }
 
   /*
-    Format period on blur.
+    Period input.
   */
 
   const periodInput = row.querySelector(".schedule2-actual-period");
 
   if (periodInput) {
     periodInput.addEventListener("blur", formatWithCommasAndDecimals);
+
+    /*
+      When the period changes, automatically
+      populate the matching Schedule 1 date.
+    */
+
+    periodInput.addEventListener("change", () => {
+      const period = Math.floor(cleanNumber(periodInput.value));
+
+      const dateInput = row.querySelector(".schedule2-actual-payment-date");
+
+      if (dateInput && period > 0) {
+        const defaultDate = getSchedule1PaymentDate(period);
+
+        if (defaultDate) {
+          dateInput.value = formatDateForInput(defaultDate);
+        }
+      }
+    });
   }
 
   /*
-    Focus new payment field.
+    Focus payment input.
   */
 
   if (paymentInput) {
@@ -452,6 +967,11 @@ function setupSchedule2RowEvents() {
     return;
   }
 
+  /*
+    Event delegation means this works for
+    dynamically-created rows too.
+  */
+
   body.addEventListener("click", (event) => {
     const removeButton = event.target.closest(".schedule2-remove-btn");
 
@@ -464,6 +984,16 @@ function setupSchedule2RowEvents() {
     if (row) {
       row.remove();
     }
+
+    /*
+        Keep at least one blank row available.
+      */
+
+    if (body.children.length === 0) {
+      addSchedule2PaymentRow();
+    }
+
+    clearSchedule2Highlights();
   });
 }
 
@@ -480,17 +1010,15 @@ function validateSchedule2Payments(payments, maximumPeriods) {
     */
 
     if (item.actualPayment <= 0) {
-      alert("Each Actual Monthly Payment must be greater than zero.");
+      alert("Each Scenario Payment must be greater than zero.");
 
       if (item.row) {
         item.row.classList.add("schedule2-incomplete-row");
 
-        const paymentInput = item.row.querySelector(
-          ".schedule2-actual-payment",
-        );
+        const input = item.row.querySelector(".schedule2-actual-payment");
 
-        if (paymentInput) {
-          paymentInput.focus();
+        if (input) {
+          input.focus();
         }
       }
 
@@ -505,15 +1033,15 @@ function validateSchedule2Payments(payments, maximumPeriods) {
       item.actualPaymentPeriod <= 0 ||
       item.actualPaymentPeriod > maximumPeriods
     ) {
-      alert(`Actual Payment Period must be between 1 and ${maximumPeriods}.`);
+      alert(`Scenario Payment Period must be between 1 and ${maximumPeriods}.`);
 
       if (item.row) {
         item.row.classList.add("schedule2-incomplete-row");
 
-        const periodInput = item.row.querySelector(".schedule2-actual-period");
+        const input = item.row.querySelector(".schedule2-actual-period");
 
-        if (periodInput) {
-          periodInput.focus();
+        if (input) {
+          input.focus();
         }
       }
 
@@ -526,7 +1054,7 @@ function validateSchedule2Payments(payments, maximumPeriods) {
 
     if (usedPeriods.has(item.actualPaymentPeriod)) {
       alert(
-        `Period ${item.actualPaymentPeriod} has already been entered. Each payment period can only be used once.`,
+        `Period ${item.actualPaymentPeriod} has already been entered. Each scenario payment period can only be used once.`,
       );
 
       if (item.row) {
@@ -537,20 +1065,79 @@ function validateSchedule2Payments(payments, maximumPeriods) {
     }
 
     usedPeriods.add(item.actualPaymentPeriod);
+
+    /*
+      Payment date.
+
+      If blank, automatically use the
+      Schedule 1 payment date.
+    */
+
+    if (!item.actualPaymentDate) {
+      const defaultDate = getSchedule1PaymentDate(item.actualPaymentPeriod);
+
+      if (defaultDate) {
+        item.actualPaymentDate = formatDateForInput(defaultDate);
+
+        const dateInput = item.row?.querySelector(
+          ".schedule2-actual-payment-date",
+        );
+
+        if (dateInput) {
+          dateInput.value = item.actualPaymentDate;
+        }
+      }
+    }
+
+    /*
+      Date is required after fallback.
+    */
+
+    if (!item.actualPaymentDate) {
+      alert(
+        `Please enter an Actual Payment Date for Period ${item.actualPaymentPeriod}.`,
+      );
+
+      const dateInput = item.row?.querySelector(
+        ".schedule2-actual-payment-date",
+      );
+
+      if (dateInput) {
+        dateInput.focus();
+      }
+
+      return false;
+    }
+
+    /*
+      Date must actually be valid.
+    */
+
+    if (!parseLocalDate(item.actualPaymentDate)) {
+      alert(
+        `Invalid Actual Payment Date for Period ${item.actualPaymentPeriod}.`,
+      );
+
+      const dateInput = item.row?.querySelector(
+        ".schedule2-actual-payment-date",
+      );
+
+      if (dateInput) {
+        dateInput.focus();
+      }
+
+      return false;
+    }
   }
 
   return true;
 }
 
 /* =====================================================
-   HIGHLIGHT ACTUAL PAYMENT ROWS
+   HIGHLIGHT ACTUAL / SCENARIO PAYMENT ROWS
    ===================================================== */
 
 function highlightSchedule2ActualPayments(actualPayments) {
-  /*
-    Clear old highlights first.
-  */
-
   clearSchedule2Highlights();
 
   /*
@@ -564,8 +1151,7 @@ function highlightSchedule2ActualPayments(actualPayments) {
   });
 
   /*
-    Highlight corresponding generated
-    amortization schedule rows.
+    Highlight amortization periods.
   */
 
   const body = document.getElementById("amortizationBody2");
@@ -578,32 +1164,26 @@ function highlightSchedule2ActualPayments(actualPayments) {
     actualPayments.map((item) => item.actualPaymentPeriod),
   );
 
-  const scheduleRows = body.querySelectorAll("tr");
-
-  scheduleRows.forEach((row) => {
+  body.querySelectorAll("tr").forEach((row) => {
     const firstCell = row.querySelector("td");
 
     if (!firstCell) {
       return;
     }
 
-    const period = Math.floor(cleanNumber(firstCell.textContent));
+    const period = parseInt(firstCell.textContent.trim(), 10);
 
-    if (actualPeriods.has(period)) {
+    if (Number.isInteger(period) && actualPeriods.has(period)) {
       row.classList.add("schedule2-actual-period-highlight");
     }
   });
 }
 
 /* =====================================================
-   ADD SCHEDULE 2 HIGHLIGHT STYLES
+   SCHEDULE 2 HIGHLIGHT STYLES
    ===================================================== */
 
 function initializeSchedule2HighlightStyles() {
-  /*
-    Prevent duplicate style elements.
-  */
-
   if (document.getElementById("schedule2HighlightStyles")) {
     return;
   }
@@ -613,14 +1193,10 @@ function initializeSchedule2HighlightStyles() {
   style.id = "schedule2HighlightStyles";
 
   style.textContent = `
-    /* Actual payment input row */
-
     .schedule2-actual-row-highlight td {
       background-color: #fff3cd !important;
       border-color: #ffe69c !important;
     }
-
-    /* Generated Schedule 2 row */
 
     .schedule2-actual-period-highlight td {
       background-color: #dff3ff !important;
@@ -628,8 +1204,6 @@ function initializeSchedule2HighlightStyles() {
       border-bottom: 2px solid #0070b8 !important;
       font-weight: 600;
     }
-
-    /* Incomplete input row */
 
     .schedule2-incomplete-row td {
       background-color: #f8d7da !important;
@@ -640,6 +1214,18 @@ function initializeSchedule2HighlightStyles() {
       border-color: #dc3545 !important;
       background-color: #fff5f5 !important;
     }
+
+    .amortization-annual-summary-row td {
+      background-color: #eef5ff !important;
+      font-weight: 600;
+      border-top: 2px solid #6c8ebf !important;
+    }
+
+    .amortization-total-row td {
+      font-weight: 700;
+      background-color: #e8e8e8 !important;
+      border-top: 3px solid #444 !important;
+    }
   `;
 
   document.head.appendChild(style);
@@ -647,7 +1233,7 @@ function initializeSchedule2HighlightStyles() {
 
 /* =====================================================
    SCHEDULE 2
-   MULTIPLE ACTUAL PAYMENTS
+   WHAT-IF / SCENARIO AMORTIZATION
    ===================================================== */
 
 function generateSchedule2(
@@ -668,7 +1254,7 @@ function generateSchedule2(
   const message = document.getElementById("schedule2PaymentMessage");
 
   if (message) {
-    message.textContent = "";
+    message.innerHTML = "";
     message.style.display = "none";
   }
 
@@ -677,7 +1263,7 @@ function generateSchedule2(
   const maximumPeriods = Math.ceil(loanTermYears * 12);
 
   /*
-    Sort payments by period.
+    Sort scenario payments by period.
   */
 
   const sortedPayments = [...actualPayments].sort(
@@ -685,81 +1271,147 @@ function generateSchedule2(
   );
 
   /*
-    Create payment lookup map.
+    Create lookup map.
   */
 
-  const actualPaymentMap = new Map();
+  const scenarioPaymentMap = new Map();
 
   sortedPayments.forEach((item) => {
-    actualPaymentMap.set(item.actualPaymentPeriod, item.actualPayment);
+    scenarioPaymentMap.set(item.actualPaymentPeriod, item);
   });
 
   let balance = loanAmount;
 
   let totalPayment = 0;
-
   let totalInterest = 0;
+  let totalPrincipal = 0;
+  let totalUnpaidInterest = 0;
 
-  let updatedNumberOfPayments = 0;
+  let numberOfPayments = 0;
+
+  /*
+    Track requested scenario payments
+    and payments actually applied.
+
+    This lets the summary remain accurate
+    if a final payment is capped.
+  */
+
+  let totalScenarioPaymentsApplied = 0;
 
   const cappedPayments = [];
 
+  /*
+    Annual totals.
+  */
+
+  let currentYear = null;
+
+  let annualPayment = 0;
+  let annualInterest = 0;
+  let annualPrincipal = 0;
+  let annualUnpaidInterest = 0;
+
   /* =================================================
-     GENERATE AMORTIZATION
+     GENERATE SCENARIO
      ================================================= */
 
   for (let period = 1; period <= maximumPeriods; period++) {
+    /*
+      Stop after the mortgage is paid off.
+    */
+
     if (balance <= 0.000001) {
       break;
     }
 
     const beginningBalance = balance;
 
+    /*
+      Current period interest.
+    */
+
     const interestPaid = monthlyRate === 0 ? 0 : beginningBalance * monthlyRate;
 
     /*
-      Default to Constant Monthly Payment.
+      Default payment = constant payment.
     */
 
     let payment = monthlyPayment;
 
+    let scenarioItem = null;
+
     /*
-      Use Actual Monthly Payment
-      when this period has one.
+      Override constant payment if
+      this period has a scenario payment.
     */
 
-    if (actualPaymentMap.has(period)) {
-      payment = actualPaymentMap.get(period);
+    if (scenarioPaymentMap.has(period)) {
+      scenarioItem = scenarioPaymentMap.get(period);
+
+      payment = scenarioItem.actualPayment;
     }
 
     /*
-      Amount required to pay off
-      remaining balance.
+      Amount needed to completely pay
+      the remaining mortgage this period.
     */
 
     const amountDue = beginningBalance + interestPaid;
 
     /*
-      Prevent overpayment.
+      Cap overpayment.
+
+      Example:
+
+      Remaining amount = $3,000
+      Scenario payment = $5,000
+
+      Schedule uses $3,000.
+      The $2,000 excess is not added
+      to the mortgage balance.
     */
 
+    const requestedPayment = payment;
+
     if (payment > amountDue) {
-      if (actualPaymentMap.has(period)) {
+      payment = amountDue;
+
+      if (scenarioItem) {
         cappedPayments.push({
-          period: period,
-          requestedPayment: payment,
-          cappedPayment: amountDue,
+          period,
+          requestedPayment,
+          appliedPayment: payment,
+          excess: requestedPayment - payment,
         });
       }
-
-      payment = amountDue;
     }
 
     /*
       Calculate principal.
     */
 
-    const principalPaid = payment - interestPaid;
+    let principalPaid = payment - interestPaid;
+
+    /*
+      If payment is less than interest,
+      principal cannot become negative.
+
+      The difference is shown as
+      Unpaid Interest.
+    */
+
+    let unpaidInterest = 0;
+
+    if (principalPaid < 0) {
+      unpaidInterest = Math.abs(principalPaid);
+
+      principalPaid = 0;
+    }
+
+    /*
+      Calculate ending mortgage balance.
+    */
 
     let endingBalance = beginningBalance - principalPaid;
 
@@ -768,83 +1420,164 @@ function generateSchedule2(
     }
 
     /*
-      Totals.
+      Payment date.
+
+      Scenario payment can have its own
+      entered date.
+
+      Otherwise use Schedule 1's date.
+    */
+
+    let paymentDate = getSchedule1PaymentDate(period);
+
+    if (scenarioItem && scenarioItem.actualPaymentDate) {
+      const customDate = parseLocalDate(scenarioItem.actualPaymentDate);
+
+      if (customDate) {
+        paymentDate = customDate;
+      }
+    }
+
+    const year = paymentDate ? paymentDate.getFullYear() : "";
+
+    const displayDate = paymentDate ? formatDisplayDate(paymentDate) : "";
+
+    /*
+      Finish previous annual summary.
+    */
+
+    if (currentYear !== null && year !== currentYear) {
+      body.appendChild(
+        createAnnualSummaryRow({
+          year: currentYear,
+          totalPayment: annualPayment,
+          totalInterest: annualInterest,
+          totalPrincipal: annualPrincipal,
+          totalUnpaidInterest: annualUnpaidInterest,
+          endingBalance: beginningBalance,
+        }),
+      );
+
+      annualPayment = 0;
+      annualInterest = 0;
+      annualPrincipal = 0;
+      annualUnpaidInterest = 0;
+    }
+
+    currentYear = year;
+
+    /*
+      Overall totals.
     */
 
     totalPayment += payment;
-
     totalInterest += interestPaid;
-
-    updatedNumberOfPayments = period;
-
-    /*
-      Create schedule row.
-    */
-
-    const row = document.createElement("tr");
+    totalPrincipal += principalPaid;
+    totalUnpaidInterest += unpaidInterest;
 
     /*
-      Mark rows that use an Actual Payment.
+      Scenario payment summary.
+
+      Only count payments entered by the user,
+      not normal constant payments.
     */
 
-    if (actualPaymentMap.has(period)) {
-      row.classList.add("schedule2-actual-period-highlight");
+    if (scenarioItem) {
+      totalScenarioPaymentsApplied += payment;
     }
 
-    row.innerHTML = `
-      <td>${period}</td>
+    /*
+      Annual totals.
+    */
 
-      <td>
-        ${formatOutput(beginningBalance)}
-      </td>
+    annualPayment += payment;
+    annualInterest += interestPaid;
+    annualPrincipal += principalPaid;
+    annualUnpaidInterest += unpaidInterest;
 
-      <td>
-        ${formatOutput(payment)}
-      </td>
+    numberOfPayments = period;
 
-      <td>
-        ${formatOutput(interestPaid)}
-      </td>
+    /*
+      Add row.
+    */
 
-      <td>
-        ${formatOutput(principalPaid)}
-      </td>
-
-      <td>
-        ${formatOutput(endingBalance)}
-      </td>
-    `;
-
-    body.appendChild(row);
+    body.appendChild(
+      createScheduleRow({
+        period,
+        year,
+        paymentDate: displayDate,
+        beginningBalance,
+        payment,
+        interestPaid,
+        principalPaid,
+        unpaidInterest,
+        endingBalance,
+        actualPayment: !!scenarioItem,
+      }),
+    );
 
     balance = endingBalance;
+
+    /*
+      Mortgage paid off.
+    */
+
+    if (balance <= 0.000001) {
+      body.appendChild(
+        createAnnualSummaryRow({
+          year: currentYear,
+          totalPayment: annualPayment,
+          totalInterest: annualInterest,
+          totalPrincipal: annualPrincipal,
+          totalUnpaidInterest: annualUnpaidInterest,
+          endingBalance: balance,
+        }),
+      );
+
+      break;
+    }
+
+    /*
+      Final scheduled period.
+    */
+
+    if (period === maximumPeriods) {
+      body.appendChild(
+        createAnnualSummaryRow({
+          year: currentYear,
+          totalPayment: annualPayment,
+          totalInterest: annualInterest,
+          totalPrincipal: annualPrincipal,
+          totalUnpaidInterest: annualUnpaidInterest,
+          endingBalance: balance,
+        }),
+      );
+    }
   }
 
-  /* =================================================
-     SHOW CAPPED PAYMENT MESSAGE
-     ================================================= */
+  /*
+    Show overpayment information.
+  */
 
   if (message && cappedPayments.length > 0) {
     let messageHTML = `
       <strong>
-        One or more Actual Payments exceeded the remaining balance.
+        One or more scenario payments exceeded the remaining mortgage balance.
       </strong>
       <br><br>
     `;
 
     cappedPayments.forEach((item) => {
-      const excess = item.requestedPayment - item.cappedPayment;
-
       messageHTML += `
-        Period ${item.period}:
-        requested payment of
-        $${formatOutput(item.requestedPayment)}
-        was limited to
-        $${formatOutput(item.cappedPayment)}.
-        Excess amount:
-        $${formatOutput(excess)}.
-        <br>
-      `;
+          Period ${item.period}:
+          requested payment of
+          $${formatOutput(item.requestedPayment)}
+          was limited to
+          $${formatOutput(item.appliedPayment)}.
+          Excess amount:
+          $${formatOutput(item.excess)}.
+          <br>
+        `;
     });
 
     message.innerHTML = messageHTML;
@@ -852,42 +1585,22 @@ function generateSchedule2(
     message.style.display = "block";
   }
 
-  /* =================================================
-     TOTAL ROW
-     ================================================= */
+  /*
+    Overall total row.
+  */
 
-  const totalRow = document.createElement("tr");
-
-  totalRow.classList.add("amortization-total-row");
-
-  totalRow.innerHTML = `
-    <td>
-      <strong>TOTAL</strong>
-    </td>
-
-    <td></td>
-
-    <td>
-      <strong>
-        ${formatOutput(totalPayment)}
-      </strong>
-    </td>
-
-    <td>
-      <strong>
-        ${formatOutput(totalInterest)}
-      </strong>
-    </td>
-
-    <td></td>
-
-    <td></td>
-  `;
-
-  body.appendChild(totalRow);
+  body.appendChild(
+    createOverallTotalRow({
+      totalPayment,
+      totalInterest,
+      totalPrincipal,
+      totalUnpaidInterest,
+      endingBalance: balance,
+    }),
+  );
 
   /* =================================================
-     SUMMARY
+     SCHEDULE 2 SUMMARY
      ================================================= */
 
   const constant = document.getElementById("schedule2Constant");
@@ -905,20 +1618,18 @@ function generateSchedule2(
   }
 
   /*
-    Total of all entered actual payments.
+    This is the sum of scenario payments
+    actually applied to the mortgage.
+
+    It does NOT include ordinary constant payments.
   */
 
   if (additional) {
-    const totalActualPayments = actualPayments.reduce(
-      (sum, item) => sum + item.actualPayment,
-      0,
-    );
-
-    additional.textContent = formatOutput(totalActualPayments);
+    additional.textContent = formatOutput(totalScenarioPaymentsApplied);
   }
 
   /*
-    Number of actual payment rows.
+    Number of scenario overrides.
   */
 
   if (actualPaymentCount) {
@@ -926,11 +1637,11 @@ function generateSchedule2(
   }
 
   /*
-    Number of payments actually generated.
+    Number of payments until payoff.
   */
 
   if (periods) {
-    periods.textContent = updatedNumberOfPayments;
+    periods.textContent = numberOfPayments;
   }
 }
 
@@ -942,15 +1653,13 @@ function calculateSchedule2() {
   const { loanAmount, interestRate, loanTermYears } = getMortgageData();
 
   /*
-    Get Constant Monthly Payment
-    from num6.
+    num6 is the Constant Monthly Payment.
   */
 
   let monthlyPayment = cleanNumber(document.getElementById("num6")?.value);
 
   /*
-    If num6 is empty,
-    calculate the payment.
+    If num6 is unavailable, calculate it.
   */
 
   if (
@@ -967,7 +1676,7 @@ function calculateSchedule2() {
   }
 
   /*
-    Validate mortgage.
+    Validate.
   */
 
   if (loanAmount <= 0 || loanTermYears <= 0 || monthlyPayment <= 0) {
@@ -979,23 +1688,16 @@ function calculateSchedule2() {
   }
 
   /*
-    Clear old highlights before validation.
+    Clear previous highlighting.
   */
 
   clearSchedule2Highlights();
 
   /*
-    Get all actual payments.
-
-    TRUE means incomplete rows
-    must show an error.
+    Strictly read scenario payments.
   */
 
   const actualPayments = getSchedule2Payments(true);
-
-  /*
-    Stop if an incomplete row was found.
-  */
 
   if (actualPayments === null) {
     return;
@@ -1004,7 +1706,7 @@ function calculateSchedule2() {
   const maximumPeriods = Math.ceil(loanTermYears * 12);
 
   /*
-    Validate actual payments.
+    Validate.
   */
 
   if (!validateSchedule2Payments(actualPayments, maximumPeriods)) {
@@ -1012,7 +1714,7 @@ function calculateSchedule2() {
   }
 
   /*
-    Generate Schedule 2.
+    Generate.
   */
 
   generateSchedule2(
@@ -1024,15 +1726,14 @@ function calculateSchedule2() {
   );
 
   /*
-    Highlight all actual payment periods
-    and their corresponding input rows.
+    Highlight.
   */
 
   highlightSchedule2ActualPayments(actualPayments);
 }
 
 /* =====================================================
-   CSV HELPER
+   CSV ESCAPE
    ===================================================== */
 
 function csvEscape(value) {
@@ -1051,15 +1752,11 @@ function csvEscape(value) {
 }
 
 /* =====================================================
-   DOWNLOAD SCHEDULE 1 AS CSV
+   DOWNLOAD SCHEDULE 1 CSV
    ===================================================== */
 
 function downloadSchedule1CSV() {
   const body = document.getElementById("amortizationBody1");
-
-  /*
-    Schedule must be calculated first.
-  */
 
   if (!body || body.children.length === 0) {
     alert("Please calculate Schedule 1 first.");
@@ -1067,31 +1764,23 @@ function downloadSchedule1CSV() {
     return;
   }
 
-  /* =================================================
-     GET MORTGAGE INFORMATION
-     ================================================= */
-
-  const { loanAmount, interestRate, loanTermYears } = getMortgageData();
+  const {
+    loanAmount,
+    interestRate,
+    loanTermYears,
+    purchasePrice,
+    downPayment,
+  } = getMortgageData();
 
   const monthlyPayment = cleanNumber(
     document.getElementById("schedule1Payment")?.textContent,
   );
 
-  const purchasePrice = cleanNumber(document.getElementById("num1")?.value);
-
-  const downPayment = cleanNumber(document.getElementById("num2")?.value);
-
   const date = document.getElementById("date")?.value || "";
 
-  /* =================================================
-     CREATE CSV
-     ================================================= */
+  const startDate = document.getElementById("schedule1StartDate")?.value || "";
 
   const csvRows = [];
-
-  /*
-    Title.
-  */
 
   csvRows.push([csvEscape("Mortgage Amortization Schedule")]);
 
@@ -1099,11 +1788,9 @@ function downloadSchedule1CSV() {
 
   csvRows.push([]);
 
-  /*
-    Mortgage information.
-  */
-
   csvRows.push(["Date", csvEscape(date)]);
+
+  csvRows.push(["Payment Start Date", csvEscape(startDate)]);
 
   csvRows.push([
     "Purchase Price",
@@ -1136,52 +1823,58 @@ function downloadSchedule1CSV() {
   csvRows.push([]);
 
   /*
-    Schedule table header.
+    Table header.
   */
 
   csvRows.push([
     "Period",
+    "Year",
+    "Payment Date",
     "Beginning Balance",
     "Total Payment",
     "Interest Paid",
     "Principal Paid",
+    "Unpaid Interest",
     "Ending Balance",
+    "Late Fee",
+    "Other Charges",
   ]);
 
-  /* =================================================
-     GET TABLE ROWS
-     ================================================= */
+  /*
+    Table rows.
+  */
 
   const rows = body.querySelectorAll("tr");
 
   rows.forEach((row) => {
     const cells = row.querySelectorAll("td");
 
-    if (cells.length !== 6) {
+    if (cells.length === 11) {
+      const rowData = Array.from(cells).map((cell) => {
+        const text = cell.textContent.trim();
+
+        if (text !== "TOTAL" && text !== "") {
+          return text.replace(/[$,]/g, "");
+        }
+
+        return text;
+      });
+
+      csvRows.push(rowData.map(csvEscape));
+
       return;
     }
 
-    const rowData = Array.from(cells).map((cell) => {
-      const text = cell.textContent.trim();
+    const text = row.textContent.trim();
 
-      /*
-          Remove $ and commas
-          from numeric values.
-        */
-
-      if (text !== "TOTAL" && text !== "") {
-        return text.replace(/[$,]/g, "");
-      }
-
-      return text;
-    });
-
-    csvRows.push(rowData.map(csvEscape));
+    if (text) {
+      csvRows.push([csvEscape(text)]);
+    }
   });
 
-  /* =================================================
-     FOOTER
-     ================================================= */
+  /*
+    Footer.
+  */
 
   csvRows.push([]);
 
@@ -1189,15 +1882,11 @@ function downloadSchedule1CSV() {
     csvEscape("For informational purposes only. All numbers are estimates."),
   ]);
 
-  /* =================================================
-     CREATE CSV FILE
-     ================================================= */
+  /*
+    Create file.
+  */
 
   const csvContent = csvRows.map((row) => row.join(",")).join("\r\n");
-
-  /*
-    UTF-8 BOM for Excel.
-  */
 
   const blob = new Blob(["\uFEFF" + csvContent], {
     type: "text/csv;charset=utf-8;",
@@ -1216,10 +1905,6 @@ function downloadSchedule1CSV() {
   link.click();
 
   document.body.removeChild(link);
-
-  /*
-    Release browser memory.
-  */
 
   setTimeout(() => {
     URL.revokeObjectURL(url);
@@ -1245,15 +1930,15 @@ function clearAllFields() {
   ];
 
   ids.forEach((id) => {
-    const el = document.getElementById(id);
+    const element = document.getElementById(id);
 
-    if (el) {
-      el.value = "";
+    if (element) {
+      element.value = "";
     }
   });
 
   /*
-    Reset operator.
+    Reset operation.
   */
 
   const operator = document.getElementById("operator");
@@ -1283,35 +1968,31 @@ function clearAllFields() {
   }
 
   /*
-    Clear Schedule 2 payment input rows.
+    Reset scenario payment rows.
   */
 
-  const schedule2InputBody = document.getElementById("schedule2PaymentRows");
+  const inputBody = document.getElementById("schedule2PaymentRows");
 
-  if (schedule2InputBody) {
-    schedule2InputBody.innerHTML = "";
-
-    /*
-      Create one fresh empty row.
-    */
+  if (inputBody) {
+    inputBody.innerHTML = "";
 
     addSchedule2PaymentRow();
   }
 
   /*
-    Clear highlights.
+    Clear highlighting.
   */
 
   clearSchedule2Highlights();
 
   /*
-    Hide Schedule 2 message.
+    Hide messages.
   */
 
   const message = document.getElementById("schedule2PaymentMessage");
 
   if (message) {
-    message.textContent = "";
+    message.innerHTML = "";
 
     message.style.display = "none";
   }
@@ -1324,7 +2005,6 @@ function clearAllFields() {
     "schedule1Loan",
     "schedule1Payment",
     "schedule1Periods",
-
     "schedule2Constant",
     "schedule2Additional",
     "schedule2ActualPaymentCount",
@@ -1332,10 +2012,10 @@ function clearAllFields() {
   ];
 
   summaryIds.forEach((id) => {
-    const el = document.getElementById(id);
+    const element = document.getElementById(id);
 
-    if (el) {
-      el.textContent = "0";
+    if (element) {
+      element.textContent = "0";
     }
   });
 }
@@ -1345,43 +2025,31 @@ function clearAllFields() {
    ===================================================== */
 
 function calculate() {
-  const operator = document.getElementById("operator").value;
+  const operator = document.getElementById("operator")?.value;
 
   const resultInput = document.getElementById("result");
 
-  resultInput.value = "";
+  if (resultInput) {
+    resultInput.value = "";
+  }
 
-  const purchasePrice = cleanNumber(document.getElementById("num1").value);
+  const {
+    purchasePrice,
+    downPayment,
+    loanAmount,
+    interestRate,
+    loanTermYears,
+  } = getMortgageData();
 
-  const downPayment = cleanNumber(document.getElementById("num2").value);
+  const tax = cleanNumber(document.getElementById("num7")?.value);
 
-  const interestRateRaw = document.getElementById("num4").value;
+  const insurance = cleanNumber(document.getElementById("num8")?.value);
 
-  const interestRate = cleanNumber(interestRateRaw.replace(/[^0-9.]/g, ""));
-
-  const loanTermYears = cleanNumber(document.getElementById("num5").value);
-
-  const tax = cleanNumber(document.getElementById("num7").value);
-
-  const insurance = cleanNumber(document.getElementById("num8").value);
-
-  const others = cleanNumber(document.getElementById("num9").value);
+  const others = cleanNumber(document.getElementById("num9")?.value);
 
   const loanField = document.getElementById("num3");
 
   const paymentField = document.getElementById("num6");
-
-  /*
-    Mortgage amount.
-  */
-
-  let loanAmount = 0;
-
-  if (purchasePrice > 0 && downPayment >= 0 && downPayment <= purchasePrice) {
-    loanAmount = purchasePrice - downPayment;
-  } else {
-    loanAmount = cleanNumber(loanField.value);
-  }
 
   /* ===================================================
      MORTGAGE AMOUNT
@@ -1389,14 +2057,22 @@ function calculate() {
 
   if (operator === "loan") {
     if (purchasePrice > 0 && downPayment >= 0 && downPayment <= purchasePrice) {
-      loanField.value = formatOutput(loanAmount);
+      if (loanField) {
+        loanField.value = formatOutput(loanAmount);
+      }
     } else {
-      loanField.value = "";
+      if (loanField) {
+        loanField.value = "";
+      }
 
-      resultInput.value = "Invalid Num1/Num2";
+      if (resultInput) {
+        resultInput.value = "Invalid Num1/Num2";
+      }
     }
 
-    paymentField.value = "";
+    if (paymentField) {
+      paymentField.value = "";
+    }
 
     return;
   }
@@ -1407,7 +2083,9 @@ function calculate() {
 
   if (operator === "payment") {
     if (purchasePrice > 0 && downPayment >= 0 && downPayment <= purchasePrice) {
-      loanField.value = formatOutput(loanAmount);
+      if (loanField) {
+        loanField.value = formatOutput(loanAmount);
+      }
     }
 
     if (loanAmount > 0) {
@@ -1418,10 +2096,12 @@ function calculate() {
           loanTermYears,
         );
 
-        paymentField.value = formatOutput(monthlyPayment);
+        if (paymentField) {
+          paymentField.value = formatOutput(monthlyPayment);
+        }
 
         /*
-          Schedule 1.
+          Schedule 1 baseline.
         */
 
         generateSchedule1(
@@ -1434,39 +2114,48 @@ function calculate() {
         /*
           Schedule 2.
 
-          Normal Calculate ignores
-          incomplete rows. The dedicated
-          Recalculate button performs
-          strict validation.
+          Normal Calculate accepts
+          currently complete rows and
+          ignores incomplete rows.
         */
 
         const actualPayments = getSchedule2Payments(false);
 
         if (actualPayments !== null) {
-          generateSchedule2(
-            loanAmount,
-            interestRate,
-            loanTermYears,
-            monthlyPayment,
-            actualPayments,
-          );
+          const maximumPeriods = Math.ceil(loanTermYears * 12);
 
-          highlightSchedule2ActualPayments(actualPayments);
+          if (validateSchedule2Payments(actualPayments, maximumPeriods)) {
+            generateSchedule2(
+              loanAmount,
+              interestRate,
+              loanTermYears,
+              monthlyPayment,
+              actualPayments,
+            );
+
+            highlightSchedule2ActualPayments(actualPayments);
+          }
         }
       } else {
-        paymentField.value = "";
+        if (paymentField) {
+          paymentField.value = "";
+        }
 
         alert("Missing or invalid inputs for Monthly Payment");
       }
     } else {
-      paymentField.value = "";
+      if (paymentField) {
+        paymentField.value = "";
+      }
 
       alert(
         "Please provide either Purchase Price & Down Payment or a Mortgage Amount.",
       );
     }
 
-    resultInput.value = "";
+    if (resultInput) {
+      resultInput.value = "";
+    }
 
     return;
   }
@@ -1477,15 +2166,23 @@ function calculate() {
 
   if (operator === "total") {
     if (loanAmount > 0) {
-      loanField.value = formatOutput(loanAmount);
+      if (loanField) {
+        loanField.value = formatOutput(loanAmount);
+      }
     } else {
-      loanField.value = "";
+      if (loanField) {
+        loanField.value = "";
+      }
 
       alert("Invalid Purchase Price or Down Payment");
 
-      paymentField.value = "";
+      if (paymentField) {
+        paymentField.value = "";
+      }
 
-      resultInput.value = "";
+      if (resultInput) {
+        resultInput.value = "";
+      }
 
       return;
     }
@@ -1499,13 +2196,19 @@ function calculate() {
         loanTermYears,
       );
 
-      paymentField.value = formatOutput(monthlyPayment);
+      if (paymentField) {
+        paymentField.value = formatOutput(monthlyPayment);
+      }
     } else {
-      paymentField.value = "";
+      if (paymentField) {
+        paymentField.value = "";
+      }
 
       alert("Missing or invalid inputs for Monthly Payment");
 
-      resultInput.value = "";
+      if (resultInput) {
+        resultInput.value = "";
+      }
 
       return;
     }
@@ -1516,10 +2219,12 @@ function calculate() {
 
     const totalMonthlyCost = monthlyPayment + tax + insurance + others;
 
-    if (totalMonthlyCost > 0) {
-      resultInput.value = formatOutput(totalMonthlyCost);
-    } else {
-      resultInput.value = "";
+    if (resultInput) {
+      if (totalMonthlyCost > 0) {
+        resultInput.value = formatOutput(totalMonthlyCost);
+      } else {
+        resultInput.value = "";
+      }
     }
 
     /*
@@ -1530,30 +2235,32 @@ function calculate() {
 
     /*
       Schedule 2.
-
-      Normal Calculate ignores incomplete
-      rows. Recalculate performs strict
-      validation.
     */
 
     const actualPayments = getSchedule2Payments(false);
 
     if (actualPayments !== null) {
-      generateSchedule2(
-        loanAmount,
-        interestRate,
-        loanTermYears,
-        monthlyPayment,
-        actualPayments,
-      );
+      const maximumPeriods = Math.ceil(loanTermYears * 12);
 
-      highlightSchedule2ActualPayments(actualPayments);
+      if (validateSchedule2Payments(actualPayments, maximumPeriods)) {
+        generateSchedule2(
+          loanAmount,
+          interestRate,
+          loanTermYears,
+          monthlyPayment,
+          actualPayments,
+        );
+
+        highlightSchedule2ActualPayments(actualPayments);
+      }
     }
 
     return;
   }
 
-  resultInput.value = "Please select a valid operation";
+  if (resultInput) {
+    resultInput.value = "Please select a valid operation";
+  }
 }
 
 /* =====================================================
@@ -1562,10 +2269,6 @@ function calculate() {
 
 function initializeSchedule2() {
   const body = document.getElementById("schedule2PaymentRows");
-
-  /*
-    Create first empty row.
-  */
 
   if (body && body.children.length === 0) {
     addSchedule2PaymentRow();
@@ -1588,7 +2291,7 @@ function initializeSchedule2() {
   setupSchedule2RowEvents();
 
   /*
-    Recalculate button.
+    Recalculate Schedule 2.
   */
 
   const recalculateButton = document.getElementById("recalculateSchedule2Btn");
@@ -1598,7 +2301,7 @@ function initializeSchedule2() {
   }
 
   /*
-    Schedule 2 highlight styles.
+    Highlight styles.
   */
 
   initializeSchedule2HighlightStyles();
@@ -1616,48 +2319,46 @@ window.addEventListener("DOMContentLoaded", () => {
   const formatIds = ["num1", "num2", "num4", "num5", "num7", "num8", "num9"];
 
   formatIds.forEach((id) => {
-    const el = document.getElementById(id);
+    const element = document.getElementById(id);
 
-    if (el) {
-      el.addEventListener("blur", formatWithCommasAndDecimals);
+    if (element) {
+      element.addEventListener("blur", formatWithCommasAndDecimals);
     }
   });
 
   /*
-      Existing Calculate button.
+      Main Calculate button.
     */
 
-  const calculateBtn = document.getElementById("calculateBtn");
+  const calculateButton = document.getElementById("calculateBtn");
 
-  if (calculateBtn) {
-    calculateBtn.addEventListener("click", calculate);
+  if (calculateButton) {
+    calculateButton.addEventListener("click", calculate);
   }
 
   /*
-      Initialize Schedule 2.
+      Schedule 2.
     */
 
   initializeSchedule2();
 
   /*
-      Schedule 1 CSV Download.
+      Schedule 1 CSV.
     */
 
-  const downloadSchedule1CsvBtn = document.getElementById(
-    "downloadSchedule1CsvBtn",
-  );
+  const csvButton = document.getElementById("downloadSchedule1CsvBtn");
 
-  if (downloadSchedule1CsvBtn) {
-    downloadSchedule1CsvBtn.addEventListener("click", downloadSchedule1CSV);
+  if (csvButton) {
+    csvButton.addEventListener("click", downloadSchedule1CSV);
   }
 
   /*
-      Reset button.
+      Reset.
     */
 
-  const resetBtn = document.getElementById("resetBtn");
+  const resetButton = document.getElementById("resetBtn");
 
-  if (resetBtn) {
-    resetBtn.addEventListener("click", clearAllFields);
+  if (resetButton) {
+    resetButton.addEventListener("click", clearAllFields);
   }
 });

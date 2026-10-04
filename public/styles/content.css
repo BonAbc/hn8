@@ -280,7 +280,9 @@ button:hover {
   margin-bottom: 20px;
 }
 
-/* ---------- Mortgage Container ---------- */
+/* ============================================================
+   MORTGAGE CONTAINER
+   ============================================================ */
 
 .mortgage-container {
   display: flex;
@@ -288,14 +290,21 @@ button:hover {
   justify-content: space-between;
   align-items: stretch;
   gap: 10px;
+
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* ---------- Mortgage Wrapper ---------- */
+/* ============================================================
+   MORTGAGE WRAPPER
+   ============================================================ */
 
 .mortgage-wrapper {
   flex: 1 1 30%;
   min-width: 250px;
+
   padding: 10px;
+
   box-sizing: border-box;
 
   border: 2px solid #007bff;
@@ -304,37 +313,49 @@ button:hover {
   background-color: gold;
 }
 
-/* ---------- Mortgage Labels ---------- */
+/* ============================================================
+   MORTGAGE LABELS
+   ============================================================ */
 
 .calc-block label {
   display: block;
+
   margin-bottom: 5px;
+
   font-weight: bold;
 }
 
-/* ---------- Recalculate Schedule 2 Button ---------- */
+/* ============================================================
+   RECALCULATE BUTTON CONTAINER
+   ============================================================ */
 
 .mortgage-wrapper:has(#recalculateSchedule2Btn) {
   display: flex;
+
   align-items: center;
   justify-content: center;
 }
 
 #recalculateSchedule2Btn {
   display: block;
+
   margin: 0 auto;
 }
 
-/* =====================================
-   Amortization Schedule
-   ===================================== */
+/* ============================================================
+   AMORTIZATION SECTION
+   ============================================================ */
 
 .amortization-section {
   width: 100%;
-  max-width: 1200px;
+  max-width: none;
+
   margin: 0 auto;
-  text-align: center;
+  padding: 0;
+
   box-sizing: border-box;
+
+  text-align: center;
 }
 
 .amortization-section h2,
@@ -342,41 +363,66 @@ button:hover {
   text-align: center;
 }
 
-/* ---------- Table Wrapper ---------- */
+/* ============================================================
+   AMORTIZATION TABLE WRAPPER
+
+   Wide tables remain horizontally scrollable.
+
+   IMPORTANT:
+   The table itself is NOT centered inside the scrolling area.
+   This keeps Period visible on the left side.
+   ============================================================ */
 
 .amortization-table-wrapper {
   width: 100%;
-  margin: 20px auto;
+  max-width: 100%;
+
+  margin: 20px 0;
+
+  padding: 0;
+
+  display: block;
 
   overflow-x: auto;
   overflow-y: hidden;
 
-  display: flex;
-  justify-content: center;
-
   box-sizing: border-box;
+
+  -webkit-overflow-scrolling: touch;
+
+  scrollbar-width: auto;
 }
 
-/* ---------- Table ---------- */
+/* ============================================================
+   AMORTIZATION TABLE
+   ============================================================ */
 
 .amortization-table {
-  width: 100%;
-  max-width: 1100px;
+  width: max-content;
+
+  min-width: 1100px;
+
   margin: 0 auto;
+  padding: 0;
 
   border-collapse: collapse;
 
-  background-color: #fff;
+  background-color: #ffffff;
 
   text-align: center;
+
   font-size: 14px;
+
+  table-layout: auto;
 }
 
-/* ---------- Header ---------- */
+/* ============================================================
+   AMORTIZATION HEADER
+   ============================================================ */
 
 .amortization-table thead th {
   background-color: #212529;
-  color: #fff;
+  color: #ffffff;
 
   padding: 10px 12px;
 
@@ -386,9 +432,13 @@ button:hover {
 
   text-align: center;
   vertical-align: middle;
+
+  font-weight: 600;
 }
 
-/* ---------- Body ---------- */
+/* ============================================================
+   AMORTIZATION BODY
+   ============================================================ */
 
 .amortization-table tbody td {
   padding: 8px 12px;
@@ -401,7 +451,64 @@ button:hover {
   white-space: nowrap;
 }
 
-/* ---------- Alternating Rows ---------- */
+/* ============================================================
+   AMORTIZATION FIRST COLUMN - PERIOD
+   ============================================================ */
+
+.amortization-table th:first-child,
+.amortization-table td:first-child {
+  width: 70px;
+
+  min-width: 70px;
+
+  padding-left: 12px;
+  padding-right: 12px;
+
+  text-align: center;
+
+  white-space: nowrap;
+}
+
+/* ============================================================
+   AMORTIZATION YEAR COLUMN
+   ============================================================ */
+
+.amortization-table th:nth-child(2),
+.amortization-table td:nth-child(2) {
+  width: 60px;
+
+  min-width: 60px;
+
+  text-align: center;
+
+  white-space: nowrap;
+}
+
+/* ============================================================
+   PAYMENT DATE COLUMN
+   ============================================================ */
+
+.amortization-table th:nth-child(3),
+.amortization-table td:nth-child(3) {
+  min-width: 120px;
+
+  white-space: nowrap;
+}
+
+/* ============================================================
+   MONEY / BALANCE COLUMNS
+   ============================================================ */
+
+.amortization-table th:nth-child(n + 4),
+.amortization-table td:nth-child(n + 4) {
+  min-width: 120px;
+
+  white-space: nowrap;
+}
+
+/* ============================================================
+   ALTERNATING ROWS
+   ============================================================ */
 
 .amortization-table tbody tr:nth-child(even) {
   background-color: #f8f9fa;
@@ -411,17 +518,12 @@ button:hover {
   background-color: #ffffff;
 }
 
-/* ---------- Hover ---------- */
+/* ============================================================
+   HOVER
+   ============================================================ */
 
 .amortization-table tbody tr:hover {
   background-color: #e9ecef;
-}
-
-/* ---------- First Column ---------- */
-
-.amortization-table th:first-child,
-.amortization-table td:first-child {
-  text-align: center;
 }
 
 /* ============================================================
@@ -431,9 +533,13 @@ button:hover {
 .schedule2-payment-message {
   display: none;
 
+  width: 100%;
+
   margin: 15px 0;
 
   padding: 12px 16px;
+
+  box-sizing: border-box;
 
   border-radius: 6px;
 
@@ -444,62 +550,82 @@ button:hover {
   color: #664d03;
 
   line-height: 1.5;
+
+  text-align: left;
 }
 
 /* ============================================================
-   SCHEDULE 2 - ACTUAL PAYMENT INPUT TABLE
+   SCHEDULE 2 INPUT TABLE WRAPPER
+
+   This is the important section for:
+
+   <div class="amortization-table-wrapper schedule2-input-wrapper">
+
+   Keep the wrapper full width and scrollable.
+   Center the TABLE only when there is enough room.
+   On small screens the table stays left aligned so it
+   can be scrolled naturally.
    ============================================================ */
 
-/*
-   This table uses the same general table style as
-   Schedule 1 and Schedule 2.
-
-   Columns:
-   Actual Monthly Payment
-   Actual Payment Period
-   Action
-*/
-
-.schedule2-payment-table-wrapper {
+.schedule2-input-wrapper {
   width: 100%;
+  max-width: 100%;
 
   margin: 20px auto;
+
+  padding: 0;
+
+  display: flex;
+
+  justify-content: center;
+  align-items: flex-start;
 
   overflow-x: auto;
   overflow-y: hidden;
 
-  display: flex;
-  justify-content: center;
-
   box-sizing: border-box;
 
   -webkit-overflow-scrolling: touch;
+
+  scrollbar-width: auto;
 }
 
-/* ---------- Schedule 2 Payment Table ---------- */
+/* ============================================================
+   SCHEDULE 2 PAYMENT TABLE
+
+   Do NOT change the wide table behavior.
+
+   It remains 650px minimum so the four columns do not
+   collapse and become difficult to use.
+   ============================================================ */
 
 .schedule2-payment-table {
-  width: 100%;
+  width: max-content;
 
-  max-width: 900px;
+  min-width: 650px;
 
   margin: 0 auto;
+  padding: 0;
 
   border-collapse: collapse;
 
-  background-color: #fff;
+  background-color: #ffffff;
 
   text-align: center;
 
   font-size: 14px;
+
+  table-layout: auto;
 }
 
-/* ---------- Header ---------- */
+/* ============================================================
+   SCHEDULE 2 PAYMENT TABLE HEADER
+   ============================================================ */
 
 .schedule2-payment-table thead th {
   background-color: #212529;
 
-  color: #fff;
+  color: #ffffff;
 
   padding: 10px 12px;
 
@@ -510,9 +636,13 @@ button:hover {
   text-align: center;
 
   vertical-align: middle;
+
+  font-weight: 600;
 }
 
-/* ---------- Body ---------- */
+/* ============================================================
+   SCHEDULE 2 PAYMENT TABLE BODY
+   ============================================================ */
 
 .schedule2-payment-table tbody td {
   padding: 8px 12px;
@@ -528,7 +658,9 @@ button:hover {
   background-color: #ffffff;
 }
 
-/* ---------- Alternating Rows ---------- */
+/* ============================================================
+   SCHEDULE 2 ALTERNATING ROWS
+   ============================================================ */
 
 .schedule2-payment-table tbody tr:nth-child(even) td {
   background-color: #f8f9fa;
@@ -538,7 +670,9 @@ button:hover {
   background-color: #ffffff;
 }
 
-/* ---------- Hover ---------- */
+/* ============================================================
+   SCHEDULE 2 HOVER
+   ============================================================ */
 
 .schedule2-payment-table tbody tr:hover td {
   background-color: #e9ecef;
@@ -550,7 +684,6 @@ button:hover {
 
 .schedule2-payment-table input {
   width: 100%;
-
   max-width: 220px;
 
   min-height: 38px;
@@ -576,13 +709,17 @@ button:hover {
     box-shadow 0.15s ease;
 }
 
-/* ---------- Actual Payment ---------- */
+/* ============================================================
+   ACTUAL PAYMENT INPUT
+   ============================================================ */
 
 .schedule2-payment-table .schedule2-actual-payment {
   text-align: right;
 }
 
-/* ---------- Actual Period ---------- */
+/* ============================================================
+   ACTUAL PERIOD INPUT
+   ============================================================ */
 
 .schedule2-payment-table .schedule2-actual-period {
   max-width: 150px;
@@ -590,7 +727,9 @@ button:hover {
   text-align: center;
 }
 
-/* ---------- Input Focus ---------- */
+/* ============================================================
+   INPUT FOCUS
+   ============================================================ */
 
 .schedule2-payment-table input:focus {
   border-color: #007bff;
@@ -598,7 +737,9 @@ button:hover {
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
 }
 
-/* ---------- Input Hover ---------- */
+/* ============================================================
+   INPUT HOVER
+   ============================================================ */
 
 .schedule2-payment-table input:hover {
   border-color: #8fa8ba;
@@ -612,7 +753,6 @@ button:hover {
   display: inline-block;
 
   min-width: 80px;
-
   min-height: 34px;
 
   padding: 6px 14px;
@@ -626,7 +766,6 @@ button:hover {
   color: #ffffff;
 
   font-size: 13px;
-
   font-weight: 600;
 
   cursor: pointer;
@@ -656,16 +795,19 @@ button:hover {
   display: flex;
 
   justify-content: center;
-
   align-items: center;
 
   gap: 10px;
 
-  margin: 10px 0 20px;
+  width: 100%;
+
+  margin: 10px auto 20px;
+
+  box-sizing: border-box;
 }
 
 /* ============================================================
-   ADD BUTTON
+   ADD SCHEDULE 2 PAYMENT BUTTON
    ============================================================ */
 
 #addSchedule2PaymentBtn {
@@ -686,7 +828,6 @@ button:hover {
   color: #ffffff;
 
   font-size: 14px;
-
   font-weight: 600;
 
   cursor: pointer;
@@ -730,7 +871,6 @@ button:hover {
   color: #ffffff;
 
   font-size: 14px;
-
   font-weight: 600;
 
   cursor: pointer;
@@ -753,7 +893,43 @@ button:hover {
 }
 
 /* ============================================================
-   TABLET - GENERAL MORTGAGE
+   SCHEDULE 2 SUMMARY
+
+   Keep summary centered and responsive.
+   ============================================================ */
+
+.amortization-summary {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  justify-content: center;
+  align-items: center;
+
+  gap: 15px;
+
+  width: 100%;
+
+  margin: 15px auto;
+
+  box-sizing: border-box;
+
+  text-align: center;
+}
+
+.amortization-summary span {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 5px;
+
+  text-align: center;
+}
+
+/* ============================================================
+   TABLET - 992px
    ============================================================ */
 
 @media (max-width: 992px) {
@@ -764,40 +940,75 @@ button:hover {
   }
 
   .amortization-section {
+    width: 100%;
     max-width: 100%;
 
     padding: 0 10px;
   }
 
+  /*
+     Main amortization table remains left aligned
+     inside its horizontal scrolling container.
+  */
+
   .amortization-table-wrapper {
-    justify-content: flex-start;
+    width: 100%;
+
+    display: block;
 
     overflow-x: auto;
+    overflow-y: hidden;
+
+    margin: 20px 0;
+
+    padding: 0;
   }
 
   .amortization-table {
-    min-width: 850px;
+    width: max-content;
+
+    min-width: 1100px;
+
+    margin: 0;
   }
-}
 
-/* ============================================================
-   TABLET - SCHEDULE 2 PAYMENT INPUT TABLE
-   ============================================================ */
+  /*
+     Schedule 2 input table:
+     Center it when there is available space.
+  */
 
-@media (max-width: 992px) {
-  .schedule2-payment-table-wrapper {
-    justify-content: flex-start;
+  .schedule2-input-wrapper {
+    width: 100%;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: flex-start;
 
     overflow-x: auto;
+
+    margin: 20px auto;
+
+    padding: 0;
   }
 
   .schedule2-payment-table {
+    width: max-content;
+
     min-width: 650px;
+
+    margin: 0 auto;
+  }
+
+  .schedule2-button-row {
+    justify-content: center;
+
+    width: 100%;
   }
 }
 
 /* ============================================================
-   MOBILE
+   MOBILE - 768px
    ============================================================ */
 
 @media (max-width: 768px) {
@@ -821,7 +1032,6 @@ button:hover {
     display: flex;
 
     align-items: center;
-
     justify-content: center;
   }
 
@@ -829,14 +1039,17 @@ button:hover {
     margin: 0 auto;
   }
 
-  /* Schedule section */
+  /* ========================================================
+     AMORTIZATION SECTION
+     ======================================================== */
 
   .amortization-section {
     width: 100%;
-
     max-width: 100%;
 
     padding: 0 5px;
+
+    box-sizing: border-box;
   }
 
   .amortization-section h2 {
@@ -847,29 +1060,35 @@ button:hover {
     font-size: 18px;
   }
 
-  /*
-    Main amortization table remains wide enough
-    to preserve readable columns.
-  */
+  /* ========================================================
+     AMORTIZATION TABLE
+
+     Keep the table wide.
+     Scroll horizontally.
+     Start at Period.
+     ======================================================== */
 
   .amortization-table-wrapper {
     width: 100%;
 
     display: block;
 
-    overflow-x: auto;
+    margin: 15px 0;
 
+    padding: 0;
+
+    overflow-x: auto;
     overflow-y: hidden;
 
     -webkit-overflow-scrolling: touch;
-
-    margin: 15px 0;
   }
 
   .amortization-table {
     width: max-content;
 
-    min-width: 850px;
+    min-width: 1100px;
+
+    margin: 0;
 
     font-size: 13px;
   }
@@ -882,28 +1101,48 @@ button:hover {
     padding: 7px 10px;
   }
 
+  /* Make Period especially visible */
+
+  .amortization-table th:first-child,
+  .amortization-table td:first-child {
+    min-width: 70px;
+
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
   /* ========================================================
-     Schedule 2 Payment Input Table
+     SCHEDULE 2 PAYMENT INPUT TABLE
      ======================================================== */
 
-  .schedule2-payment-table-wrapper {
+  .schedule2-input-wrapper {
     width: 100%;
 
     display: block;
 
-    overflow-x: auto;
+    margin: 15px 0;
 
+    padding: 0;
+
+    overflow-x: auto;
     overflow-y: hidden;
 
     -webkit-overflow-scrolling: touch;
 
-    margin: 15px 0;
+    /*
+       On mobile, don't force the 650px table
+       into the viewport.
+
+       The table stays wide and scrolls naturally.
+    */
   }
 
   .schedule2-payment-table {
     width: max-content;
 
     min-width: 650px;
+
+    margin: 0;
 
     font-size: 13px;
   }
@@ -923,7 +1162,7 @@ button:hover {
   }
 
   /* ========================================================
-     Schedule 2 Buttons
+     SCHEDULE 2 BUTTONS
      ======================================================== */
 
   .schedule2-button-row {
@@ -932,6 +1171,9 @@ button:hover {
     width: 100%;
 
     gap: 8px;
+
+    margin-left: auto;
+    margin-right: auto;
   }
 
   #addSchedule2PaymentBtn,
@@ -942,10 +1184,35 @@ button:hover {
 
     margin: 0 auto;
   }
+
+  /* ========================================================
+     SCHEDULE 2 SUMMARY
+     ======================================================== */
+
+  .amortization-summary {
+    width: 100%;
+
+    flex-direction: column;
+
+    justify-content: center;
+    align-items: center;
+
+    gap: 8px;
+
+    margin: 15px auto;
+  }
+
+  .amortization-summary span {
+    width: 100%;
+
+    justify-content: center;
+
+    text-align: center;
+  }
 }
 
 /* ============================================================
-   SMALL MOBILE
+   SMALL MOBILE - 480px
    ============================================================ */
 
 @media (max-width: 480px) {
@@ -971,10 +1238,17 @@ button:hover {
     font-size: 16px;
   }
 
-  /* Main amortization table */
+  /* ========================================================
+     AMORTIZATION TABLE
+
+     Keep 1100px width.
+     Do NOT reduce it to 850px.
+     ======================================================== */
 
   .amortization-table {
-    min-width: 850px;
+    width: max-content;
+
+    min-width: 1100px;
 
     font-size: 12px;
   }
@@ -987,12 +1261,38 @@ button:hover {
     padding: 6px 8px;
   }
 
-  /* Schedule 2 payment input table */
+  .amortization-table th:first-child,
+  .amortization-table td:first-child {
+    min-width: 70px;
+
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  /* ========================================================
+     SCHEDULE 2 PAYMENT INPUT TABLE
+     ======================================================== */
+
+  .schedule2-input-wrapper {
+    width: 100%;
+
+    display: block;
+
+    margin: 15px 0;
+
+    overflow-x: auto;
+
+    padding: 0;
+  }
 
   .schedule2-payment-table {
-    min-width: 600px;
+    width: max-content;
+
+    min-width: 650px;
 
     font-size: 12px;
+
+    margin: 0;
   }
 
   .schedule2-payment-table thead th {
@@ -1020,32 +1320,83 @@ button:hover {
 
     font-size: 12px;
   }
+
+  /* ========================================================
+     SCHEDULE 2 SUMMARY
+     ======================================================== */
+
+  .amortization-summary {
+    gap: 6px;
+
+    margin: 12px auto;
+  }
+
+  .amortization-summary span {
+    font-size: 13px;
+  }
+
+  /* ========================================================
+     SCHEDULE 2 BUTTONS
+     ======================================================== */
+
+  .schedule2-button-row {
+    width: 100%;
+
+    margin: 10px auto 20px;
+
+    gap: 8px;
+  }
+
+  #addSchedule2PaymentBtn,
+  #recalculateSchedule2Btn {
+    width: 100%;
+
+    max-width: 280px;
+  }
 }
+
+/* ============================================================
+   MORTGAGE GRAPHICS
+   ============================================================ */
+
 .mortgage-graphics {
   width: 100%;
+
   margin-top: 30px;
   margin-bottom: 30px;
+
   padding: 30px;
+
+  box-sizing: border-box;
+
   background-color: #f8f9fa;
+
   border: 1px solid #000;
 }
 
 .mortgage-chart-container {
   position: relative;
+
   width: 100%;
   height: 400px;
 }
 
 #balanceChart {
   display: block;
+
   width: 100% !important;
   height: 100% !important;
 }
+
+/* ============================================================
+   MORTGAGE GRAPHICS - MOBILE
+   ============================================================ */
 
 @media (max-width: 576px) {
   .mortgage-graphics {
     margin-top: 20px;
     margin-bottom: 20px;
+
     padding: 15px;
   }
 
@@ -1055,7 +1406,7 @@ button:hover {
 }
 
 /* ============================================================
-   End MORTGAGE PAGE
+   END MORTGAGE PAGE
    ============================================================ */
 /* ============================================================
    TAX PAGE

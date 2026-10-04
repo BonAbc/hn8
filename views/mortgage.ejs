@@ -167,7 +167,15 @@
       </div>
     </div>
   </div>
-
+  <br />
+  <hr />
+  <div>
+    <span style="font-weight: bolder">
+      Payment Start Date:
+      <input type="date" id="schedule1StartDate" value="<%= defaultDate %>" />
+      Select it before click Calculate
+    </span>
+  </div>
   <br />
   <hr />
   <h6>***For informational purposes only. All numbers are estimates.***</h6>
@@ -182,16 +190,6 @@
     <h3>Schedule 1 — Constant Monthly Payment</h3>
 
     <div class="amortization-summary">
-      <div>
-        <span>
-          Payment Start Date:
-          <input
-            type="date"
-            id="schedule1StartDate"
-            value="<%= defaultDate %>"
-          />
-        </span>
-      </div>
       <span>
         Mortgage Amount:
         <strong id="schedule1Loan"> $0.00 </strong>
@@ -217,11 +215,16 @@
         <thead>
           <tr>
             <th>Period</th>
+            <th>Year</th>
+            <th>Payment Date</th>
             <th>Beginning Balance</th>
             <th>Total Payment</th>
             <th>Interest Paid</th>
             <th>Principal Paid</th>
+            <th>Unpaid Interest</th>
             <th>Ending Balance</th>
+            <th>Late Fee</th>
+            <th>Other Charges</th>
           </tr>
         </thead>
 
@@ -232,6 +235,7 @@
 
   <br />
   <br />
+
   <hr />
 
   <section class="mortgage-graphics">
@@ -246,7 +250,6 @@
 
   <br />
   <br />
-
   <!-- ===================================== -->
   <!-- Amortization Schedule 2 -->
   <!-- ===================================== -->
@@ -269,20 +272,13 @@
       resulting balance carries forward and affects all following periods.
     </p>
 
-    <!-- ===================================== -->
-    <!-- ACTUAL PAYMENT INPUT TABLE -->
-    <!-- ===================================== -->
-
-    <!-- ===================================== -->
-    <!-- Schedule 2 Actual Payments -->
-    <!-- ===================================== -->
-
     <div class="amortization-table-wrapper schedule2-input-wrapper">
       <table class="amortization-table schedule2-payment-table">
         <thead>
           <tr>
             <th>Actual Monthly Payment</th>
             <th>Actual Payment Period</th>
+            <th>Actual Payment Date</th>
             <th>Action</th>
           </tr>
         </thead>
@@ -348,11 +344,16 @@
         <thead>
           <tr>
             <th>Period</th>
+            <th>Year</th>
+            <th>Payment Date</th>
             <th>Beginning Balance</th>
             <th>Total Payment</th>
             <th>Interest Paid</th>
             <th>Principal Paid</th>
+            <th>Unpaid Interest</th>
             <th>Ending Balance</th>
+            <th>Late Fee</th>
+            <th>Other Charges</th>
           </tr>
         </thead>
 
@@ -361,7 +362,6 @@
     </div>
   </section>
 
-  <div id="schedule2PaymentMessage" class="schedule2-payment-message"></div>
   <br />
 
   <h5>Turning Numbers into Better Decisions.</h5>
@@ -371,13 +371,11 @@
 
 <!-- Link external JS -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
 
 <script src="/js/clock.js"></script>
 
 <script src="/js/mortgage.js"></script>
-
 <script src="/js/mortgage-graphics.js"></script>
 
 <!-- Link external JS end -->
