@@ -1021,6 +1021,38 @@ button:hover {
     font-size: 12px;
   }
 }
+.mortgage-graphics {
+  width: 100%;
+  margin-top: 30px;
+  margin-bottom: 30px;
+  padding: 30px;
+  background-color: #f8f9fa;
+  border: 1px solid #000;
+}
+
+.mortgage-chart-container {
+  position: relative;
+  width: 100%;
+  height: 400px;
+}
+
+#balanceChart {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@media (max-width: 576px) {
+  .mortgage-graphics {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    padding: 15px;
+  }
+
+  .mortgage-chart-container {
+    height: 280px;
+  }
+}
 
 /* ============================================================
    End MORTGAGE PAGE

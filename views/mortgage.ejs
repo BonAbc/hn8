@@ -182,6 +182,16 @@
     <h3>Schedule 1 — Constant Monthly Payment</h3>
 
     <div class="amortization-summary">
+      <div>
+        <span>
+          Payment Start Date:
+          <input
+            type="date"
+            id="schedule1StartDate"
+            value="<%= defaultDate %>"
+          />
+        </span>
+      </div>
       <span>
         Mortgage Amount:
         <strong id="schedule1Loan"> $0.00 </strong>
@@ -217,6 +227,20 @@
 
         <tbody id="amortizationBody1"></tbody>
       </table>
+    </div>
+  </section>
+
+  <br />
+  <br />
+  <hr />
+
+  <section class="mortgage-graphics">
+    <h2>Mortgage Graphics</h2>
+
+    <h3>Remaining Mortgage Balance</h3>
+
+    <div class="mortgage-chart-container">
+      <canvas id="balanceChart"></canvas>
     </div>
   </section>
 
@@ -346,12 +370,15 @@
 </main>
 
 <!-- Link external JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
 
 <script src="/js/clock.js"></script>
 
 <script src="/js/mortgage.js"></script>
+
+<script src="/js/mortgage-graphics.js"></script>
 
 <!-- Link external JS end -->
 
