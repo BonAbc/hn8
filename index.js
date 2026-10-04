@@ -74,8 +74,6 @@ const globalLimiter = rateLimit({
   message: "Too many requests. Please try again later.",
 });
 
-app.use(globalLimiter);
-app.use(compression());
 //
 // ----------------------------
 // Blocked IPs
@@ -112,7 +110,9 @@ app.use(async (req, res, next) => {
     next();
   }
 });
-
+//
+app.use(globalLimiter);
+app.use(compression());
 //
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -265,10 +265,16 @@ const authLimiter = rateLimit({
   max: 10,
   message: "Too many login attempts. Try again later.",
 });
-
-app.use("/login", authLimiter);
 //
-app.use("/chapw", authLimiter);
+const publicLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: "Too many request attempts. Try again later.",
+});
+//
+//app.use("/login", authLimiter);
+//
+//app.use("/chapw", authLimiter);
 //
 const connectReactionLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
@@ -343,25 +349,25 @@ function ensureAuthenticated(req, res, next) {
 
 //function ensureAdmin(req, res, next) {
 
-app.get("/", (req, res) =>
+app.get("/", publicLimiter, (req, res) =>
   res.render("index.ejs", { defaultDate: getToday() }),
 );
-app.get("/about", (req, res) =>
+app.get("/about", publicLimiter, (req, res) =>
   res.render("about.ejs", { defaultDate: getToday() }),
 );
 
 // Contact
-app.get("/contact", (req, res) =>
+app.get("/contact", publicLimiter, (req, res) =>
   res.render("contact.ejs", { defaultDate: getToday(), thanks: null }),
 );
 //app.post/contact
 
 // Additional Links & Tools
-app.get("/link", (req, res) =>
+app.get("/link", publicLimiter, (req, res) =>
   res.render("link.ejs", { defaultDate: getToday() }),
 );
 
-app.get("/anotherlink", async (req, res) => {
+app.get("/anotherlink", publicLimiter, async (req, res) => {
   try {
     // Query tax data from database
     const pr = await db.query("SELECT * FROM obbpr ORDER BY id");
@@ -377,7 +383,7 @@ app.get("/anotherlink", async (req, res) => {
   }
 });
 
-app.get("/otherlink", async (req, res) => {
+app.get("/otherlink", publicLimiter, async (req, res) => {
   try {
     // Query tax data from database
     const results = await db.query("SELECT * FROM obb ORDER BY id");
@@ -392,23 +398,23 @@ app.get("/otherlink", async (req, res) => {
     res.status(500).send("Error loading tax data");
   }
 });
-app.get("/calculate", (req, res) =>
+app.get("/calculate", publicLimiter, (req, res) =>
   res.render("calculator.ejs", { defaultDate: getToday() }),
 );
 app.get("/mortgage", ensureAuthenticated, (req, res) =>
   res.render("mortgage.ejs", { defaultDate: getToday() }),
 );
-app.get("/hana", (req, res) =>
+app.get("/hana", publicLimiter, (req, res) =>
   res.render("hana.ejs", { defaultDate: getToday() }),
 );
-app.get("/hnpage", (req, res) =>
+app.get("/hnpage", publicLimiter, (req, res) =>
   res.render("HN.ejs", {
     defaultDate: getToday(),
     message: "Thank you for your business.",
   }),
 );
 
-app.get("/tax", async (req, res) => {
+app.get("/tax", publicLimiter, async (req, res) => {
   try {
     const result = await db.query("SELECT * FROM taxrate_2025 ORDER BY id");
     res.render("tax.ejs", { defaultDate: getToday(), taxData: result.rows });
@@ -418,7 +424,7 @@ app.get("/tax", async (req, res) => {
   }
 });
 //Tax calculation tool
-app.get("/apti", async (req, res) => {
+app.get("/apti", publicLimiter, async (req, res) => {
   try {
     // Query Table1: fs.fs
     const fsResult = await db.query("SELECT fs FROM fs order by fs");
@@ -446,7 +452,7 @@ app.get("/apti", async (req, res) => {
   }
 });
 
-app.get("/invoices", async (req, res) => {
+app.get("/invoices", publicLimiter, async (req, res) => {
   try {
     // Fetch all companies from the "companies" table
     // These will populate the "From:" dropdown in the invoice form
