@@ -115,7 +115,7 @@ app.use(async (req, res, next) => {
 // PER-IP TRAFFIC PROTECTION
 // ==================================================
 
-const MAX_REQUESTS = 10;
+const MAX_REQUESTS = 30;
 const REQUEST_WINDOW_MINUTES = 1;
 
 // One request at a time per IP
