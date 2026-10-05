@@ -693,7 +693,6 @@ function generateSchedule1(
     of payments, not necessarily the number actually
     generated if the mortgage pays off early.
   */
-
   let generatedPeriods = 0;
 
   const scheduleRows = body.querySelectorAll("tr");
@@ -713,7 +712,7 @@ function generateSchedule1(
   });
 
   if (periods) {
-    periods.textContent = generatedPeriods;
+    periods.textContent = totalPeriods;
   }
 }
 
