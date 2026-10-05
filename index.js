@@ -115,10 +115,11 @@ app.use(async (req, res, next) => {
 // PER-IP TRAFFIC PROTECTION
 // ==================================================
 
-const MAX_REQUESTS = 30;
+const MAX_REQUESTS = 60;
 const REQUEST_WINDOW_MINUTES = 1;
 
-// One request at a time per IP
+// Allow up to 2 simultaneous requests per IP
+const MAX_ACTIVE_REQUESTS = 9;
 const activeRequests = new Map();
 
 app.use(async (req, res, next) => {
@@ -131,10 +132,12 @@ app.use(async (req, res, next) => {
     }
 
     // ==================================================
-    // 1. ONE ACTIVE REQUEST PER IP
+    // 1. MAX 2 ACTIVE REQUESTS PER IP
     // ==================================================
 
-    if (activeRequests.has(clientIP)) {
+    const activeCount = activeRequests.get(clientIP) || 0;
+
+    if (activeCount >= MAX_ACTIVE_REQUESTS) {
       console.log(
         `CONCURRENT LIMIT: ${clientIP} | ${req.method} ${req.originalUrl}`,
       );
@@ -144,7 +147,8 @@ app.use(async (req, res, next) => {
         .send("Too many simultaneous requests. Please try again.");
     }
 
-    activeRequests.set(clientIP, true);
+    // Increment active request count
+    activeRequests.set(clientIP, activeCount + 1);
 
     let released = false;
 
@@ -152,23 +156,30 @@ app.use(async (req, res, next) => {
       if (released) return;
 
       released = true;
-      activeRequests.delete(clientIP);
+
+      const currentCount = activeRequests.get(clientIP) || 0;
+
+      if (currentCount <= 1) {
+        activeRequests.delete(clientIP);
+      } else {
+        activeRequests.set(clientIP, currentCount - 1);
+      }
     };
 
     res.once("finish", release);
     res.once("close", release);
 
     // ==================================================
-    // 2. MAX 5 REQUESTS PER IP / 15 MINUTES
+    // 2. MAX 60 REQUESTS PER IP / 1 MINUTE
     // ==================================================
 
     const result = await db.query(
       `
-  SELECT COUNT(*) AS request_count
-  FROM webtraffic
-  WHERE visitor_ip = $1
-    AND created_at >= NOW() - ($2 * INTERVAL '1 minute')
-  `,
+      SELECT COUNT(*) AS request_count
+      FROM webtraffic
+      WHERE visitor_ip = $1
+        AND created_at >= NOW() - ($2 * INTERVAL '1 minute')
+      `,
       [clientIP, REQUEST_WINDOW_MINUTES],
     );
 
@@ -192,7 +203,13 @@ app.use(async (req, res, next) => {
       req.headers["cf-connecting-ip"] || req.ip?.replace(/^::ffff:/, "");
 
     if (clientIP) {
-      activeRequests.delete(clientIP);
+      const currentCount = activeRequests.get(clientIP) || 0;
+
+      if (currentCount <= 1) {
+        activeRequests.delete(clientIP);
+      } else {
+        activeRequests.set(clientIP, currentCount - 1);
+      }
     }
 
     next();
