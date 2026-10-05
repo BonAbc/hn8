@@ -688,29 +688,6 @@ function generateSchedule1(
     payment.textContent = formatOutput(monthlyPayment);
   }
 
-  /*
-    This represents the maximum scheduled number
-    of payments, not necessarily the number actually
-    generated if the mortgage pays off early.
-  */
-  let generatedPeriods = 0;
-
-  const scheduleRows = body.querySelectorAll("tr");
-
-  scheduleRows.forEach((row) => {
-    const firstCell = row.querySelector("td");
-
-    if (!firstCell) {
-      return;
-    }
-
-    const value = parseInt(firstCell.textContent.trim(), 10);
-
-    if (Number.isInteger(value)) {
-      generatedPeriods = Math.max(generatedPeriods, value);
-    }
-  });
-
   if (periods) {
     periods.textContent = totalPeriods;
   }
