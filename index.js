@@ -62,7 +62,8 @@ app.use((req, res, next) => {
     path === "/hieuncpa.rar" ||
     path === "/hieuncpa.zip" ||
     path === "/wp" ||
-    path === "/wordpress"
+    path === "/wordpress" ||
+    req.query.rest_route !== undefined
   ) {
     return res.status(404).end();
   }
