@@ -56,7 +56,13 @@ app.use((req, res, next) => {
     path === "/wp-admin" ||
     path.startsWith("/wp-admin/") ||
     path.startsWith("/wp-content/") ||
-    path.startsWith("/wp-includes/")
+    path.startsWith("/wp-includes/") ||
+    path === "/.env" ||
+    path === "/.git/head" ||
+    path === "/hieuncpa.rar" ||
+    path === "/hieuncpa.zip" ||
+    path === "/wp" ||
+    path === "/wordpress"
   ) {
     return res.status(404).end();
   }
