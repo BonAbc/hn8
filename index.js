@@ -48,7 +48,21 @@ dotenv.config();
 const app = express();
 app.set("trust proxy", 1);
 //
+app.use((req, res, next) => {
+  const path = req.path.toLowerCase();
 
+  if (
+    path.endsWith(".php") ||
+    path === "/wp-admin" ||
+    path.startsWith("/wp-admin/") ||
+    path.startsWith("/wp-content/") ||
+    path.startsWith("/wp-includes/")
+  ) {
+    return res.status(404).end();
+  }
+
+  next();
+});
 // ----------------------------
 // HTTPS Redirect Middleware
 // ----------------------------
