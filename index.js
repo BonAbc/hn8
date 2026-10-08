@@ -52,18 +52,31 @@ app.use((req, res, next) => {
   const path = req.path.toLowerCase();
 
   if (
+    // Any .env file/path
+    /(^|\/)\.env(?:$|[./_-])/.test(path) ||
+    // Anything under .git
+    /(^|\/)\.git(?:\/|$)/.test(path) ||
+    // GitHub / GitLab metadata
+    path.startsWith("/.github/") ||
+    path.startsWith("/.gitlab/") ||
+    path === "/.gitlab-ci.yml" ||
+    // Package/config secrets
+    path === "/.npmrc" ||
+    path === "/.yarnrc" ||
+    path === "/.yarnrc.yml" ||
+    // PHP / WordPress probes
     path.endsWith(".php") ||
     path === "/wp-admin" ||
     path.startsWith("/wp-admin/") ||
     path.startsWith("/wp-content/") ||
     path.startsWith("/wp-includes/") ||
-    path === "/.env" ||
-    path === "/.git/head" ||
-    path === "/hieuncpa.rar" ||
-    path === "/hieuncpa.zip" ||
     path === "/wp" ||
-    path === "/signup" ||
+    path.startsWith("/wp/") ||
     path === "/wordpress" ||
+    path.startsWith("/wordpress/") ||
+    // Debug/profiler
+    path.startsWith("/_profiler/") ||
+    // REST route probing
     req.query.rest_route !== undefined
   ) {
     return res.status(404).end();
@@ -10858,12 +10871,15 @@ app.post("/web/traffic/test/block", ensureAdmin, async (req, res) => {
     });
   }
 });
+//
+app.use((req, res) => {
+  res.status(404).end();
+});
 // ----------------------------
 app.use((err, req, res, next) => {
   console.error("❌ Uncaught error:", err);
   res.status(500).send("Server error");
 });
-
 // ----------------------------
 // Start Server for both production and local.
 // ----------------------------
