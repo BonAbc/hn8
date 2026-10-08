@@ -62,6 +62,7 @@ app.use((req, res, next) => {
     path === "/hieuncpa.rar" ||
     path === "/hieuncpa.zip" ||
     path === "/wp" ||
+    path === "/signup" ||
     path === "/wordpress" ||
     req.query.rest_route !== undefined
   ) {
@@ -135,61 +136,96 @@ app.use(async (req, res, next) => {
 // ==================================================
 // PER-IP TRAFFIC PROTECTION
 // ==================================================
-
+//
 const MAX_REQUESTS = 60;
 const REQUEST_WINDOW_MINUTES = 1;
 
-// Allow up to 2 simultaneous requests per IP
+// Allow up to 9 simultaneous requests per IP
 const MAX_ACTIVE_REQUESTS = 9;
+
+// Block IP for 15 minutes after exceeding concurrent limit
+const IP_BLOCK_DURATION_MS = 15 * 60 * 1000;
+
 const activeRequests = new Map();
+const blockedIPs = new Map();
 
 app.use(async (req, res, next) => {
-  try {
-    const clientIP =
-      req.headers["cf-connecting-ip"] || req.ip?.replace(/^::ffff:/, "");
+  const clientIP =
+    req.headers["cf-connecting-ip"] || req.ip?.replace(/^::ffff:/, "");
 
-    if (!clientIP) {
-      return next();
-    }
+  if (!clientIP) {
+    return next();
+  }
 
-    // ==================================================
-    // 1. MAX 2 ACTIVE REQUESTS PER IP
-    // ==================================================
+  // ==================================================
+  // 0. CHECK 15-MINUTE IP BLOCK
+  // ==================================================
 
-    const activeCount = activeRequests.get(clientIP) || 0;
+  const blockedUntil = blockedIPs.get(clientIP);
 
-    if (activeCount >= MAX_ACTIVE_REQUESTS) {
-      console.log(
-        `CONCURRENT LIMIT: ${clientIP} | ${req.method} ${req.originalUrl}`,
-      );
+  if (blockedUntil) {
+    if (Date.now() < blockedUntil) {
+      const remainingMinutes = Math.ceil((blockedUntil - Date.now()) / 60000);
 
       return res
         .status(429)
-        .send("Too many simultaneous requests. Please try again.");
+        .send(
+          `Too many simultaneous requests. Your IP is blocked for ${remainingMinutes} more minute(s).`,
+        );
     }
 
-    // Increment active request count
-    activeRequests.set(clientIP, activeCount + 1);
+    // Block expired
+    blockedIPs.delete(clientIP);
+  }
 
-    let released = false;
+  // ==================================================
+  // 1. MAX 9 ACTIVE REQUESTS PER IP
+  // ==================================================
 
-    const release = () => {
-      if (released) return;
+  const activeCount = activeRequests.get(clientIP) || 0;
 
-      released = true;
+  if (activeCount >= MAX_ACTIVE_REQUESTS) {
+    console.log(
+      `CONCURRENT LIMIT: ${clientIP} | Blocking for 15 minutes | ${req.method} ${req.originalUrl}`,
+    );
 
-      const currentCount = activeRequests.get(clientIP) || 0;
+    // Block this IP for 15 minutes
+    blockedIPs.set(clientIP, Date.now() + IP_BLOCK_DURATION_MS);
 
-      if (currentCount <= 1) {
-        activeRequests.delete(clientIP);
-      } else {
-        activeRequests.set(clientIP, currentCount - 1);
-      }
-    };
+    return res
+      .status(429)
+      .send("Too many simultaneous requests. Your IP has been blocked.");
+  }
 
-    res.once("finish", release);
-    res.once("close", release);
+  // ==================================================
+  // RESERVE ACTIVE REQUEST SLOT
+  // ==================================================
 
+  activeRequests.set(clientIP, activeCount + 1);
+
+  let released = false;
+
+  const release = () => {
+    if (released) return;
+
+    released = true;
+
+    const currentCount = activeRequests.get(clientIP) || 0;
+
+    if (currentCount <= 1) {
+      activeRequests.delete(clientIP);
+    } else {
+      activeRequests.set(clientIP, currentCount - 1);
+    }
+  };
+
+  // Release slot when response finishes
+  res.once("finish", release);
+
+  // Release slot if connection closes
+  res.once("close", release);
+
+  try {
     // ==================================================
     // 2. MAX 60 REQUESTS PER IP / 1 MINUTE
     // ==================================================
@@ -216,27 +252,17 @@ app.use(async (req, res, next) => {
       return res.status(429).send("Too many requests. Please try again later.");
     }
 
+    // Continue to next middleware
     next();
   } catch (error) {
     console.error("IP traffic protection error:", error);
 
-    const clientIP =
-      req.headers["cf-connecting-ip"] || req.ip?.replace(/^::ffff:/, "");
-
-    if (clientIP) {
-      const currentCount = activeRequests.get(clientIP) || 0;
-
-      if (currentCount <= 1) {
-        activeRequests.delete(clientIP);
-      } else {
-        activeRequests.set(clientIP, currentCount - 1);
-      }
-    }
+    // Release active slot if database fails
+    release();
 
     next();
   }
 });
-
 //
 app.use(globalLimiter);
 app.use(compression());
