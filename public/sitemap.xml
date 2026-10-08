@@ -6,7 +6,15 @@
   </url>
 
   <url>
-    <loc>https://hieuncpa.com/contact</loc>
+    <loc>https://hieuncpa.com/contact</loc>    
   </url>
 
-</urlset>
+  <url>
+    <loc>https://hieuncpa.com/social/exchange</loc>    
+  </url>
+
+  <url>
+    <loc>https://hieuncpa.com/public/post/connect</loc>    
+  </url>
+
+</urlset> 

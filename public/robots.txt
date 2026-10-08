@@ -1,4 +1,6 @@
 User-agent: *
 Disallow: /*
 Allow: /$
-Allow: /contact/$
+Allow: /contact/$ 
+Allow: /social/exchange/$
+Allow: /public/post/connect/$
