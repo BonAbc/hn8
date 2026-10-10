@@ -6,7 +6,7 @@
    <div class="date-row">
     <form>
       <label for="date">Date:</label>
-      <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+      <input type="date" id="date" name="date" data-local-today />
     </form>
 
     <div class="clock" id="clock">
@@ -191,7 +191,7 @@
     data-placeholder="What's on your mind?/The main content of the file/video upload"
     
   ></div>
-
+ 
   <input
     type="hidden"
     name="content"
@@ -2239,7 +2239,8 @@
 
 <script src="/js/social.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
-<script src="/js/clock.js"></script>
+<script src="/js/clocklocal.js"></script>
+<script src="/js/local-date.js"></script>
 
 
 <%- include("partials/footer.ejs") %><!--Remember this include when add a new page-->  
