@@ -7,7 +7,7 @@
   <div class="date-row">
     <form>
       <label for="date">Date:</label>
-      <input type="date" id="date" name="date" value="<%= defaultDate %>" />
+      <input type="date" id="date" name="date" data-local-today />
     </form>
 
     <div class="clock" id="clock">
@@ -363,7 +363,10 @@
   </section>
 
   <br />
-
+  <section class="py-4 px-3 bg-light border border-black rounded mt-4 mb-4">
+    <a href="/mortgage/rate"> Interest Rate Calculator </a>
+  </section>
+  <br />
   <h5>Turning Numbers into Better Decisions.</h5>
 
   <!---->
@@ -373,8 +376,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
 
-<script src="/js/clock.js"></script>
-
+<script src="/js/clocklocal.js"></script>
+<script src="/js/local-date.js"></script>
 <script src="/js/mortgage.js"></script>
 <script src="/js/mortgage-graphics.js"></script>
 

@@ -3,15 +3,10 @@
 <main> 
 <!---->
  <div class="date-row">
-  <form>
-    <label for="date">Date:</label>
-    <input
-      type="date"
-      id="date"
-      name="date"
-      value="<%= defaultDate %>"
-    >
-  </form>
+   <form>
+      <label for="date">Date:</label>
+      <input type="date" id="date" name="date" data-local-today />
+    </form>
  
   <div class="clock" id="clock">
   <span class="number n12">12</span>
@@ -243,7 +238,8 @@ Contact us
 
     </main>
     <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
-    <script src="/js/clock.js"></script>
+    <script src="/js/clocklocal.js"></script>
+    <script src="/js/local-date.js"></script>
     <!--audio-->
    <script>
       document.querySelector("#hi").addEventListener("click", function ( ) {

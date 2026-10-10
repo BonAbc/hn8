@@ -515,9 +515,7 @@ function ensureAuthenticated(req, res, next) {
 
 //function ensureAdmin(req, res, next) {
 
-app.get("/", publicLimiter, (req, res) =>
-  res.render("index.ejs", { defaultDate: getToday() }),
-);
+app.get("/", publicLimiter, (req, res) => res.render("index.ejs"));
 app.get("/about", publicLimiter, (req, res) =>
   res.render("about.ejs", { defaultDate: getToday() }),
 );
@@ -568,8 +566,13 @@ app.get("/calculate", publicLimiter, (req, res) =>
   res.render("calculator.ejs", { defaultDate: getToday() }),
 );
 app.get("/mortgage", ensureAuthenticated, (req, res) =>
-  res.render("mortgage.ejs", { defaultDate: getToday() }),
+  res.render("mortgage.ejs"),
 );
+//
+app.get("/mortgage/rate", ensureAuthenticated, (req, res) =>
+  res.render("rate.ejs"),
+);
+//
 app.get("/hana", publicLimiter, (req, res) =>
   res.render("hana.ejs", { defaultDate: getToday() }),
 );
