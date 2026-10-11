@@ -3,4 +3,5 @@ Disallow: /*
 Allow: /$
 Allow: /contact/$ 
 Allow: /social/exchange/$
-Allow: /public/post/connect/$
+Allow: /public/post/connect/$ 
+Allow: /mortgage/$ 
