@@ -52,19 +52,58 @@ app.use((req, res, next) => {
   const path = req.path.toLowerCase();
 
   if (
-    // Any .env file/path
+    // Environment files and secrets
     /(^|\/)\.env(?:$|[./_-])/.test(path) ||
-    // Anything under .git
+    path === "/env" ||
+    path.startsWith("/env/") ||
+    path === "/environment" ||
+    path.startsWith("/environment/") ||
+    // Git metadata
     /(^|\/)\.git(?:\/|$)/.test(path) ||
-    // GitHub / GitLab metadata
     path.startsWith("/.github/") ||
+    path === "/.github" ||
     path.startsWith("/.gitlab/") ||
+    path === "/.gitlab" ||
     path === "/.gitlab-ci.yml" ||
-    // Package/config secrets
+    // Package manager configuration
     path === "/.npmrc" ||
     path === "/.yarnrc" ||
     path === "/.yarnrc.yml" ||
-    // PHP / WordPress probes
+    path === "/.pypirc" ||
+    path === "/.pnpmfile.cjs" ||
+    // Repository and AI-agent instruction files
+    [
+      "/readme",
+      "/readme.md",
+      "/claude.md",
+      "/agents.md",
+      "/contributing.md",
+      "/security.md",
+      "/code_of_conduct.md",
+      "/changelog.md",
+      "/changes.md",
+      "/authors",
+      "/authors.md",
+      "/license",
+      "/license.md",
+      "/.dockerignore",
+      "/dockerfile",
+      "/docker-compose.yml",
+      "/docker-compose.yaml",
+      "/makefile",
+      "/.editorconfig",
+      "/.gitattributes",
+      "/.gitignore",
+    ].includes(path) ||
+    // Configuration endpoint probes
+    path === "/config" ||
+    path.startsWith("/config/") ||
+    path === "/configuration" ||
+    path.startsWith("/configuration/") ||
+    path === "/api/config" ||
+    path.startsWith("/api/config/") ||
+    path === "/server-status" ||
+    // PHP and WordPress probes
     path.endsWith(".php") ||
     path === "/wp-admin" ||
     path.startsWith("/wp-admin/") ||
@@ -74,8 +113,15 @@ app.use((req, res, next) => {
     path.startsWith("/wp/") ||
     path === "/wordpress" ||
     path.startsWith("/wordpress/") ||
-    // Debug/profiler
+    path === "/wp-json" ||
+    path.startsWith("/wp-json/") ||
+    // Debugging and profiling
     path.startsWith("/_profiler/") ||
+    path === "/_profiler" ||
+    path.startsWith("/debug/") ||
+    path === "/debug" ||
+    path.startsWith("/__debug__/") ||
+    path === "/__debug__" ||
     // REST route probing
     req.query.rest_route !== undefined
   ) {
