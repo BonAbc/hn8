@@ -611,7 +611,9 @@ app.get("/otherlink", publicLimiter, async (req, res) => {
 app.get("/calculate", publicLimiter, (req, res) =>
   res.render("calculator.ejs", { defaultDate: getToday() }),
 );
-app.get("/mortgage", publicLimiter, (req, res) => res.render("mortgage.ejs"));
+app.get("/mortgage", ensureAuthenticated, (req, res) =>
+  res.render("mortgage.ejs"),
+);
 //
 app.get("/mortgage/rate", ensureAuthenticated, (req, res) =>
   res.render("rate.ejs"),
